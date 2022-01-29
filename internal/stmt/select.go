@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+// SelectStmt e.g. SELECT c1+6,c2 FROM t WHERE c3 > 16 FOR UPDATE
 type SelectStmt struct {
 	Table     string
 	Columns   []string

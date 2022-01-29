@@ -1,9 +1,9 @@
 package txn
 
 const (
-	IsolationRUName  = "ReadUncommitted"
-	IsolationRCName  = "ReadCommitted"
-	IsolationRRName  = "RepeatableRead"
+	IsolationRUName  = "Read Uncommitted"
+	IsolationRCName  = "Read Committed"
+	IsolationRRName  = "Repeatable Read"
 	IsolationSERName = "Serializable"
 
 	IsolationRUAlias  = "RU"
