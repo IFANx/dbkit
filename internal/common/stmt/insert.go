@@ -7,9 +7,9 @@ import (
 
 // InsertStmt e.g. INSERT INTO t(c2, c3) VALUES (16, 'a'), (22, 'a')
 type InsertStmt struct {
-	Table   string
-	Columns []string
-	Values  [][]string
+	TableName string
+	Columns   []string
+	Values    [][]string
 }
 
 func (stmt *InsertStmt) String() string {
@@ -19,6 +19,6 @@ func (stmt *InsertStmt) String() string {
 	}
 	rows := "(" + strings.Join(pairs, "),(") + ")"
 	sql := fmt.Sprintf("INSERT INTO %s(%s) VALUES %s",
-		stmt.Table, strings.Join(stmt.Columns, ","), rows)
+		stmt.TableName, strings.Join(stmt.Columns, ","), rows)
 	return sql
 }

@@ -1,12 +1,18 @@
 package common
 
+import "dbkit/internal"
 
 type Table struct {
-	Name			string
-	ColumnNames		[]string
-	Columns			map[string]Column
-	Indexes			map[string]Index
+	DBMS        internal.DBMS
+	Name        string
+	ColumnNames []string
+	Columns     map[string]*Column
+	Indexes     map[string]*Index
 
-	indexCount		int
-	hasPrimaryKey	bool
+	indexCount    int
+	hasPrimaryKey bool
+}
+
+func (table *Table) UpdateSchema() {
+	
 }

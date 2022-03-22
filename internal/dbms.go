@@ -11,7 +11,9 @@ func (dbms *DBMS) String() string {
 
 var (
 	MYSQL       = DBMS{DBMySQLName, DBMySQLAlias}
+	MARIADB     = DBMS{DBMARIADBName, DBMARIADBAlias}
 	TIDB        = DBMS{DBTiDBName, DBTiDBAlias}
 	COCKROACHDB = DBMS{DBCockroachName, DBCockroachDBAlias}
 	ZNBASE      = DBMS{DBZNBaseName, DBZNBaseAlias}
+	SQLITE      = DBMS{DBSQLiteName, DBSQLiteAlias}
 )

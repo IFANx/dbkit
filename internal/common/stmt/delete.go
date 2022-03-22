@@ -6,12 +6,12 @@ import (
 
 // DeleteStmt e.g. DELETE FROM t WHERE c3 > 16
 type DeleteStmt struct {
-	Table     string
+	TableName string
 	Predicate string
 }
 
 func (stmt *DeleteStmt) String() string {
 	sql := fmt.Sprintf("DELETE FROM %s WHERE %s",
-		stmt.Table, stmt.Predicate)
+		stmt.TableName, stmt.Predicate)
 	return sql
 }

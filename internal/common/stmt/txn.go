@@ -1,6 +1,8 @@
 package stmt
 
-import "dbkit/internal/txn"
+import (
+	"dbkit/internal/common/txn"
+)
 
 type BeginStmt struct{}
 

@@ -43,6 +43,8 @@ func GetAllowedIsolationOfDBMS(dbms internal.DBMS) []IsolationLevel {
 		return []IsolationLevel{Serializable}
 	case internal.ZNBASE:
 		return []IsolationLevel{ReadCommitted, Serializable}
+	case internal.SQLITE:
+		return []IsolationLevel{Serializable}
 	default:
 		log.Infof("Unsupported isolation alias: %s", dbms)
 		panic("Unreachable")

@@ -7,8 +7,8 @@ import (
 
 // SelectStmt e.g. SELECT c1+6,c2 FROM t WHERE c3 > 16 FOR UPDATE
 type SelectStmt struct {
-	Table     string
-	Columns   []string
+	TableName string
+	Targets   []string
 	Predicate string
 	ForShare  bool
 	ForUpdate bool
@@ -16,7 +16,7 @@ type SelectStmt struct {
 
 func (stmt *SelectStmt) String() string {
 	sql := fmt.Sprintf("SELECT %s FROM %s WHERE %s",
-		strings.Join(stmt.Columns, ","), stmt.Table, stmt.Predicate)
+		strings.Join(stmt.Targets, ","), stmt.TableName, stmt.Predicate)
 	if stmt.ForShare {
 		sql += " FOR SHARE"
 	}

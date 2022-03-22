@@ -1,7 +1,7 @@
 package common
 
 type Column struct {
-	Table      Table
+	Table      *Table
 	Name       string
 	Type       DataType
 	NotNull    bool

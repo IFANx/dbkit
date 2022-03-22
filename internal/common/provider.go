@@ -1,6 +1,9 @@
 package common
 
+import "github.com/jmoiron/sqlx"
+
 type Provider interface {
-	GenerateDatabase()
-	GenerateTable() Table
+	GenerateConn() *sqlx.Conn
+	GenerateTable() *Table
+	UpdateSchema()
 }

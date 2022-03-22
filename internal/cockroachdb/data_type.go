@@ -62,7 +62,7 @@ func (dataType CockroachDataType) Name() string {
 	case TypeTimestamp:
 		return "timestamp"
 	default:
-		log.Infof("Unsupported data type")
+		log.Infof("Unsupported data type: %v", dataType)
 		panic("Unreachable")
 	}
 }
