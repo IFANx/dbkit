@@ -1,7 +1,7 @@
 package gen
 
 import (
-	"dbkit/internal/common"
+	"dbkit/internal"
 	"dbkit/internal/randomly"
 	"reflect"
 	"strconv"
@@ -9,11 +9,16 @@ import (
 )
 
 type ExprGen struct {
-	table      *common.Table
+	table      *internal.Table
 	depthLimit int
 }
 
-func (exprGen *ExprGen) GenPredicate() string {
+func NewExprGen(table *internal.Table, depthLimit int) *ExprGen {
+	return &ExprGen{table, depthLimit}
+}
+
+func GenPredicate(table *internal.Table) string {
+	exprGen := NewExprGen(table, 6)
 	expr := exprGen.genExpr(0)
 	if expr == "" {
 		return "True"
@@ -79,6 +84,12 @@ func (exprGen *ExprGen) genUaryPrefixOp(depth int) string {
 func (exprGen *ExprGen) genUaryPostfixOp(depth int) string {
 	op := randomly.RandPickOneStr([]string{"IS NULL", "IS FALSE", "IS TRUE"})
 	return "(" + exprGen.genExpr(depth+1) + ")" + op
+}
+
+func (exprGen *ExprGen) genBinaryLogicalOp(depth int) string {
+	op := randomly.RandPickOneStr([]string{"AND", "&&", "OR", "||", "XOR"})
+	return "(" + exprGen.genExpr(depth+1) + ")" + op +
+		"(" + exprGen.genExpr(depth+1) + ")"
 }
 
 func (exprGen *ExprGen) genBinaryBitOp(depth int) string {

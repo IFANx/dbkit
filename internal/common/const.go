@@ -1,4 +1,4 @@
-package internal
+package common
 
 const (
 	DBMySQLName     = "MySQL"
@@ -11,7 +11,7 @@ const (
 	DBMySQLAlias       = "mysql"
 	DBMARIADBAlias     = "mariadb"
 	DBTiDBAlias        = "tidb"
-	DBCockroachDBAlias = "crdb"
+	DBCockroachDBAlias = "cockroachdb"
 	DBZNBaseAlias      = "znbase"
 	DBSQLiteAlias      = "sqlite"
 )

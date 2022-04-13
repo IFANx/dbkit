@@ -5,9 +5,12 @@ import (
 	"dbkit/internal/common"
 	"dbkit/internal/common/stmt"
 	"dbkit/internal/randomly"
+	"fmt"
 )
 
-func GenCreateIndexStmt(idxName string, table common.Table) stmt.CreateIndexStmt {
+func GenCreateIndexStmt(table *internal.Table) stmt.CreateIndexStmt {
+	table.IndexCount++
+	idxName := fmt.Sprintf("i%d", table.IndexCount)
 	candidateColumns := randomly.RandomPickNotEmptyStr(table.ColumnNames)
 	indexedColumns := make([]string, 0)
 	for _, colName := range candidateColumns {
@@ -16,8 +19,8 @@ func GenCreateIndexStmt(idxName string, table common.Table) stmt.CreateIndexStmt
 			indexedColumns = append(indexedColumns, colName)
 		} else if column.Type.IsString() {
 			switch table.DBMS {
-			case internal.MYSQL:
-			case internal.MARIADB:
+			case common.MYSQL:
+			case common.MARIADB:
 				indexedColumns = append(indexedColumns, colName+"(5)")
 			default:
 				indexedColumns = append(indexedColumns, colName)

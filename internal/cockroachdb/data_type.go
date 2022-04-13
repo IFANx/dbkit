@@ -1,7 +1,7 @@
 package cockroachdb
 
 import (
-	"dbkit/internal"
+	"dbkit/internal/common"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -25,8 +25,8 @@ const (
 	TypeTimestamp
 )
 
-func (dataType CockroachDataType) DBMS() internal.DBMS {
-	return internal.COCKROACHDB
+func (dataType CockroachDataType) DBMS() common.DBMS {
+	return common.COCKROACHDB
 }
 
 func (dataType CockroachDataType) Name() string {

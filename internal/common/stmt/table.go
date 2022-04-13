@@ -16,7 +16,7 @@ type CreateTableStmt struct {
 }
 
 func (stmt *CreateTableStmt) String() string {
-	colDefs := make([]string, 0, len(stmt.Columns))
+	colDefs := make([]string, len(stmt.Columns))
 	for idx, colName := range stmt.Columns {
 		colDefs[idx] = colName + " " + stmt.ColumnTypes[colName]
 		if stmt.ColumnOptions[colName] != "" {

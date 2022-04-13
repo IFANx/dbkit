@@ -1,7 +1,6 @@
 package txn
 
 import (
-	"dbkit/internal"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -29,24 +28,6 @@ func GetIsolationFromAlias(alias string) IsolationLevel {
 		return Serializable
 	default:
 		log.Infof("Unsupported isolation alias: %s", alias)
-		panic("Unreachable")
-	}
-}
-
-func GetAllowedIsolationOfDBMS(dbms internal.DBMS) []IsolationLevel {
-	switch dbms {
-	case internal.MYSQL:
-		return []IsolationLevel{ReadUncommitted, ReadCommitted, RepeatableRead, Serializable}
-	case internal.TIDB:
-		return []IsolationLevel{ReadCommitted, RepeatableRead}
-	case internal.COCKROACHDB:
-		return []IsolationLevel{Serializable}
-	case internal.ZNBASE:
-		return []IsolationLevel{ReadCommitted, Serializable}
-	case internal.SQLITE:
-		return []IsolationLevel{Serializable}
-	default:
-		log.Infof("Unsupported isolation alias: %s", dbms)
 		panic("Unreachable")
 	}
 }

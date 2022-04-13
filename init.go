@@ -1,7 +1,7 @@
 package main
 
 import (
-	"dbkit/internal/randomly"
+	"dbkit/internal"
 	"dbkit/internal/util"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -12,6 +12,7 @@ import (
 )
 
 var logFile *os.File
+var state internal.GlobalState
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
@@ -19,17 +20,30 @@ func init() {
 	// 指定配置文件路径
 	viper.SetConfigFile("./config/config.json")
 
-	testID := time.Now().Format("20060102150405") + randomly.RandAlphabetStrLen(5)
-	viper.Set("TestID", testID)
+	var (
+		logFile *os.File
+		err     error
+	)
 
-	logFileName := "./config/" + testID + ".log"
+	logFileName := "./log/" + time.Now().Format("2006010215") + ".log"
 	if util.CheckFileIsExist(logFileName) { //如果文件存在
-		log.Fatalf("Test ID is not unique, log file exits")
-	}
-	logFile, err := os.Create(logFileName)
-	if err != nil {
-		log.Fatalf("Faied to create log file")
+		logFile, err = os.OpenFile(logFileName, os.O_APPEND, 0666) //打开文件
+		if err != nil {
+			log.Fatalf("打开日志文件失败")
+		}
+	} else {
+		logFile, err = os.Create(logFileName)
+		if err != nil {
+			log.Fatalf("创建日志文件失败")
+		}
 	}
 	mw := io.MultiWriter(os.Stdout, logFile)
 	log.SetOutput(mw)
+
+	state := internal.GetState()
+	conn := state.GetDataSourceConn()
+	err = conn.Ping()
+	if err != nil {
+		log.Fatalf("连接MySQL数据源失败，请确认DBKit基础数据库连接参数无误")
+	}
 }

@@ -5,6 +5,7 @@ type DBKitConfig struct {
 	Target     string
 	DataSource DataSourceConfig
 	MySQL      MySQLConfig
+	MariaDB    MariaDBConfig
 	TiDB       TiDBConfig
 	Cockroach  CockroachConfig
 	SQLite     SQLiteConfig
@@ -18,6 +19,14 @@ type DataSourceConfig struct {
 }
 
 type MySQLConfig struct {
+	DBName   string
+	Port     int
+	Host     string
+	Username string
+	Password string
+}
+
+type MariaDBConfig struct {
 	DBName   string
 	Port     int
 	Host     string
@@ -42,9 +51,5 @@ type CockroachConfig struct {
 }
 
 type SQLiteConfig struct {
-	DBName   string
-	Port     int
-	Host     string
-	Username string
-	Password string
+	DBName string
 }

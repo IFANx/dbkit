@@ -1,11 +1,12 @@
-package mysql
+package gen
 
 import (
-	"dbkit/internal"
+	"dbkit/internal/common"
 	"dbkit/internal/randomly"
 	log "github.com/sirupsen/logrus"
 	"math/rand"
 	"strconv"
+	"strings"
 )
 
 type MySQLDataType int8
@@ -42,8 +43,8 @@ const (
 	TypeJson
 )
 
-func (dataType MySQLDataType) DBMS() internal.DBMS {
-	return internal.MYSQL
+func (dataType MySQLDataType) DBMS() common.DBMS {
+	return common.MYSQL
 }
 
 func RandMySQLType() MySQLDataType {
@@ -118,6 +119,10 @@ func (dataType MySQLDataType) Name() string {
 }
 
 func ParseDataType(name string) MySQLDataType {
+	idx := strings.Index(name, "(")
+	if idx > 0 {
+		name = name[:idx]
+	}
 	switch name {
 	case "bit":
 		return TypeBit
@@ -183,6 +188,15 @@ func ParseDataType(name string) MySQLDataType {
 	}
 }
 
+func (dataType MySQLDataType) CanBePrimary() bool {
+	switch dataType {
+	case TypeInt, TypeTinyInt, TypeMediumInt, TypeBigInt, TypeFloat, TypeDouble, TypeDecimal:
+		return true
+	default:
+		return false
+	}
+}
+
 func (dataType MySQLDataType) HasSize() bool {
 	switch dataType {
 	case TypeBit, TypeChar, TypeVarchar, TypeVarBinary, TypeText, TypeBlob:
@@ -239,43 +253,33 @@ func (dataType MySQLDataType) GenRandomVal() string {
 	case TypeSmallInt:
 		return strconv.Itoa(randomly.RandIntGap(-32768, 32767))
 	case TypeMediumInt:
-		return strconv.Itoa(randomly.RandIntGap(8388608, 8388607))
-	case TypeInt:
-	case TypeBigInt:
+		return strconv.Itoa(randomly.RandIntGap(-8388608, 8388607))
+	case TypeInt, TypeBigInt:
 		return strconv.Itoa(int(rand.Int31()))
-	case TypeDecimal:
-	case TypeFloat:
+	case TypeDecimal, TypeFloat:
 		return strconv.FormatFloat(float64(randomly.RandFloat()), 'f',
 			randomly.RandIntGap(0, 5), 32)
 	case TypeDouble:
 		return strconv.FormatFloat(randomly.RandDouble(), 'f',
 			randomly.RandIntGap(0, 10), 64)
-	case TypeChar:
-	case TypeVarchar:
-	case TypeText:
-	case TypeTinyText:
-	case TypeMediumText:
-	case TypeLongText:
-		return "\"" + randomly.RandPrintStrLen(randomly.RandIntGap(5, 10)) + "\""
-	case TypeBinary:
-	case TypeVarBinary:
-		return "\"" + randomly.RandPrintStrLen(randomly.RandIntGap(5, 10)) + "\""
-	case TypeBlob:
-	case TypeTinyBlob:
-	case TypeLongBlob:
-		return "\"" + randomly.RandHexStrLen(randomly.RandIntGap(5, 10)) + "\""
+	case TypeChar, TypeVarchar, TypeText, TypeTinyText, TypeMediumText, TypeLongText:
+		return "'" + randomly.RandPrintStrLen(randomly.RandIntGap(5, 10)) + "'"
+	case TypeBinary, TypeVarBinary:
+		return "'" + randomly.RandPrintStrLen(randomly.RandIntGap(5, 10)) + "'"
+	case TypeBlob, TypeTinyBlob, TypeLongBlob:
+		return "'" + randomly.RandHexStrLen(randomly.RandIntGap(5, 10)) + "'"
 	case TypeEnum:
 		return "enum"
 	case TypeSet:
 		return "set"
 	case TypeDate:
-		return "\"" + randomly.RandDateStr() + "\""
+		return "'" + randomly.RandDateStr() + "'"
 	case TypeTime:
-		return "\"" + randomly.RandTimeStr() + "\""
+		return "'" + randomly.RandTimeStr() + "'"
 	case TypeDateTime:
-		return "\"" + randomly.RandDateTimeStr() + "\""
+		return "'" + randomly.RandDateTimeStr() + "'"
 	case TypeTimestamp:
-		return "\"" + randomly.RandDateTimeStr() + "\""
+		return "'" + randomly.RandDateTimeStr() + "'"
 	case TypeYear:
 		return strconv.Itoa(randomly.RandIntGap(1901, 2155))
 	case TypeJson:

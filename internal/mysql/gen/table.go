@@ -1,31 +1,32 @@
 package gen
 
 import (
+	"dbkit/internal"
 	"dbkit/internal/common/stmt"
-	"dbkit/internal/mysql"
 	"dbkit/internal/randomly"
 	"strconv"
 )
 
-func GenCreateTableStmt(tableName string) stmt.CreateTableStmt {
+func GenCreateTableStmt(table *internal.Table) stmt.CreateTableStmt {
 	var (
 		colNames   []string
-		colTypes   map[string]string
-		colOptions map[string]string
-		tabOptions map[string]string
+		colTypes   = make(map[string]string)
+		colOptions = make(map[string]string)
+		tabOptions = make(map[string]string)
 		partition  = ""
 	)
 
 	columnCnt := randomly.RandIntGap(2, 6)
 	for i := 0; i < columnCnt; i++ {
 		colName := "c" + strconv.Itoa(i)
-		colType := mysql.RandMySQLType()
+		colNames = append(colNames, colName)
+		colType := RandMySQLType()
 		colTypes[colName] = getTypeString(colType)
 		colOptions[colName] = getColOptions(colType)
 	}
 
 	return stmt.CreateTableStmt{
-		TableName:       tableName,
+		TableName:       table.Name,
 		Columns:         colNames,
 		ColumnTypes:     colTypes,
 		ColumnOptions:   colOptions,
@@ -34,23 +35,23 @@ func GenCreateTableStmt(tableName string) stmt.CreateTableStmt {
 	}
 }
 
-func getColOptions(dataType mysql.MySQLDataType) string {
+func getColOptions(dataType MySQLDataType) string {
 	return ""
 }
 
-func getTypeString(dataType mysql.MySQLDataType) string {
+func getTypeString(dataType MySQLDataType) string {
 	var res string
 	switch dataType {
-	case mysql.TypeDecimal:
+	case TypeDecimal:
 		res = "DECIMAL"
 		if randomly.RandBool() {
 			res += getPrecisionAndScale()
 		}
-	case mysql.TypeInt:
+	case TypeInt:
 		res = randomly.RandPickOneStr([]string{"TINYINT", "SMALLINT", "MEDIUMINT", "INT", "BIGINT"})
-	case mysql.TypeVarchar:
+	case TypeVarchar:
 		res = randomly.RandPickOneStr([]string{"VARCHAR(50)", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT"})
-	case mysql.TypeFloat:
+	case TypeFloat:
 		res = randomly.RandPickOneStr([]string{"DOUBLE", "FLOAT"})
 		if randomly.RandBool() {
 			res += getPrecisionAndScale()
