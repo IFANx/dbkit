@@ -4,7 +4,6 @@ import (
 	"dbkit/internal/common"
 	"dbkit/internal/randomly"
 	log "github.com/sirupsen/logrus"
-	"math/rand"
 	"strconv"
 	"strings"
 )
@@ -48,7 +47,7 @@ func (dataType MySQLDataType) DBMS() common.DBMS {
 }
 
 func RandMySQLType() MySQLDataType {
-	types := []MySQLDataType{TypeInt, TypeVarchar, TypeFloat, TypeDecimal}
+	types := []MySQLDataType{TypeInt, TypeVarchar, TypeFloat}
 	return types[randomly.RandIntGap(0, len(types))]
 }
 
@@ -251,11 +250,14 @@ func (dataType MySQLDataType) GenRandomVal() string {
 	case TypeTinyInt:
 		return strconv.Itoa(randomly.RandIntGap(-128, 127))
 	case TypeSmallInt:
-		return strconv.Itoa(randomly.RandIntGap(-32768, 32767))
+		//return strconv.Itoa(randomly.RandIntGap(-32768, 32767))
+		return strconv.Itoa(randomly.RandIntGap(-128, 127))
 	case TypeMediumInt:
-		return strconv.Itoa(randomly.RandIntGap(-8388608, 8388607))
+		//return strconv.Itoa(randomly.RandIntGap(-8388608, 8388607))
+		return strconv.Itoa(randomly.RandIntGap(-128, 127))
 	case TypeInt, TypeBigInt:
-		return strconv.Itoa(int(rand.Int31()))
+		//return strconv.Itoa(int(rand.Int31()))
+		return strconv.Itoa(randomly.RandIntGap(-128, 127))
 	case TypeDecimal, TypeFloat:
 		return strconv.FormatFloat(float64(randomly.RandFloat()), 'f',
 			randomly.RandIntGap(0, 5), 32)

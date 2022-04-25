@@ -3,6 +3,7 @@ package gen
 import (
 	"dbkit/internal"
 	"dbkit/internal/randomly"
+	log "github.com/sirupsen/logrus"
 	"reflect"
 	"strconv"
 	"strings"
@@ -39,6 +40,7 @@ func (exprGen *ExprGen) genExpr(depth int) string {
 	paramList := []reflect.Value{
 		reflect.ValueOf(depth),
 	}
+	log.Infof("opName: %s", opName)
 	return reflect.ValueOf(exprGen).MethodByName(opName).Call(paramList)[0].String()
 }
 

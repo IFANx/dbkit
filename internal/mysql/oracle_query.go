@@ -33,7 +33,7 @@ func (tester *MySQLQueryTester) RunTest() {
 		for run := 0; run < 20; run++ {
 			ctx.CountTestRun()
 			predicate := gen.GenPredicate(table)
-
+			log.Infof("生成新的谓词：%s", predicate)
 			// NoREC
 			norec := stmt.SelectStmt{
 				TableName: table.Name,

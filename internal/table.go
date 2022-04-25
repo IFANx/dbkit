@@ -23,6 +23,7 @@ type Table struct {
 func (table *Table) Build() {
 	table.DropTable()
 	stmt := table.DBProvider.GenCreateTableStmt(table)
+	log.Infof("生成数据表创建语句：%s", stmt.String())
 	err := table.TestCtx.ExecSQL(stmt.String())
 	if err != nil {
 		log.Infof("创建数据表失败：%s", err)
@@ -30,6 +31,7 @@ func (table *Table) Build() {
 	table.UpdateSchema()
 	for i := 0; i < randomly.RandIntGap(1, 3); i++ {
 		stmt := table.DBProvider.GenCreateIndexStmt(table)
+		log.Infof("生成索引创建语句：%s", stmt.String())
 		err := table.TestCtx.ExecSQL(stmt.String())
 		if err != nil {
 			log.Infof("创建索引失败：%s", err)
@@ -37,6 +39,7 @@ func (table *Table) Build() {
 	}
 	for i := 0; i < randomly.RandIntGap(5, 10); i++ {
 		stmt := table.DBProvider.GenInsertStmt(table)
+		log.Infof("生成数据插入语句：%s", stmt.String())
 		err := table.TestCtx.ExecSQL(stmt.String())
 		if err != nil {
 			log.Infof("插入记录失败：%s", err)

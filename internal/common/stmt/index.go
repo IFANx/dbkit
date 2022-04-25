@@ -18,7 +18,7 @@ func (stmt *CreateIndexStmt) String() string {
 	if stmt.Unique {
 		uniqueStr = " UNIQUE "
 	}
-	sql := fmt.Sprintf("CREATE%sINDEX %s ON %s (%s)", uniqueStr,
+	sql := fmt.Sprintf("CREATE%sINDEX %s ON %s(%s)", uniqueStr,
 		stmt.IndexName, stmt.TableName, strings.Join(stmt.Columns, ","))
 	return sql
 }
