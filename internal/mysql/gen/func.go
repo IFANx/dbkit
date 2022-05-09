@@ -19,7 +19,7 @@ var functions = []MySQLFunc{
 	{"BIN", 1}, {"CEIL", 1},
 	{"CEILING", 1}, {"CHAR", 1},
 	{"COMPRESS", 1}, {"CONCAT", 1},
-	{"CONV", 1}, {"COS", 1},
+	{"COS", 1},
 	{"COT", 1}, {"CRC32", 1},
 	{"CURTIME", 0}, {"DATEBASE", 0},
 	{"DEGREES", 1}, {"EXP", 1},

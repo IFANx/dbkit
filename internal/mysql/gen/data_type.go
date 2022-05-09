@@ -265,9 +265,9 @@ func (dataType MySQLDataType) GenRandomVal() string {
 		return strconv.FormatFloat(randomly.RandDouble(), 'f',
 			randomly.RandIntGap(0, 10), 64)
 	case TypeChar, TypeVarchar, TypeText, TypeTinyText, TypeMediumText, TypeLongText:
-		return "'" + randomly.RandPrintStrLen(randomly.RandIntGap(5, 10)) + "'"
+		return "'" + randomly.RandNormStrLen(randomly.RandIntGap(5, 10)) + "'"
 	case TypeBinary, TypeVarBinary:
-		return "'" + randomly.RandPrintStrLen(randomly.RandIntGap(5, 10)) + "'"
+		return "'" + randomly.RandNormStrLen(randomly.RandIntGap(5, 10)) + "'"
 	case TypeBlob, TypeTinyBlob, TypeLongBlob:
 		return "'" + randomly.RandHexStrLen(randomly.RandIntGap(5, 10)) + "'"
 	case TypeEnum:
