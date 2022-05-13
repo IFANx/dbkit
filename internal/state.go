@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"dbkit/config"
 	"dbkit/internal/common"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
@@ -12,7 +13,7 @@ import (
 )
 
 type GlobalState struct {
-	Config      *DBKitConfig
+	Config      *config.DBKitConfig
 	Tests       []*TestContext
 	ConnStates  map[common.DBMS]int // -1连接失败 0未配置 1成功
 	Connections map[common.DBMS]*sqlx.DB
@@ -38,14 +39,14 @@ func makeGlobalState() *GlobalState {
 	if err != nil {
 		log.Fatalf("读取配置文件错误")
 	}
-	config := DBKitConfig{}
-	err = viper.Unmarshal(&config)
+	dbKitConfig := config.DBKitConfig{}
+	err = viper.Unmarshal(&dbKitConfig)
 	if err != nil {
 		log.Fatalf("解析配置文件错误")
 	}
 
 	state := GlobalState{
-		Config:      &config,
+		Config:      &dbKitConfig,
 		Tests:       make([]*TestContext, 0),
 		ConnStates:  make(map[common.DBMS]int),
 		Connections: make(map[common.DBMS]*sqlx.DB),
@@ -89,35 +90,35 @@ func (state *GlobalState) initConnPool(dbms common.DBMS) (*sqlx.DB, int) {
 
 	switch dbms {
 	case common.MYSQL:
-		config := state.Config.MySQL
-		if config.DBName == "" {
+		mySQLConfig := state.Config.MySQL
+		if mySQLConfig.DBName == "" {
 			return nil, 0
 		}
 		connStr := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
-			config.Username, config.Password, config.Host, config.Port, config.DBName)
+			mySQLConfig.Username, mySQLConfig.Password, mySQLConfig.Host, mySQLConfig.Port, mySQLConfig.DBName)
 		db, err = sqlx.Open("mysql", connStr)
 	case common.TIDB:
-		config := state.Config.TiDB
-		if config.DBName == "" {
+		tiDBConfig := state.Config.TiDB
+		if tiDBConfig.DBName == "" {
 			return nil, 0
 		}
 		connStr := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
-			config.Username, config.Password, config.Host, config.Port, config.DBName)
+			tiDBConfig.Username, tiDBConfig.Password, tiDBConfig.Host, tiDBConfig.Port, tiDBConfig.DBName)
 		db, err = sqlx.Open("mysql", connStr)
 	case common.MARIADB:
-		config := state.Config.MariaDB
-		if config.DBName == "" {
+		mariaDBConfig := state.Config.MariaDB
+		if mariaDBConfig.DBName == "" {
 			return nil, 0
 		}
 		connStr := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
-			config.Username, config.Password, config.Host, config.Port, config.DBName)
+			mariaDBConfig.Username, mariaDBConfig.Password, mariaDBConfig.Host, mariaDBConfig.Port, mariaDBConfig.DBName)
 		db, err = sqlx.Open("mysql", connStr)
 	case common.SQLITE:
-		config := state.Config.SQLite
-		if config.DBName == "" {
+		sqLiteConfig := state.Config.SQLite
+		if sqLiteConfig.DBName == "" {
 			return nil, 0
 		}
-		connStr := fmt.Sprintf("./db/%s.db", config.DBName)
+		connStr := fmt.Sprintf("./db/%s.db", sqLiteConfig.DBName)
 		db, err = sqlx.Open("sqlite3", connStr)
 	default:
 		log.Fatalf("该类型数据库当前不支持:%s", dbms)
