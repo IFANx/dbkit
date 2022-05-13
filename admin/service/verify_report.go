@@ -46,3 +46,28 @@ func GetVerifyReportPage(ctx *gin.Context) {
 		})
 	}
 }
+
+func GetVerifyReportDetail(ctx *gin.Context) {
+	ridStr := ctx.DefaultQuery("rid", "0")
+	rid, err := strconv.Atoi(ridStr)
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"ok":  false,
+			"err": err.Error(),
+		})
+		return
+	}
+	report, err := model.GetVerifyReportByRid(rid)
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"ok":  false,
+			"err": err.Error(),
+		})
+		return
+	} else {
+		ctx.JSON(http.StatusOK, gin.H{
+			"ok":   true,
+			"data": report,
+		})
+	}
+}

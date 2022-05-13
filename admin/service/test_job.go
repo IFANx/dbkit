@@ -76,3 +76,10 @@ func GetTestJobDetail(ctx *gin.Context) {
 		},
 	})
 }
+
+func SubTestJob(ctx *gin.Context) {
+	ctx.JSON(http.StatusOK, gin.H{
+		"ok":  false,
+		"err": "功能待实现",
+	})
+}

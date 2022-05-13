@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html>
+<head><title>Jarstick</title>
+    <style>
+        html {
+            font-family: Helvetica, Arial, sans-serif;
+            font-size: 16px;
+        }
+
+        #legend {
+            position: fixed;
+            left: 10px;
+            top: 10px;
+            background-color: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(3px);
+            padding: 5px 2px 1px 2px;
+            border-radius: 4px;
+        }
+
+        #canvas {
+            margin-top: 45px;
+        }
+
+        #calc {
+            width: 0;
+            height: 0;
+            visibility: hidden;
+        }
+
+        .bg {
+            fill: transparent;
+        }
+
+        .divider {
+            stroke: #ccc;
+            stroke-width: 1;
+        }
+
+        .history-rect {
+            stroke: #888;
+            stroke-width: 1;
+            fill: #42d1f5;
+            rx: 4;
+            ry: 4;
+        }
+
+        .link {
+            fill: #206475;
+            cursor: pointer;
+        }
+
+        .selected {
+            stroke-width: 5;
+        }
+
+        .target-rect {
+            opacity: 0;
+        }
+
+        .history-text {
+            font-size: 0.9rem;
+            font-family: Menlo, Courier New, monospace;
+        }
+
+        .hidden {
+            opacity: 0.2;
+        }
+
+        .hidden line {
+            opacity: 0.5; /* note: this is multiplicative */
+        }
+
+        .linearization {
+            stroke: rgba(0, 0, 0, 0.5);
+        }
+
+        .linearization-invalid {
+            stroke: rgba(255, 0, 0, 0.5);
+        }
+
+        .linearization-point {
+            stroke-width: 5;
+        }
+
+        .linearization-line {
+            stroke-width: 2;
+        }
+
+        .tooltip {
+            position: absolute;
+            opacity: 0;
+            border: 1px solid #ccc;
+            background: white;
+            border-radius: 4px;
+            padding: 5px;
+            font-size: 0.8rem;
+        }
+
+        .inactive {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div id="legend">
+    <svg xmlns="http://www.w3.org/2000/svg" width="660" height="20">
+        <text x="0" y="10" alignment-baseline="middle">客户端</text>
+        <line x1="50" y1="0" x2="70" y2="20" stroke="#000" stroke-width="1"></line>
+        <text x="70" y="10" alignment-baseline="middle">时间</text>
+        <line x1="110" y1="10" x2="200" y2="10" stroke="#000" stroke-width="2"></line>
+        <polygon points="200,5 200,15, 210,10" fill="#000"></polygon>
+        <rect x="300" y="5" width="10" height="10" fill="rgba(0, 0, 0, 0.5)"></rect>
+        <text x="315" y="10" alignment-baseline="middle">线性化点</text>
+        <rect x="400" y="5" width="10" height="10" fill="rgba(255, 0, 0, 0.5)"></rect>
+        <text x="415" y="10" alignment-baseline="middle">非法可线性化点</text>
+        <text x="520" y="10" alignment-baseline="middle" id="jump-link" class="link">[ jump to first error ]</text>
+    </svg>
+</div>
+<div id="canvas">
+</div>
+<div id="calc">
+</div>
+<script>
+    'use strict'
+
+    const SVG_NS = 'http://www.w3.org/2000/svg'
+
+    function svgnew(tag, attrs) {
+        const el = document.createElementNS(SVG_NS, tag)
+        svgattr(el, attrs)
+        return el
+    }
+
+    function svgattr(el, attrs) {
+        if (attrs != null) {
+            for (var k in attrs) {
+                if (Object.prototype.hasOwnProperty.call(attrs, k)) {
+                    el.setAttributeNS(null, k, attrs[k])
+                }
+            }
+        }
+    }
+
+    function svgattach(parent, child) {
+        return parent.appendChild(child)
+    }
+
+    function svgadd(el, tag, attrs) {
+        return svgattach(el, svgnew(tag, attrs))
+    }
+
+    function newArray(n, fn) {
+        const arr = new Array(n)
+        for (let i = 0; i < n; i++) {
+            arr[i] = fn(i)
+        }
+        return arr
+    }
+
+    function arrayEq(a, b) {
+        if (a === b) {
+            return true
+        }
+        if (a == null || b == null) {
+            return false
+        }
+        if (a.length != b.length) {
+            return false
+        }
+        for (let i = 0; i < a.length; i++) {
+            if (a[i] !== b[i]) {
+                return false
+            }
+        }
+        return true
+    }
+
+    function render(data) {
+        const PADDING = 10
+        const BOX_HEIGHT = 30
+        const BOX_SPACE = 15
+        const XOFF = 20
+        const EPSILON = 20
+        const LINE_BLEED = 5
+        const BOX_GAP = 20
+        const BOX_TEXT_PADDING = 10
+
+        let maxClient = -1
+        data.forEach(partition => {
+            partition['history'].forEach(el => {
+                maxClient = Math.max(maxClient, el['clientId'])
+            })
+        })
+        const nClient = maxClient + 1
+
+        // Prepare some useful data to be used later:
+        // - Add a GID to each event
+        // - Create a mapping from GIDs back to events
+        // - Create a set of all timestamps
+        // - Create a set of all start timestamps
+        const allTimestamps = new Set()
+        const startTimestamps = new Set()
+        let gid = 0
+        const byGid = {}
+        data.forEach(partition => {
+            partition['history'].forEach(el => {
+                allTimestamps.add(el['start'])
+                startTimestamps.add(el['start'])
+                allTimestamps.add(el['end'])
+                // give elements GIDs
+                el['Gid'] = gid
+                byGid[gid] = el
+                gid++
+            })
+        })
+        let sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b)
+
+        // This should not happen with "real" histories, but for certain edge
+        // cases, we need to deal with having multiple events share a start/end
+        // time. We solve this by tweaking the events that share the end time,
+        // updating the time to end+epsilon. In practice, rather than having to
+        // choose an epsilon, we choose to average the value with the next largest
+        // timestamp.
+        const nextTs = {}
+        for (let i = 0; i < sortedTimestamps.length-1; i++) {
+            nextTs[sortedTimestamps[i]] = sortedTimestamps[i+1]
+        }
+        data.forEach(partition => {
+            partition['history'].forEach(el => {
+                let end = el['end']
+                el['OriginalEnd'] = end // for display purposes
+                if (startTimestamps.has(end)) {
+                    if (Object.prototype.hasOwnProperty.call(nextTs, end)) {
+                        const tweaked = (end + nextTs[end])/2
+                        el['end'] = tweaked
+                        allTimestamps.add(tweaked)
+                    }
+                }
+            })
+        })
+        // Update sortedTimestamps, because we created some new timestamps.
+        sortedTimestamps = Array.from(allTimestamps).sort((a, b) => a - b)
+
+        // Compute layout.
+        //
+        // We warp time to make it easier to see what's going on. We can think
+        // of there being a monotonically increasing mapping from timestamps to
+        // x-positions. This mapping should satisfy some criteria to make the
+        // visualization interpretable:
+        //
+        // - distinguishability: there should be some minimum distance between
+        // unequal timestamps
+        // - visible text: history boxes should be wide enough to fit the text
+        // they contain
+        // - enough space for LPs: history boxes should be wide enough to fit
+        // all linearization points that go through them, while maintaining
+        // readability of linearizations (where each LP in a sequence is spaced
+        // some minimum distance away from the previous one)
+        //
+        // Originally, I thought about this as a linear program:
+        //
+        // - variables for every unique timestamp, x_i = warp(timestamp_i)
+        // - objective: minimize sum x_i
+        // - constraint: non-negative
+        // - constraint: ordering + distinguishability, timestamp_i < timestamp_j -> x_i + EPS < x_j
+        // - constraint: visible text, size_text_j < x_{timestamp_j_end} - x_{timestamp_j_start}
+        // - constraint: linearization lines have points that fit within box, ...
+        //
+        // This used to actually be implemented using an LP solver (without the
+        // linearization point part, though that should be doable too), but
+        // then I realized it's possible to solve optimally using a greedy
+        // left-to-right scan in linear time.
+        //
+        // So that is what we do here. We optimally solve the above, and while
+        // doing so, also compute some useful information (e.g. x-positions of
+        // linearization points) that is useful later.
+        const xPos = {}
+        // Compute some information about history elements, sorted by end time;
+        // the most important information here is box width.
+        const byEnd = data.flatMap(partition =>
+            partition['history'].map(el => {
+                // compute width of the text inside the history element by actually
+                // drawing it (in a hidden div)
+                const scratch = document.getElementById('calc')
+                scratch.innerHTML = ''
+                const svg = svgadd(scratch, 'svg')
+                const text = svgadd(svg, 'text', {
+                    'text-anchor': 'middle',
+                    'alignment-baseline': 'middle',
+                    'class': 'history-text',
+                })
+                text.textContent = el['description']
+                const bbox = text.getBBox()
+                const width = bbox.width + 2*BOX_TEXT_PADDING
+                return {
+                    'start': el['start'],
+                    'end': el['end'],
+                    'width': width,
+                    'gid': el['Gid']
+                }
+            })
+        ).sort((a, b) => a.end - b.end)
+        // Some preprocessing for linearization points and illegal next
+        // linearizations. We need to figure out where exactly LPs end up
+        // as we go, so we can make sure event boxes are wide enough.
+        const eventToLinearizations = newArray(gid, () => []) // event -> [{index, position}]
+        const eventIllegalLast = newArray(gid, () => []) // event -> [index]
+        const allLinearizations = []
+        let lgid = 0
+        data.forEach(partition => {
+            partition['partialLinearizations'].forEach(lin => {
+                const globalized = [] // linearization with global indexes instead of partition-local ones
+                const included = new Set() // for figuring out illegal next LPs
+                lin.forEach((id, position) => {
+                    included.add(id['index'])
+                    const gid = partition['history'][id['index']]['Gid']
+                    globalized.push(gid)
+                    eventToLinearizations[gid].push({'index': lgid, 'position': position})
+                })
+                allLinearizations.push(globalized)
+                let minEnd = Infinity
+                partition['history'].forEach((el, index) => {
+                    if (!included.has(index)) {
+                        minEnd = Math.min(minEnd, el['end'])
+                    }
+                })
+                partition['history'].forEach((el, index) => {
+                    if (!included.has(index) && el['start'] < minEnd) {
+                        eventIllegalLast[el['Gid']].push(lgid)
+                    }
+                })
+                lgid++
+            })
+        })
+        const linearizationPositions = newArray(lgid, () => []) // [[xpos]]
+        // Okay, now we're ready to do the left-to-right scan.
+        // Solve timestamp -> xPos.
+        let eventIndex = 0
+        xPos[sortedTimestamps[0]] = 0 // positions start at 0
+        for (let i = 1; i < sortedTimestamps.length; i++) {
+            // left-to-right scan, finding minimum time we can use
+            const ts = sortedTimestamps[i]
+            // ensure some gap from last timestamp
+            let pos = xPos[sortedTimestamps[i-1]] + BOX_GAP
+            // ensure that text fits in boxes
+            while (eventIndex < byEnd.length && byEnd[eventIndex].end <= ts) {
+                // push our position as far as necessary to accommodate text in box
+                const event = byEnd[eventIndex]
+                const textEndPos = xPos[event.start] + event.width
+                pos = Math.max(pos, textEndPos)
+                // Ensure that LPs fit in box.
+                //
+                // When placing the end of an event, for all partial linearizations
+                // that include that event, for the prefix that comes before that event,
+                // all their start points must have been placed already, so we can figure
+                // out the minimum width that the box needs to be to accommodate the LP.
+                eventToLinearizations[event.gid]
+                    .concat(eventIllegalLast[event.gid].map(index => {
+                        return {
+                            'index': index,
+                            'position': allLinearizations[index].length-1,
+                        }
+                    }))
+                    .forEach(li => {
+                        const {index, position} = li
+                        for (let i = linearizationPositions[index].length; i <= position; i++) {
+                            // determine past points
+                            let prev = null
+                            if (linearizationPositions[index].length != 0) {
+                                prev = linearizationPositions[index][i-1]
+                            }
+                            const nextGid = allLinearizations[index][i]
+                            let nextPos
+                            if (prev === null) {
+                                nextPos = xPos[byGid[nextGid]['start']]
+                            } else {
+                                nextPos = Math.max(xPos[byGid[nextGid]['start']], prev + EPSILON)
+                            }
+                            linearizationPositions[index].push(nextPos)
+                        }
+                        // this next line only really makes sense for the ones in
+                        // eventToLinearizations, not the ones from eventIllegalLast,
+                        // but it's safe to do it for all points, so we don't bother to
+                        // distinguish.
+                        pos = Math.max(pos, linearizationPositions[index][position])
+                    })
+                // ensure that illegal next LPs fit in box too
+                eventIllegalLast[event.gid].forEach(li => {
+                    const lin = linearizationPositions[li]
+                    const prev = lin[lin.length-1]
+                    pos = Math.max(pos, prev + EPSILON)
+                })
+
+                eventIndex++
+            }
+            xPos[ts] = pos
+        }
+
+        // Solved, now draw UI.
+
+        let selected = false
+        let selectedIndex = [-1, -1]
+
+        const height = 2*PADDING + BOX_HEIGHT * nClient + BOX_SPACE * (nClient - 1)
+        const width = 2*PADDING + XOFF + xPos[sortedTimestamps[sortedTimestamps.length-1]]
+        const svg = svgadd(document.getElementById('canvas'), 'svg', {
+            'width': width,
+            'height': height,
+        })
+
+        // draw background, etc.
+        const bg = svgadd(svg, 'g')
+        const bgRect = svgadd(bg, 'rect', {
+            'height': height,
+            'width': width,
+            'x': 0,
+            'y': 0,
+            'class': 'bg',
+        })
+        bgRect.onclick = handleBgClick
+        for (let i = 0; i < nClient; i++) {
+            const text = svgadd(bg, 'text', {
+                'x': XOFF/2,
+                'y': PADDING + BOX_HEIGHT/2 + i * (BOX_HEIGHT + BOX_SPACE),
+                'text-anchor': 'middle',
+                'alignment-baseline': 'middle',
+            })
+            text.textContent = i
+        }
+        svgadd(bg, 'line', {
+            'x1': PADDING + XOFF,
+            'y1': PADDING,
+            'x2': PADDING + XOFF,
+            'y2': height - PADDING,
+            'class': 'divider'
+        })
+
+        // draw history
+        const historyLayers = []
+        const historyRects = []
+        const targetRects = svgnew('g')
+        data.forEach((partition, partitionIndex) => {
+            const l = svgadd(svg, 'g')
+            historyLayers.push(l)
+            const rects = []
+            partition['history'].forEach((el, elIndex) => {
+                const g = svgadd(l, 'g')
+                const rx = xPos[el['start']]
+                const width = xPos[el['end']] - rx
+                const x = rx + XOFF + PADDING
+                const y = PADDING + el['clientId'] * (BOX_HEIGHT + BOX_SPACE)
+                rects.push(svgadd(g, 'rect', {
+                    'height': BOX_HEIGHT,
+                    'width': width,
+                    'x': x,
+                    'y': y,
+                    'class': 'history-rect'
+                }))
+                const text = svgadd(g, 'text', {
+                    'x': x + width/2,
+                    'y': y + BOX_HEIGHT/2,
+                    'text-anchor': 'middle',
+                    'alignment-baseline': 'middle',
+                    'class': 'history-text',
+                })
+                text.textContent = el['description']
+                // we don't add mouseTarget to g, but to targetRects, because we
+                // want to layer this on top of everything at the end; otherwise, the
+                // LPs and lines will be over the target, which will create holes
+                // where hover etc. won't work
+                const mouseTarget = svgadd(targetRects, 'rect', {
+                    'height': BOX_HEIGHT,
+                    'width': width,
+                    'x': x,
+                    'y': y,
+                    'class': 'target-rect',
+                    'data-partition': partitionIndex,
+                    'data-index': elIndex,
+                })
+                mouseTarget.onmouseover = handleMouseOver
+                mouseTarget.onmousemove = handleMouseMove
+                mouseTarget.onmouseout = handleMouseOut
+                mouseTarget.onclick = handleClick
+            })
+            historyRects.push(rects)
+        })
+
+        // draw partial linearizations
+        const illegalLast = data.map(partition => {
+            return partition['partialLinearizations'].map(() => new Set())
+        })
+        const largestIllegal = data.map(() => {return {}})
+        const largestIllegalLength = data.map(() => {return {}})
+        const partialLayers = []
+        const errorPoints = []
+        data.forEach((partition, partitionIndex) => {
+            const l = []
+            partialLayers.push(l)
+            partition['partialLinearizations'].forEach((lin, linIndex) => {
+                const g = svgadd(svg, 'g')
+                l.push(g)
+                let prevX = null
+                let prevY = null
+                let prevEl = null
+                const included = new Set()
+                lin.forEach(id => {
+                    const el = partition['history'][id['index']]
+                    const hereX = PADDING + XOFF + xPos[el['start']]
+                    const x = prevX !== null ? Math.max(hereX, prevX + EPSILON) : hereX
+                    const y = PADDING + el['clientId'] * (BOX_HEIGHT + BOX_SPACE) - LINE_BLEED
+                    // line from previous
+                    if (prevEl !== null) {
+                        svgadd(g, 'line', {
+                            'x1': prevX,
+                            'x2': x,
+                            'y1': prevEl['clientId'] >= el['clientId'] ? prevY : prevY + BOX_HEIGHT + 2*LINE_BLEED,
+                            'y2': prevEl['clientId'] <= el['clientId'] ? y : y + BOX_HEIGHT + 2*LINE_BLEED,
+                            'class': 'linearization linearization-line',
+                        })
+                    }
+                    // current line
+                    svgadd(g, 'line', {
+                        'x1': x,
+                        'x2': x,
+                        'y1': y,
+                        'y2': y + BOX_HEIGHT + 2*LINE_BLEED,
+                        'class': 'linearization linearization-point'
+                    })
+                    prevX = x
+                    prevY = y
+                    prevEl = el
+                    included.add(id['index'])
+                })
+                // show possible but illegal next linearizations
+                // a history element is a possible next try
+                // if no other history element must be linearized earlier
+                // i.e. forall others, this.start < other.end
+                let minEnd = Infinity
+                partition['history'].forEach((el, index) => {
+                    if (!included.has(index)) {
+                        minEnd = Math.min(minEnd, el['end'])
+                    }
+                })
+                partition['history'].forEach((el, index) => {
+                    if (!included.has(index) && el['start'] < minEnd) {
+                        const hereX = PADDING + XOFF + xPos[el['start']]
+                        const x = prevX !== null ? Math.max(hereX, prevX + EPSILON) : hereX
+                        const y = PADDING + el['clientId'] * (BOX_HEIGHT + BOX_SPACE) - LINE_BLEED
+                        // line from previous
+                        svgadd(g, 'line', {
+                            'x1': prevX,
+                            'x2': x,
+                            'y1': prevEl['clientId'] >= el['clientId'] ? prevY : prevY + BOX_HEIGHT + 2*LINE_BLEED,
+                            'y2': prevEl['clientId'] <= el['clientId'] ? y : y + BOX_HEIGHT + 2*LINE_BLEED,
+                            'class': 'linearization-invalid linearization-line',
+                        })
+                        // current line
+                        const point = svgadd(g, 'line', {
+                            'x1': x,
+                            'x2': x,
+                            'y1': y,
+                            'y2': y + BOX_HEIGHT + 2*LINE_BLEED,
+                            'class': 'linearization-invalid linearization-point',
+                        })
+                        errorPoints.push({
+                            x: x,
+                            partition: partitionIndex,
+                            index: lin[lin.length-1]['index'], // NOTE not index
+                            element: point
+                        })
+                        illegalLast[partitionIndex][linIndex].add(index)
+                        if (!Object.prototype.hasOwnProperty.call(largestIllegalLength[partitionIndex], index) || largestIllegalLength[partitionIndex][index] < lin.length) {
+                            largestIllegalLength[partitionIndex][index] = lin.length
+                            largestIllegal[partitionIndex][index] = linIndex
+                        }
+                    }
+                })
+            })
+        })
+        errorPoints.sort((a, b) => a.x - b.x)
+
+        // attach targetRects
+        svgattach(svg, targetRects)
+
+        // tooltip
+        const tooltip = document.getElementById('canvas').appendChild(document.createElement('div'))
+        tooltip.setAttribute('class', 'tooltip')
+
+        function handleMouseOver() {
+            if (!selected) {
+                const partition = parseInt(this.dataset['partition'])
+                const index = parseInt(this.dataset['index'])
+                highlight(partition, index)
+            }
+            tooltip.style.opacity = 1
+        }
+
+        function linearizationIndex(partition, index) {
+            // show this linearization
+            if (Object.prototype.hasOwnProperty.call(data[partition]['largest'], index)) {
+                return data[partition]['largest'][index]
+            } else if (Object.prototype.hasOwnProperty.call(largestIllegal[partition], index)) {
+                return largestIllegal[partition][index]
+            }
+            return null
+        }
+
+        function highlight(partition, index) {
+            // hide all but this partition
+            historyLayers.forEach((layer, i) => {
+                if (i === partition) {
+                    layer.classList.remove('hidden')
+                } else {
+                    layer.classList.add('hidden')
+                }
+            })
+            // hide all but the relevant linearization
+            partialLayers.forEach(layer => {
+                layer.forEach(g => {
+                    g.classList.add('hidden')
+                })
+            })
+            // show this linearization
+            const maxIndex = linearizationIndex(partition, index)
+            if (maxIndex !== null) {
+                partialLayers[partition][maxIndex].classList.remove('hidden')
+            }
+            updateJump()
+        }
+
+        let lastTooltip = [null, null, null, null, null]
+        function handleMouseMove() {
+            const partition = parseInt(this.dataset['partition'])
+            const index = parseInt(this.dataset['index'])
+            const [sPartition, sIndex] = selectedIndex
+            const thisTooltip = [partition, index, selected, sPartition, sIndex]
+
+            if (!arrayEq(lastTooltip, thisTooltip)) {
+                let maxIndex
+                if (!selected) {
+                    maxIndex = linearizationIndex(partition, index)
+                } else {
+                    // if selected, show info relevant to the selected linearization
+                    maxIndex = linearizationIndex(sPartition, sIndex)
+                }
+                if (selected && sPartition !== partition) {
+                    tooltip.innerHTML = 'Not part of selected partition.'
+                } else if (maxIndex === null) {
+                    if (!selected) {
+                        tooltip.innerHTML = 'Not part of any partial linearization.'
+                    } else {
+                        tooltip.innerHTML = 'Selected element is not part of any partial linearization.'
+                    }
+                } else {
+                    const lin = data[partition]['partialLinearizations'][maxIndex]
+                    let prev = null, curr = null
+                    let found = false
+                    for (let i = 0; i < lin.length; i++) {
+                        prev = curr
+                        curr = lin[i]
+                        if (curr['index'] === index) {
+                            found = true
+                            break
+                        }
+                    }
+                    let call = data[partition]['history'][index]['start']
+                    let ret = data[partition]['history'][index]['OriginalEnd']
+                    let msg = ''
+                    if (found) {
+                        // part of linearization
+                        if (prev !== null) {
+                            msg = '<strong>Previous state:</strong><br>' + prev['stateDescription'] + '<br><br>'
+                        }
+                        msg += '<strong>New state:</strong><br>' + curr['stateDescription'] +
+                            '<br><br>Call: ' + call +
+                            '<br><br>Return: ' + ret
+                    } else if (illegalLast[partition][maxIndex].has(index)) {
+                        // illegal next one
+                        msg = '<strong>Previous state:</strong><br>' + lin[lin.length-1]['stateDescription'] +
+                            '<br><br><strong>New state:</strong><br>&langle;invalid op&rangle;' +
+                            '<br><br>Call: ' + call +
+                            '<br><br>Return: ' + ret
+                    } else {
+                        // not part of this one
+                        msg = 'Not part of selected element\'s partial linearization.'
+                    }
+                    tooltip.innerHTML = msg
+                }
+                lastTooltip = thisTooltip
+            }
+            tooltip.style.left = (event.pageX+20) + 'px'
+            tooltip.style.top = (event.pageY+20) + 'px'
+        }
+
+        function handleMouseOut() {
+            if (!selected) {
+                resetHighlight()
+            }
+            tooltip.style.opacity = 0
+            lastTooltip = [null, null, null, null, null]
+        }
+
+        function resetHighlight() {
+            // show all layers
+            historyLayers.forEach(layer => {
+                layer.classList.remove('hidden')
+            })
+            // show longest linearizations, which are first
+            partialLayers.forEach(layers => {
+                layers.forEach((l, i) => {
+                    if (i === 0) {
+                        l.classList.remove('hidden')
+                    } else {
+                        l.classList.add('hidden')
+                    }
+                })
+            })
+            updateJump()
+        }
+
+        function updateJump() {
+            const jump = document.getElementById('jump-link')
+            // find first non-hidden point
+            // feels a little hacky, but it works
+            const point = errorPoints.find(pt => !pt.element.parentElement.classList.contains('hidden'))
+            if (point) {
+                jump.classList.remove('inactive')
+                jump.onclick = () => {
+                    point.element.scrollIntoView({behavior: 'smooth', inline: 'center', block: 'center'})
+                    if (!selected) {
+                        select(point.partition, point.index)
+                    }
+                }
+            } else {
+                jump.classList.add('inactive')
+            }
+        }
+
+        function handleClick() {
+            const partition = parseInt(this.dataset['partition'])
+            const index = parseInt(this.dataset['index'])
+            if (selected) {
+                const [sPartition, sIndex] = selectedIndex
+                if (partition === sPartition && index === sIndex) {
+                    deselect()
+                    return
+                } else {
+                    historyRects[sPartition][sIndex].classList.remove('selected')
+                }
+            }
+            select(partition, index)
+        }
+
+        function handleBgClick() {
+            deselect()
+        }
+
+        function select(partition, index) {
+            selected = true
+            selectedIndex = [partition, index]
+            highlight(partition, index)
+            historyRects[partition][index].classList.add('selected')
+        }
+
+        function deselect() {
+            if (!selected) {
+                return
+            }
+            selected = false
+            resetHighlight()
+            const [partition, index] = selectedIndex
+            historyRects[partition][index].classList.remove('selected')
+        }
+
+        handleMouseOut() // initialize, same as mouse out
+    }
+
+    const data = [{"history":[{"clientId":2,"start":0,"end":11,"description":"read -\u003e 4"},{"clientId":0,"start":1,"end":5,"description":"write(4) -\u003e  "},{"clientId":1,"start":2,"end":7,"description":"read -\u003e 4"},{"clientId":3,"start":3,"end":19,"description":"cas(0,0) -\u003e 1"},{"clientId":4,"start":4,"end":9,"description":"read -\u003e 4"},{"clientId":0,"start":6,"end":13,"description":"read -\u003e 4"},{"clientId":1,"start":8,"end":15,"description":"read -\u003e 4"},{"clientId":4,"start":10,"end":18,"description":"cas(4,1) -\u003e 1"},{"clientId":2,"start":12,"end":17,"description":"cas(2,0) -\u003e 4"},{"clientId":0,"start":14,"end":23,"description":"cas(1,4) -\u003e 4"},{"clientId":1,"start":16,"end":25,"description":"write(3) -\u003e  "},{"clientId":3,"start":20,"end":27,"description":"write(2) -\u003e  "},{"clientId":2,"start":21,"end":29,"description":"write(4) -\u003e  "},{"clientId":4,"start":22,"end":31,"description":"write(1) -\u003e  "},{"clientId":0,"start":24,"end":33,"description":"read -\u003e 4"},{"clientId":1,"start":26,"end":35,"description":"cas(1,0) -\u003e 4"},{"clientId":3,"start":28,"end":37,"description":"read -\u003e 4"},{"clientId":2,"start":30,"end":39,"description":"write(1) -\u003e  "},{"clientId":4,"start":32,"end":41,"description":"write(3) -\u003e  "},{"clientId":0,"start":34,"end":47,"description":"write(3) -\u003e  "},{"clientId":1,"start":36,"end":49,"description":"write(0) -\u003e  "},{"clientId":3,"start":38,"end":43,"description":"write(2) -\u003e  "},{"clientId":2,"start":40,"end":45,"description":"write(4) -\u003e  "},{"clientId":4,"start":42,"end":51,"description":"cas(0,0) -\u003e 2"},{"clientId":3,"start":44,"end":53,"description":"read -\u003e 2"},{"clientId":2,"start":46,"end":61,"description":"read -\u003e 2"},{"clientId":0,"start":48,"end":57,"description":"cas(0,1) -\u003e 2"},{"clientId":1,"start":50,"end":55,"description":"read -\u003e 2"},{"clientId":4,"start":52,"end":59,"description":"cas(0,2) -\u003e 2"},{"clientId":3,"start":54,"end":67,"description":"write(2) -\u003e  "},{"clientId":1,"start":56,"end":63,"description":"read -\u003e 2"},{"clientId":0,"start":58,"end":71,"description":"read -\u003e 2"},{"clientId":4,"start":60,"end":69,"description":"write(2) -\u003e  "},{"clientId":2,"start":62,"end":65,"description":"write(4) -\u003e  "},{"clientId":1,"start":64,"end":75,"description":"read -\u003e 2"},{"clientId":2,"start":66,"end":73,"description":"cas(1,2) -\u003e 2"},{"clientId":3,"start":68,"end":79,"description":"read -\u003e 4"},{"clientId":4,"start":70,"end":77,"description":"cas(1,0) -\u003e 4"},{"clientId":0,"start":72,"end":81,"description":"cas(2,4) -\u003e 4"},{"clientId":2,"start":74,"end":83,"description":"write(3) -\u003e  "},{"clientId":1,"start":76,"end":85,"description":"write(1) -\u003e  "},{"clientId":4,"start":78,"end":89,"description":"read -\u003e 1"},{"clientId":3,"start":80,"end":91,"description":"read -\u003e 1"},{"clientId":0,"start":82,"end":87,"description":"read -\u003e 1"},{"clientId":2,"start":84,"end":95,"description":"read -\u003e 1"},{"clientId":1,"start":86,"end":96,"description":"cas(2,2) -\u003e 1"},{"clientId":0,"start":88,"end":93,"description":"cas(4,3) -\u003e 1"},{"clientId":4,"start":90,"end":101,"description":"cas(2,3) -\u003e 1"},{"clientId":3,"start":92,"end":99,"description":"read -\u003e 1"},{"clientId":0,"start":94,"end":103,"description":"cas(2,2) -\u003e 1"},{"clientId":2,"start":97,"end":105,"description":"cas(2,4) -\u003e 4"},{"clientId":1,"start":98,"end":107,"description":"cas(1,4) -\u003e 4"},{"clientId":3,"start":100,"end":109,"description":"write(2) -\u003e  "},{"clientId":4,"start":102,"end":113,"description":"cas(2,2) -\u003e 2"},{"clientId":0,"start":104,"end":111,"description":"write(2) -\u003e  "},{"clientId":2,"start":106,"end":115,"description":"write(3) -\u003e  "},{"clientId":1,"start":108,"end":117,"description":"cas(3,3) -\u003e 2"},{"clientId":3,"start":110,"end":119,"description":"read -\u003e 3"},{"clientId":0,"start":112,"end":121,"description":"cas(1,1) -\u003e 3"},{"clientId":4,"start":114,"end":123,"description":"read -\u003e 3"},{"clientId":2,"start":116,"end":127,"description":"read -\u003e 1"},{"clientId":1,"start":118,"end":125,"description":"write(1) -\u003e  "},{"clientId":3,"start":120,"end":129,"description":"read -\u003e 1"},{"clientId":0,"start":122,"end":135,"description":"cas(1,0) -\u003e 0"},{"clientId":4,"start":124,"end":133,"description":"cas(0,4) -\u003e 1"},{"clientId":1,"start":126,"end":137,"description":"read -\u003e 0"},{"clientId":2,"start":128,"end":131,"description":"cas(4,3) -\u003e 0"},{"clientId":3,"start":130,"end":139,"description":"read -\u003e 0"},{"clientId":2,"start":132,"end":141,"description":"write(0) -\u003e  "},{"clientId":4,"start":134,"end":147,"description":"write(4) -\u003e  "},{"clientId":0,"start":136,"end":143,"description":"cas(0,3) -\u003e 4"},{"clientId":1,"start":138,"end":145,"description":"cas(4,3) -\u003e 0"},{"clientId":3,"start":140,"end":151,"description":"write(2) -\u003e  "},{"clientId":2,"start":142,"end":149,"description":"cas(1,1) -\u003e 4"},{"clientId":0,"start":144,"end":155,"description":"cas(1,2) -\u003e 2"},{"clientId":1,"start":146,"end":153,"description":"read -\u003e 2"},{"clientId":4,"start":148,"end":157,"description":"read -\u003e 2"},{"clientId":2,"start":150,"end":165,"description":"read -\u003e 0"},{"clientId":3,"start":152,"end":161,"description":"cas(1,3) -\u003e 2"},{"clientId":1,"start":154,"end":163,"description":"read -\u003e 0"},{"clientId":0,"start":156,"end":159,"description":"write(0) -\u003e  "},{"clientId":4,"start":158,"end":171,"description":"read -\u003e 0"},{"clientId":0,"start":160,"end":167,"description":"cas(2,3) -\u003e 0"},{"clientId":3,"start":162,"end":169,"description":"read -\u003e 0"},{"clientId":1,"start":164,"end":175,"description":"cas(2,3) -\u003e 0"},{"clientId":2,"start":166,"end":173,"description":"read -\u003e 0"},{"clientId":0,"start":168,"end":177,"description":"cas(3,2) -\u003e 4"},{"clientId":3,"start":170,"end":187,"description":"read -\u003e 4"},{"clientId":4,"start":172,"end":179,"description":"write(4) -\u003e  "},{"clientId":2,"start":174,"end":183,"description":"cas(2,0) -\u003e 4"},{"clientId":1,"start":176,"end":185,"description":"cas(4,2) -\u003e 2"},{"clientId":0,"start":178,"end":181,"description":"cas(3,3) -\u003e 2"},{"clientId":4,"start":180,"end":189,"description":"read -\u003e 2"},{"clientId":0,"start":182,"end":195,"description":"cas(0,2) -\u003e 2"},{"clientId":2,"start":184,"end":191,"description":"read -\u003e 2"},{"clientId":1,"start":186,"end":197,"description":"read -\u003e 2"},{"clientId":3,"start":188,"end":193,"description":"cas(3,3) -\u003e 2"},{"clientId":4,"start":190,"end":199,"description":"read -\u003e 2"},{"clientId":2,"start":192,"end":201,"description":"cas(0,0) -\u003e 2"},{"clientId":3,"start":194,"end":209,"description":"write(3) -\u003e  "},{"clientId":0,"start":196,"end":203,"description":"write(2) -\u003e  "},{"clientId":1,"start":198,"end":205,"description":"write(4) -\u003e  "},{"clientId":4,"start":200,"end":207,"description":"cas(3,0) -\u003e 0"},{"clientId":2,"start":202,"end":211,"description":"read -\u003e 4"},{"clientId":0,"start":204,"end":221,"description":"read -\u003e 3"},{"clientId":1,"start":206,"end":217,"description":"write(2) -\u003e  "},{"clientId":4,"start":208,"end":213,"description":"cas(3,0) -\u003e 2"},{"clientId":3,"start":210,"end":215,"description":"write(4) -\u003e  "},{"clientId":2,"start":212,"end":219,"description":"write(3) -\u003e  "},{"clientId":4,"start":214,"end":227,"description":"write(3) -\u003e  "},{"clientId":3,"start":216,"end":225,"description":"cas(2,3) -\u003e 3"},{"clientId":1,"start":218,"end":223,"description":"write(1) -\u003e  "},{"clientId":2,"start":220,"end":229,"description":"read -\u003e 1"},{"clientId":0,"start":222,"end":233,"description":"read -\u003e 1"},{"clientId":1,"start":224,"end":231,"description":"cas(3,3) -\u003e 1"},{"clientId":3,"start":226,"end":237,"description":"cas(3,4) -\u003e 1"},{"clientId":4,"start":228,"end":239,"description":"write(4) -\u003e  "},{"clientId":2,"start":230,"end":235,"description":"write(0) -\u003e  "},{"clientId":1,"start":232,"end":241,"description":"write(0) -\u003e  "},{"clientId":0,"start":234,"end":245,"description":"cas(4,3) -\u003e 0"},{"clientId":2,"start":236,"end":247,"description":"read -\u003e 1"},{"clientId":3,"start":238,"end":249,"description":"write(2) -\u003e  "},{"clientId":4,"start":240,"end":243,"description":"write(1) -\u003e  "},{"clientId":1,"start":242,"end":251,"description":"cas(2,4) -\u003e 4"},{"clientId":4,"start":244,"end":253,"description":"write(2) -\u003e  "},{"clientId":0,"start":246,"end":257,"description":"cas(4,0) -\u003e 2"},{"clientId":2,"start":248,"end":255,"description":"write(1) -\u003e  "},{"clientId":3,"start":250,"end":259,"description":"read -\u003e 2"},{"clientId":1,"start":252,"end":263,"description":"cas(2,4) -\u003e 4"},{"clientId":4,"start":254,"end":261,"description":"write(1) -\u003e  "},{"clientId":2,"start":256,"end":265,"description":"cas(3,2) -\u003e 4"},{"clientId":0,"start":258,"end":267,"description":"write(1) -\u003e  "},{"clientId":3,"start":260,"end":269,"description":"write(2) -\u003e  "},{"clientId":4,"start":262,"end":277,"description":"write(3) -\u003e  "},{"clientId":1,"start":264,"end":271,"description":"read -\u003e 2"},{"clientId":2,"start":266,"end":273,"description":"cas(1,0) -\u003e 3"},{"clientId":0,"start":268,"end":275,"description":"write(2) -\u003e  "},{"clientId":3,"start":270,"end":279,"description":"read -\u003e 3"},{"clientId":1,"start":272,"end":281,"description":"cas(3,1) -\u003e 0"},{"clientId":2,"start":274,"end":285,"description":"write(0) -\u003e  "},{"clientId":0,"start":276,"end":283,"description":"cas(2,4) -\u003e 3"},{"clientId":4,"start":278,"end":289,"description":"cas(2,1) -\u003e 0"},{"clientId":3,"start":280,"end":287,"description":"write(2) -\u003e  "},{"clientId":1,"start":282,"end":295,"description":"cas(0,0) -\u003e 1"},{"clientId":0,"start":284,"end":293,"description":"cas(2,1) -\u003e 1"},{"clientId":2,"start":286,"end":291,"description":"write(1) -\u003e  "},{"clientId":3,"start":288,"end":299,"description":"read -\u003e 1"},{"clientId":4,"start":290,"end":297,"description":"read -\u003e 1"},{"clientId":2,"start":292,"end":303,"description":"cas(3,3) -\u003e 1"},{"clientId":0,"start":294,"end":305,"description":"read -\u003e 2"},{"clientId":1,"start":296,"end":307,"description":"write(1) -\u003e  "},{"clientId":4,"start":298,"end":301,"description":"cas(1,2) -\u003e 2"},{"clientId":3,"start":300,"end":311,"description":"read -\u003e 1"},{"clientId":4,"start":302,"end":309,"description":"cas(0,1) -\u003e 1"},{"clientId":2,"start":304,"end":313,"description":"read -\u003e 1"},{"clientId":0,"start":306,"end":317,"description":"cas(3,1) -\u003e 0"},{"clientId":1,"start":308,"end":315,"description":"write(0) -\u003e  "},{"clientId":4,"start":310,"end":319,"description":"cas(1,1) -\u003e 0"},{"clientId":3,"start":312,"end":325,"description":"write(0) -\u003e  "},{"clientId":2,"start":314,"end":327,"description":"write(1) -\u003e  "},{"clientId":1,"start":316,"end":323,"description":"cas(3,2) -\u003e 0"},{"clientId":0,"start":318,"end":321,"description":"cas(0,3) -\u003e 1"},{"clientId":4,"start":320,"end":329,"description":"write(4) -\u003e  "},{"clientId":0,"start":322,"end":339,"description":"write(4) -\u003e  "},{"clientId":1,"start":324,"end":331,"description":"read -\u003e 4"},{"clientId":3,"start":326,"end":337,"description":"cas(4,0) -\u003e 0"},{"clientId":2,"start":328,"end":335,"description":"write(0) -\u003e  "},{"clientId":4,"start":330,"end":333,"description":"write(1) -\u003e  "},{"clientId":1,"start":332,"end":341,"description":"write(2) -\u003e  "},{"clientId":4,"start":334,"end":345,"description":"read -\u003e 4"},{"clientId":2,"start":336,"end":349,"description":"write(4) -\u003e  "},{"clientId":3,"start":338,"end":347,"description":"cas(2,1) -\u003e 4"},{"clientId":0,"start":340,"end":343,"description":"write(4) -\u003e  "},{"clientId":1,"start":342,"end":353,"description":"cas(4,4) -\u003e 4"},{"clientId":0,"start":344,"end":357,"description":"cas(2,4) -\u003e 1"},{"clientId":4,"start":346,"end":359,"description":"cas(1,1) -\u003e 1"},{"clientId":3,"start":348,"end":351,"description":"read -\u003e 1"},{"clientId":2,"start":350,"end":355,"description":"write(1) -\u003e  "},{"clientId":3,"start":352,"end":369,"description":"write(4) -\u003e  "},{"clientId":1,"start":354,"end":367,"description":"cas(3,0) -\u003e 4"},{"clientId":2,"start":356,"end":363,"description":"write(1) -\u003e  "},{"clientId":0,"start":358,"end":365,"description":"write(1) -\u003e  "},{"clientId":4,"start":360,"end":361,"description":"read -\u003e 1"},{"clientId":4,"start":362,"end":371,"description":"read -\u003e 1"},{"clientId":2,"start":364,"end":375,"description":"read -\u003e 3"},{"clientId":0,"start":366,"end":379,"description":"cas(2,2) -\u003e 3"},{"clientId":1,"start":368,"end":381,"description":"cas(3,1) -\u003e 1"},{"clientId":3,"start":370,"end":373,"description":"write(3) -\u003e  "},{"clientId":4,"start":372,"end":377,"description":"cas(2,4) -\u003e 1"},{"clientId":3,"start":374,"end":385,"description":"write(4) -\u003e  "},{"clientId":2,"start":376,"end":383,"description":"read -\u003e 4"},{"clientId":4,"start":378,"end":391,"description":"cas(1,2) -\u003e 4"},{"clientId":0,"start":380,"end":387,"description":"cas(2,3) -\u003e 4"},{"clientId":1,"start":382,"end":389,"description":"cas(1,3) -\u003e 4"},{"clientId":2,"start":384,"end":393,"description":"write(3) -\u003e  "},{"clientId":3,"start":386,"end":395,"description":"read -\u003e 3"},{"clientId":0,"start":388,"end":401,"description":"write(3) -\u003e  "},{"clientId":1,"start":390,"end":403,"description":"cas(2,0) -\u003e 3"},{"clientId":4,"start":392,"end":397,"description":"read -\u003e 3"},{"clientId":2,"start":394,"end":399,"description":"write(3) -\u003e  "},{"clientId":3,"start":396,"end":405,"description":"read -\u003e 3"},{"clientId":4,"start":398,"end":409,"description":"read -\u003e 3"},{"clientId":2,"start":400,"end":407,"description":"cas(4,2) -\u003e 3"},{"clientId":0,"start":402,"end":411,"description":"read -\u003e 3"},{"clientId":1,"start":404,"end":413,"description":"write(2) -\u003e  "},{"clientId":3,"start":406,"end":418,"description":"write(1) -\u003e  "},{"clientId":2,"start":408,"end":415,"description":"write(1) -\u003e  "},{"clientId":4,"start":410,"end":423,"description":"read -\u003e 0"},{"clientId":0,"start":412,"end":417,"description":"cas(1,0) -\u003e 0"},{"clientId":1,"start":414,"end":421,"description":"cas(2,2) -\u003e 0"},{"clientId":2,"start":416,"end":427,"description":"write(2) -\u003e  "},{"clientId":0,"start":419,"end":429,"description":"cas(0,4) -\u003e 2"},{"clientId":3,"start":420,"end":425,"description":"write(2) -\u003e  "},{"clientId":1,"start":422,"end":431,"description":"read -\u003e 2"},{"clientId":4,"start":424,"end":439,"description":"cas(4,0) -\u003e 2"},{"clientId":3,"start":426,"end":437,"description":"read -\u003e 2"},{"clientId":2,"start":428,"end":435,"description":"read -\u003e 2"},{"clientId":0,"start":430,"end":433,"description":"read -\u003e 2"},{"clientId":1,"start":432,"end":441,"description":"cas(0,4) -\u003e 2"},{"clientId":0,"start":434,"end":447,"description":"write(2) -\u003e  "},{"clientId":2,"start":436,"end":449,"description":"write(3) -\u003e  "},{"clientId":3,"start":438,"end":445,"description":"cas(4,1) -\u003e 3"},{"clientId":4,"start":440,"end":443,"description":"read -\u003e 2"},{"clientId":1,"start":442,"end":451,"description":"read -\u003e 3"},{"clientId":4,"start":444,"end":453,"description":"write(4) -\u003e  "},{"clientId":3,"start":446,"end":455,"description":"cas(2,3) -\u003e 1"},{"clientId":0,"start":448,"end":459,"description":"cas(0,0) -\u003e 1"},{"clientId":2,"start":450,"end":457,"description":"write(1) -\u003e  "},{"clientId":1,"start":452,"end":461,"description":"read -\u003e 1"},{"clientId":4,"start":454,"end":463,"description":"read -\u003e 1"},{"clientId":3,"start":456,"end":469,"description":"cas(3,3) -\u003e 3"},{"clientId":2,"start":458,"end":467,"description":"write(3) -\u003e  "},{"clientId":0,"start":460,"end":471,"description":"read -\u003e 0"},{"clientId":1,"start":462,"end":465,"description":"write(0) -\u003e  "},{"clientId":4,"start":464,"end":473,"description":"cas(2,2) -\u003e 0"},{"clientId":1,"start":466,"end":479,"description":"write(4) -\u003e  "},{"clientId":2,"start":468,"end":481,"description":"cas(4,2) -\u003e 2"},{"clientId":3,"start":470,"end":475,"description":"write(1) -\u003e  "},{"clientId":0,"start":472,"end":483,"description":"write(4) -\u003e  "},{"clientId":4,"start":474,"end":477,"description":"cas(0,3) -\u003e 4"},{"clientId":3,"start":476,"end":491,"description":"write(3) -\u003e  "},{"clientId":4,"start":478,"end":485,"description":"read -\u003e 4"},{"clientId":1,"start":480,"end":487,"description":"cas(1,2) -\u003e 3"},{"clientId":2,"start":482,"end":493,"description":"read -\u003e 3"},{"clientId":0,"start":484,"end":489,"description":"cas(2,3) -\u003e 4"},{"clientId":4,"start":486,"end":495,"description":"write(1) -\u003e  "},{"clientId":1,"start":488,"end":497,"description":"read -\u003e 1"},{"clientId":0,"start":490,"end":503,"description":"write(3) -\u003e  "},{"clientId":3,"start":492,"end":499,"description":"write(2) -\u003e  "},{"clientId":2,"start":494,"end":501,"description":"cas(3,0) -\u003e 1"},{"clientId":4,"start":496,"end":505,"description":"read -\u003e 2"},{"clientId":1,"start":498,"end":511,"description":"read -\u003e 0"},{"clientId":3,"start":500,"end":507,"description":"write(0) -\u003e  "},{"clientId":2,"start":502,"end":513,"description":"read -\u003e 0"},{"clientId":0,"start":504,"end":509,"description":"cas(0,0) -\u003e 2"},{"clientId":4,"start":506,"end":515,"description":"cas(2,0) -\u003e 0"},{"clientId":3,"start":508,"end":521,"description":"write(1) -\u003e  "},{"clientId":0,"start":510,"end":519,"description":"read -\u003e 0"},{"clientId":1,"start":512,"end":517,"description":"read -\u003e 0"},{"clientId":2,"start":514,"end":525,"description":"cas(1,2) -\u003e 2"},{"clientId":4,"start":516,"end":523,"description":"cas(2,2) -\u003e 1"},{"clientId":1,"start":518,"end":529,"description":"read -\u003e 2"},{"clientId":0,"start":520,"end":533,"description":"read -\u003e 2"},{"clientId":3,"start":522,"end":527,"description":"read -\u003e 2"},{"clientId":4,"start":524,"end":531,"description":"read -\u003e 2"},{"clientId":2,"start":526,"end":537,"description":"write(3) -\u003e  "},{"clientId":3,"start":528,"end":535,"description":"read -\u003e 2"},{"clientId":1,"start":530,"end":539,"description":"read -\u003e 3"},{"clientId":4,"start":532,"end":543,"description":"cas(1,1) -\u003e 3"},{"clientId":0,"start":534,"end":541,"description":"read -\u003e 3"},{"clientId":3,"start":536,"end":545,"description":"cas(3,4) -\u003e 4"},{"clientId":2,"start":538,"end":547,"description":"read -\u003e 4"},{"clientId":1,"start":540,"end":551,"description":"cas(1,3) -\u003e 4"},{"clientId":0,"start":542,"end":555,"description":"write(4) -\u003e  "},{"clientId":4,"start":544,"end":553,"description":"read -\u003e 4"},{"clientId":3,"start":546,"end":549,"description":"read -\u003e 4"},{"clientId":2,"start":548,"end":557,"description":"cas(0,2) -\u003e 4"},{"clientId":3,"start":550,"end":563,"description":"cas(2,3) -\u003e 3"},{"clientId":1,"start":552,"end":564,"description":"cas(0,3) -\u003e 3"},{"clientId":4,"start":554,"end":567,"description":"write(2) -\u003e  "},{"clientId":0,"start":556,"end":559,"description":"write(1) -\u003e  "},{"clientId":2,"start":558,"end":561,"description":"cas(4,3) -\u003e 3"},{"clientId":0,"start":560,"end":573,"description":"cas(1,2) -\u003e 4"},{"clientId":2,"start":562,"end":575,"description":"write(4) -\u003e  "},{"clientId":3,"start":565,"end":569,"description":"write(1) -\u003e  "},{"clientId":1,"start":566,"end":571,"description":"write(4) -\u003e  "},{"clientId":4,"start":568,"end":577,"description":"cas(1,1) -\u003e 1"},{"clientId":3,"start":570,"end":579,"description":"cas(0,1) -\u003e 1"},{"clientId":1,"start":572,"end":581,"description":"write(1) -\u003e  "},{"clientId":0,"start":574,"end":585,"description":"read -\u003e 1"},{"clientId":2,"start":576,"end":583,"description":"cas(4,3) -\u003e 1"},{"clientId":4,"start":578,"end":587,"description":"cas(2,1) -\u003e 1"},{"clientId":3,"start":580,"end":591,"description":"cas(4,4) -\u003e 1"},{"clientId":1,"start":582,"end":589,"description":"read -\u003e 1"},{"clientId":2,"start":584,"end":597,"description":"read -\u003e 3"},{"clientId":0,"start":586,"end":593,"description":"cas(3,2) -\u003e 1"},{"clientId":4,"start":588,"end":595,"description":"write(3) -\u003e  "},{"clientId":1,"start":590,"end":603,"description":"cas(2,4) -\u003e 3"},{"clientId":3,"start":592,"end":600,"description":"cas(2,4) -\u003e 3"},{"clientId":0,"start":594,"end":599,"description":"cas(1,0) -\u003e 3"},{"clientId":4,"start":596,"end":605,"description":"read -\u003e 3"},{"clientId":2,"start":598,"end":607,"description":"write(1) -\u003e  "},{"clientId":0,"start":601,"end":613,"description":"read -\u003e 3"},{"clientId":3,"start":602,"end":609,"description":"write(3) -\u003e  "},{"clientId":1,"start":604,"end":611,"description":"cas(4,1) -\u003e 1"},{"clientId":4,"start":606,"end":615,"description":"cas(2,4) -\u003e 3"},{"clientId":2,"start":608,"end":625,"description":"read -\u003e 0"},{"clientId":3,"start":610,"end":617,"description":"cas(1,4) -\u003e 3"},{"clientId":1,"start":612,"end":623,"description":"read -\u003e 0"},{"clientId":0,"start":614,"end":619,"description":"write(0) -\u003e  "},{"clientId":4,"start":616,"end":621,"description":"write(2) -\u003e  "},{"clientId":3,"start":618,"end":627,"description":"read -\u003e 0"},{"clientId":0,"start":620,"end":635,"description":"write(3) -\u003e  "},{"clientId":4,"start":622,"end":631,"description":"read -\u003e 4"},{"clientId":1,"start":624,"end":629,"description":"cas(0,4) -\u003e 4"},{"clientId":2,"start":626,"end":633,"description":"cas(3,4) -\u003e 4"},{"clientId":3,"start":628,"end":637,"description":"read -\u003e 4"},{"clientId":1,"start":630,"end":639,"description":"write(0) -\u003e  "},{"clientId":4,"start":632,"end":645,"description":"cas(4,3) -\u003e 3"},{"clientId":2,"start":634,"end":647,"description":"cas(3,0) -\u003e 0"},{"clientId":0,"start":636,"end":643,"description":"read -\u003e 3"},{"clientId":3,"start":638,"end":641,"description":"write(3) -\u003e  "},{"clientId":1,"start":640,"end":651,"description":"read -\u003e 4"},{"clientId":3,"start":642,"end":649,"description":"write(4) -\u003e  "},{"clientId":0,"start":644,"end":653,"description":"write(4) -\u003e  "},{"clientId":4,"start":646,"end":657,"description":"read -\u003e 4"},{"clientId":2,"start":648,"end":655,"description":"write(1) -\u003e  "},{"clientId":3,"start":650,"end":661,"description":"read -\u003e 4"},{"clientId":1,"start":652,"end":659,"description":"read -\u003e 4"},{"clientId":0,"start":654,"end":665,"description":"write(4) -\u003e  "},{"clientId":2,"start":656,"end":667,"description":"read -\u003e 4"},{"clientId":4,"start":658,"end":663,"description":"read -\u003e 4"},{"clientId":1,"start":660,"end":669,"description":"cas(1,2) -\u003e 4"},{"clientId":3,"start":662,"end":673,"description":"read -\u003e 4"},{"clientId":4,"start":664,"end":675,"description":"read -\u003e 4"},{"clientId":0,"start":666,"end":671,"description":"cas(4,4) -\u003e 4"},{"clientId":2,"start":668,"end":677,"description":"cas(4,1) -\u003e 1"},{"clientId":1,"start":670,"end":685,"description":"cas(4,1) -\u003e 1"},{"clientId":0,"start":672,"end":683,"description":"cas(2,2) -\u003e 4"},{"clientId":3,"start":674,"end":681,"description":"write(4) -\u003e  "},{"clientId":4,"start":676,"end":687,"description":"cas(4,1) -\u003e 1"},{"clientId":2,"start":678,"end":679,"description":"read -\u003e 1"},{"clientId":2,"start":680,"end":689,"description":"read -\u003e 1"},{"clientId":3,"start":682,"end":697,"description":"read -\u003e 4"},{"clientId":0,"start":684,"end":693,"description":"write(4) -\u003e  "},{"clientId":1,"start":686,"end":691,"description":"write(0) -\u003e  "},{"clientId":4,"start":688,"end":694,"description":"cas(1,0) -\u003e 4"},{"clientId":2,"start":690,"end":703,"description":"cas(0,3) -\u003e 4"},{"clientId":1,"start":692,"end":707,"description":"read -\u003e 2"},{"clientId":0,"start":695,"end":701,"description":"cas(2,1) -\u003e 4"},{"clientId":4,"start":696,"end":699,"description":"read -\u003e 4"},{"clientId":3,"start":698,"end":705,"description":"write(2) -\u003e  "},{"clientId":4,"start":700,"end":713,"description":"cas(3,1) -\u003e 4"},{"clientId":0,"start":702,"end":709,"description":"write(0) -\u003e  "},{"clientId":2,"start":704,"end":711,"description":"write(4) -\u003e  "},{"clientId":3,"start":706,"end":715,"description":"read -\u003e 0"},{"clientId":1,"start":708,"end":717,"description":"write(3) -\u003e  "},{"clientId":0,"start":710,"end":721,"description":"write(0) -\u003e  "},{"clientId":2,"start":712,"end":719,"description":"read -\u003e 3"},{"clientId":4,"start":714,"end":723,"description":"write(4) -\u003e  "},{"clientId":3,"start":716,"end":727,"description":"cas(2,2) -\u003e 0"},{"clientId":1,"start":718,"end":725,"description":"cas(1,0) -\u003e 0"},{"clientId":2,"start":720,"end":737,"description":"read -\u003e 0"},{"clientId":0,"start":722,"end":729,"description":"cas(1,4) -\u003e 0"},{"clientId":4,"start":724,"end":731,"description":"read -\u003e 0"},{"clientId":1,"start":726,"end":733,"description":"write(0) -\u003e  "},{"clientId":3,"start":728,"end":734,"description":"write(0) -\u003e  "},{"clientId":0,"start":730,"end":739,"description":"write(2) -\u003e  "},{"clientId":4,"start":732,"end":741,"description":"read -\u003e 2"},{"clientId":1,"start":735,"end":745,"description":"cas(0,2) -\u003e 2"},{"clientId":3,"start":736,"end":743,"description":"cas(2,0) -\u003e 0"},{"clientId":2,"start":738,"end":747,"description":"read -\u003e 0"},{"clientId":0,"start":740,"end":751,"description":"cas(0,2) -\u003e 2"},{"clientId":4,"start":742,"end":753,"description":"read -\u003e 2"},{"clientId":3,"start":744,"end":757,"description":"read -\u003e 2"},{"clientId":1,"start":746,"end":749,"description":"read -\u003e 0"},{"clientId":2,"start":748,"end":755,"description":"read -\u003e 2"},{"clientId":1,"start":750,"end":759,"description":"cas(3,4) -\u003e 2"},{"clientId":0,"start":752,"end":761,"description":"write(0) -\u003e  "},{"clientId":4,"start":754,"end":769,"description":"cas(1,0) -\u003e 4"},{"clientId":2,"start":756,"end":763,"description":"write(1) -\u003e  "},{"clientId":3,"start":758,"end":767,"description":"write(4) -\u003e  "},{"clientId":1,"start":760,"end":765,"description":"write(4) -\u003e  "},{"clientId":0,"start":762,"end":773,"description":"cas(4,2) -\u003e 2"},{"clientId":2,"start":764,"end":771,"description":"read -\u003e 4"},{"clientId":1,"start":766,"end":775,"description":"write(0) -\u003e  "},{"clientId":3,"start":768,"end":781,"description":"read -\u003e 0"},{"clientId":4,"start":770,"end":777,"description":"write(1) -\u003e  "},{"clientId":2,"start":772,"end":779,"description":"write(0) -\u003e  "},{"clientId":0,"start":774,"end":783,"description":"read -\u003e 0"},{"clientId":1,"start":776,"end":785,"description":"read -\u003e 0"},{"clientId":4,"start":778,"end":787,"description":"cas(0,1) -\u003e 1"},{"clientId":2,"start":780,"end":789,"description":"cas(1,0) -\u003e 0"},{"clientId":3,"start":782,"end":795,"description":"read -\u003e 1"},{"clientId":0,"start":784,"end":791,"description":"cas(2,3) -\u003e 1"},{"clientId":1,"start":786,"end":793,"description":"write(0) -\u003e  "},{"clientId":4,"start":788,"end":797,"description":"cas(3,4) -\u003e 1"},{"clientId":2,"start":790,"end":799,"description":"cas(3,0) -\u003e 0"},{"clientId":0,"start":792,"end":807,"description":"cas(3,2) -\u003e 1"},{"clientId":1,"start":794,"end":801,"description":"read -\u003e 0"},{"clientId":3,"start":796,"end":809,"description":"read -\u003e 1"},{"clientId":4,"start":798,"end":805,"description":"write(1) -\u003e  "},{"clientId":2,"start":800,"end":803,"description":"cas(3,4) -\u003e 1"},{"clientId":1,"start":802,"end":813,"description":"cas(0,1) -\u003e 1"},{"clientId":2,"start":804,"end":815,"description":"read -\u003e 1"},{"clientId":4,"start":806,"end":811,"description":"cas(4,1) -\u003e 1"},{"clientId":0,"start":808,"end":817,"description":"read -\u003e 1"},{"clientId":3,"start":810,"end":821,"description":"read -\u003e 1"},{"clientId":4,"start":812,"end":819,"description":"read -\u003e 1"},{"clientId":1,"start":814,"end":823,"description":"read -\u003e 1"},{"clientId":2,"start":816,"end":827,"description":"read -\u003e 1"},{"clientId":0,"start":818,"end":825,"description":"read -\u003e 1"},{"clientId":4,"start":820,"end":829,"description":"cas(2,0) -\u003e 0"},{"clientId":3,"start":822,"end":833,"description":"read -\u003e 0"},{"clientId":1,"start":824,"end":831,"description":"write(0) -\u003e  "},{"clientId":0,"start":826,"end":839,"description":"read -\u003e 4"},{"clientId":2,"start":828,"end":835,"description":"read -\u003e 0"},{"clientId":4,"start":830,"end":841,"description":"write(1) -\u003e  "},{"clientId":1,"start":832,"end":843,"description":"write(3) -\u003e  "},{"clientId":3,"start":834,"end":837,"description":"write(4) -\u003e  "},{"clientId":2,"start":836,"end":845,"description":"read -\u003e 4"},{"clientId":3,"start":838,"end":851,"description":"write(1) -\u003e  "},{"clientId":0,"start":840,"end":849,"description":"write(1) -\u003e  "},{"clientId":4,"start":842,"end":853,"description":"write(1) -\u003e  "},{"clientId":1,"start":844,"end":847,"description":"cas(3,4) -\u003e 1"},{"clientId":2,"start":846,"end":859,"description":"write(1) -\u003e  "},{"clientId":1,"start":848,"end":855,"description":"write(3) -\u003e  "},{"clientId":0,"start":850,"end":861,"description":"read -\u003e 3"},{"clientId":3,"start":852,"end":863,"description":"read -\u003e 3"},{"clientId":4,"start":854,"end":857,"description":"cas(0,3) -\u003e 1"},{"clientId":1,"start":856,"end":873,"description":"write(0) -\u003e  "},{"clientId":4,"start":858,"end":869,"description":"write(1) -\u003e  "},{"clientId":2,"start":860,"end":867,"description":"write(3) -\u003e  "},{"clientId":0,"start":862,"end":865,"description":"read -\u003e 3"},{"clientId":3,"start":864,"end":871,"description":"read -\u003e 3"},{"clientId":0,"start":866,"end":875,"description":"write(4) -\u003e  "},{"clientId":2,"start":868,"end":881,"description":"cas(0,4) -\u003e 4"},{"clientId":4,"start":870,"end":883,"description":"write(2) -\u003e  "},{"clientId":3,"start":872,"end":877,"description":"read -\u003e 4"},{"clientId":1,"start":874,"end":879,"description":"read -\u003e 2"},{"clientId":0,"start":876,"end":885,"description":"cas(1,0) -\u003e 2"},{"clientId":3,"start":878,"end":891,"description":"cas(0,1) -\u003e 2"},{"clientId":1,"start":880,"end":893,"description":"read -\u003e 0"},{"clientId":2,"start":882,"end":895,"description":"read -\u003e 0"},{"clientId":4,"start":884,"end":887,"description":"read -\u003e 2"},{"clientId":0,"start":886,"end":889,"description":"write(0) -\u003e  "},{"clientId":4,"start":888,"end":897,"description":"read -\u003e 0"},{"clientId":0,"start":890,"end":903,"description":"cas(2,1) -\u003e 0"},{"clientId":3,"start":892,"end":905,"description":"cas(1,4) -\u003e 0"},{"clientId":1,"start":894,"end":899,"description":"write(0) -\u003e  "},{"clientId":2,"start":896,"end":901,"description":"cas(4,3) -\u003e 0"},{"clientId":4,"start":898,"end":907,"description":"read -\u003e 0"},{"clientId":1,"start":900,"end":911,"description":"write(2) -\u003e  "},{"clientId":2,"start":902,"end":909,"description":"cas(3,4) -\u003e 4"},{"clientId":0,"start":904,"end":913,"description":"write(4) -\u003e  "},{"clientId":3,"start":906,"end":915,"description":"cas(1,4) -\u003e 4"},{"clientId":4,"start":908,"end":917,"description":"read -\u003e 4"},{"clientId":2,"start":910,"end":921,"description":"cas(0,3) -\u003e 4"},{"clientId":1,"start":912,"end":923,"description":"cas(3,4) -\u003e 4"},{"clientId":0,"start":914,"end":925,"description":"read -\u003e 0"},{"clientId":3,"start":916,"end":919,"description":"write(0) -\u003e  "},{"clientId":4,"start":918,"end":929,"description":"read -\u003e 2"},{"clientId":3,"start":920,"end":931,"description":"cas(2,1) -\u003e 1"},{"clientId":2,"start":922,"end":935,"description":"cas(0,4) -\u003e 1"},{"clientId":1,"start":924,"end":927,"description":"write(2) -\u003e  "},{"clientId":0,"start":926,"end":933,"description":"cas(4,0) -\u003e 1"},{"clientId":1,"start":928,"end":937,"description":"cas(1,1) -\u003e 1"},{"clientId":4,"start":930,"end":939,"description":"cas(1,3) -\u003e 3"},{"clientId":3,"start":932,"end":943,"description":"cas(4,0) -\u003e 3"},{"clientId":0,"start":934,"end":948,"description":"write(1) -\u003e  "},{"clientId":2,"start":936,"end":941,"description":"read -\u003e 3"},{"clientId":1,"start":938,"end":947,"description":"cas(4,2) -\u003e 1"},{"clientId":4,"start":940,"end":945,"description":"write(2) -\u003e  "},{"clientId":2,"start":942,"end":951,"description":"read -\u003e 2"},{"clientId":3,"start":944,"end":953,"description":"cas(3,2) -\u003e 2"},{"clientId":4,"start":946,"end":957,"description":"write(2) -\u003e  "},{"clientId":1,"start":949,"end":955,"description":"cas(2,3) -\u003e 3"},{"clientId":0,"start":950,"end":958,"description":"cas(2,4) -\u003e 4"},{"clientId":2,"start":952,"end":961,"description":"cas(4,1) -\u003e 3"},{"clientId":3,"start":954,"end":963,"description":"read -\u003e 3"},{"clientId":1,"start":956,"end":965,"description":"write(4) -\u003e  "},{"clientId":4,"start":959,"end":969,"description":"read -\u003e 4"},{"clientId":0,"start":960,"end":967,"description":"read -\u003e 4"},{"clientId":2,"start":962,"end":971,"description":"write(3) -\u003e  "},{"clientId":3,"start":964,"end":975,"description":"read -\u003e 3"},{"clientId":1,"start":966,"end":973,"description":"cas(0,0) -\u003e 3"},{"clientId":0,"start":968,"end":980,"description":"read -\u003e 2"},{"clientId":4,"start":970,"end":979,"description":"write(4) -\u003e  "},{"clientId":2,"start":972,"end":977,"description":"write(2) -\u003e  "},{"clientId":1,"start":974,"end":985,"description":"read -\u003e 1"},{"clientId":3,"start":976,"end":986,"description":"read -\u003e 1"},{"clientId":2,"start":978,"end":982,"description":"cas(4,2) -\u003e 1"},{"clientId":0,"start":981,"end":983,"description":"write(1) -\u003e  "},{"clientId":0,"start":984,"end":988,"description":"cas(3,3) -\u003e 1"},{"clientId":3,"start":987,"end":990,"description":"read -\u003e 1"},{"clientId":0,"start":989,"end":992,"description":"read -\u003e 1"},{"clientId":3,"start":991,"end":993,"description":"cas(0,3) -\u003e 1"},{"clientId":3,"start":994,"end":995,"description":"write(0) -\u003e  "},{"clientId":3,"start":996,"end":997,"description":"write(3) -\u003e  "},{"clientId":3,"start":998,"end":999,"description":"write(0) -\u003e  "}],"partialLinearizations":[[{"index":1,"stateDescription":"4"},{"index":0,"stateDescription":"4"},{"index":2,"stateDescription":"4"},{"index":4,"stateDescription":"4"},{"index":5,"stateDescription":"4"},{"index":6,"stateDescription":"4"},{"index":7,"stateDescription":"1"},{"index":3,"stateDescription":"1"},{"index":9,"stateDescription":"4"},{"index":8,"stateDescription":"4"},{"index":10,"stateDescription":"3"},{"index":11,"stateDescription":"2"},{"index":12,"stateDescription":"4"},{"index":14,"stateDescription":"4"},{"index":15,"stateDescription":"4"},{"index":16,"stateDescription":"4"},{"index":13,"stateDescription":"1"},{"index":17,"stateDescription":"1"},{"index":18,"stateDescription":"3"},{"index":19,"stateDescription":"3"},{"index":20,"stateDescription":"0"},{"index":21,"stateDescription":"2"},{"index":23,"stateDescription":"2"},{"index":24,"stateDescription":"2"},{"index":22,"stateDescription":"4"},{"index":29,"stateDescription":"2"},{"index":25,"stateDescription":"2"},{"index":26,"stateDescription":"2"},{"index":27,"stateDescription":"2"},{"index":28,"stateDescription":"2"},{"index":30,"stateDescription":"2"},{"index":31,"stateDescription":"2"},{"index":33,"stateDescription":"4"},{"index":32,"stateDescription":"2"},{"index":34,"stateDescription":"2"},{"index":35,"stateDescription":"2"},{"index":38,"stateDescription":"4"},{"index":36,"stateDescription":"4"},{"index":37,"stateDescription":"4"},{"index":39,"stateDescription":"3"},{"index":40,"stateDescription":"1"},{"index":41,"stateDescription":"1"},{"index":42,"stateDescription":"1"},{"index":43,"stateDescription":"1"},{"index":44,"stateDescription":"1"},{"index":45,"stateDescription":"1"},{"index":46,"stateDescription":"1"},{"index":47,"stateDescription":"1"},{"index":48,"stateDescription":"1"},{"index":49,"stateDescription":"1"},{"index":51,"stateDescription":"4"},{"index":50,"stateDescription":"4"},{"index":52,"stateDescription":"2"},{"index":53,"stateDescription":"2"},{"index":54,"stateDescription":"2"},{"index":56,"stateDescription":"2"},{"index":55,"stateDescription":"3"},{"index":57,"stateDescription":"3"},{"index":58,"stateDescription":"3"},{"index":59,"stateDescription":"3"},{"index":61,"stateDescription":"1"},{"index":60,"stateDescription":"1"},{"index":62,"stateDescription":"1"},{"index":64,"stateDescription":"1"},{"index":63,"stateDescription":"0"},{"index":65,"stateDescription":"0"},{"index":66,"stateDescription":"0"},{"index":67,"stateDescription":"0"},{"index":68,"stateDescription":"0"},{"index":71,"stateDescription":"0"},{"index":69,"stateDescription":"4"},{"index":70,"stateDescription":"4"},{"index":73,"stateDescription":"4"},{"index":72,"stateDescription":"2"},{"index":74,"stateDescription":"2"},{"index":75,"stateDescription":"2"},{"index":76,"stateDescription":"2"},{"index":78,"stateDescription":"2"},{"index":80,"stateDescription":"0"},{"index":77,"stateDescription":"0"},{"index":79,"stateDescription":"0"},{"index":81,"stateDescription":"0"},{"index":82,"stateDescription":"0"},{"index":83,"stateDescription":"0"},{"index":84,"stateDescription":"0"},{"index":85,"stateDescription":"0"},{"index":88,"stateDescription":"4"},{"index":86,"stateDescription":"4"},{"index":87,"stateDescription":"4"},{"index":89,"stateDescription":"4"},{"index":90,"stateDescription":"2"},{"index":91,"stateDescription":"2"},{"index":92,"stateDescription":"2"},{"index":93,"stateDescription":"2"},{"index":94,"stateDescription":"2"},{"index":95,"stateDescription":"2"},{"index":96,"stateDescription":"2"},{"index":97,"stateDescription":"2"},{"index":98,"stateDescription":"2"},{"index":99,"stateDescription":"3"},{"index":102,"stateDescription":"0"},{"index":100,"stateDescription":"2"},{"index":101,"stateDescription":"4"},{"index":103,"stateDescription":"4"},{"index":105,"stateDescription":"2"},{"index":106,"stateDescription":"2"},{"index":107,"stateDescription":"4"},{"index":108,"stateDescription":"3"},{"index":104,"stateDescription":"3"},{"index":109,"stateDescription":"3"},{"index":110,"stateDescription":"3"},{"index":111,"stateDescription":"1"},{"index":112,"stateDescription":"1"},{"index":113,"stateDescription":"1"},{"index":114,"stateDescription":"1"},{"index":115,"stateDescription":"1"},{"index":116,"stateDescription":"4"},{"index":117,"stateDescription":"0"},{"index":118,"stateDescription":"0"},{"index":119,"stateDescription":"0"},{"index":121,"stateDescription":"2"},{"index":122,"stateDescription":"1"},{"index":120,"stateDescription":"1"},{"index":124,"stateDescription":"2"},{"index":125,"stateDescription":"2"},{"index":127,"stateDescription":"2"},{"index":123,"stateDescription":"4"},{"index":126,"stateDescription":"1"},{"index":129,"stateDescription":"1"},{"index":131,"stateDescription":"1"},{"index":132,"stateDescription":"2"},{"index":128,"stateDescription":"4"},{"index":130,"stateDescription":"4"},{"index":136,"stateDescription":"2"},{"index":134,"stateDescription":"2"},{"index":133,"stateDescription":"3"},{"index":135,"stateDescription":"3"},{"index":137,"stateDescription":"3"},{"index":140,"stateDescription":"3"},{"index":139,"stateDescription":"0"},{"index":138,"stateDescription":"0"},{"index":141,"stateDescription":"0"},{"index":142,"stateDescription":"2"},{"index":144,"stateDescription":"1"},{"index":143,"stateDescription":"1"},{"index":145,"stateDescription":"1"},{"index":146,"stateDescription":"1"},{"index":147,"stateDescription":"1"},{"index":148,"stateDescription":"1"},{"index":150,"stateDescription":"1"},{"index":151,"stateDescription":"2"},{"index":149,"stateDescription":"2"},{"index":156,"stateDescription":"0"},{"index":153,"stateDescription":"1"},{"index":152,"stateDescription":"1"},{"index":154,"stateDescription":"1"},{"index":158,"stateDescription":"0"},{"index":155,"stateDescription":"0"},{"index":157,"stateDescription":"0"},{"index":160,"stateDescription":"0"},{"index":159,"stateDescription":"1"},{"index":161,"stateDescription":"1"},{"index":162,"stateDescription":"4"},{"index":163,"stateDescription":"4"},{"index":164,"stateDescription":"4"},{"index":165,"stateDescription":"0"},{"index":166,"stateDescription":"0"},{"index":167,"stateDescription":"1"},{"index":168,"stateDescription":"2"},{"index":170,"stateDescription":"4"},{"index":169,"stateDescription":"4"},{"index":171,"stateDescription":"4"},{"index":172,"stateDescription":"4"},{"index":173,"stateDescription":"4"},{"index":177,"stateDescription":"1"},{"index":174,"stateDescription":"1"},{"index":175,"stateDescription":"1"},{"index":176,"stateDescription":"1"},{"index":178,"stateDescription":"4"},{"index":179,"stateDescription":"4"},{"index":180,"stateDescription":"1"},{"index":181,"stateDescription":"1"},{"index":182,"stateDescription":"1"},{"index":183,"stateDescription":"1"},{"index":186,"stateDescription":"1"},{"index":188,"stateDescription":"1"},{"index":187,"stateDescription":"3"},{"index":184,"stateDescription":"3"},{"index":185,"stateDescription":"3"},{"index":189,"stateDescription":"4"},{"index":190,"stateDescription":"4"},{"index":191,"stateDescription":"4"},{"index":192,"stateDescription":"4"},{"index":193,"stateDescription":"4"},{"index":194,"stateDescription":"3"},{"index":195,"stateDescription":"3"},{"index":196,"stateDescription":"3"},{"index":197,"stateDescription":"3"},{"index":198,"stateDescription":"3"},{"index":199,"stateDescription":"3"},{"index":200,"stateDescription":"3"},{"index":201,"stateDescription":"3"},{"index":202,"stateDescription":"3"},{"index":203,"stateDescription":"3"},{"index":204,"stateDescription":"2"},{"index":205,"stateDescription":"1"},{"index":206,"stateDescription":"1"},{"index":208,"stateDescription":"0"},{"index":207,"stateDescription":"0"},{"index":209,"stateDescription":"0"},{"index":210,"stateDescription":"2"},{"index":211,"stateDescription":"2"},{"index":212,"stateDescription":"2"},{"index":213,"stateDescription":"2"},{"index":214,"stateDescription":"2"},{"index":215,"stateDescription":"2"},{"index":216,"stateDescription":"2"},{"index":217,"stateDescription":"2"},{"index":218,"stateDescription":"2"},{"index":219,"stateDescription":"2"},{"index":222,"stateDescription":"2"},{"index":220,"stateDescription":"3"},{"index":221,"stateDescription":"3"},{"index":223,"stateDescription":"3"},{"index":224,"stateDescription":"4"},{"index":227,"stateDescription":"1"},{"index":225,"stateDescription":"1"},{"index":226,"stateDescription":"1"},{"index":228,"stateDescription":"1"},{"index":229,"stateDescription":"1"},{"index":231,"stateDescription":"3"},{"index":230,"stateDescription":"3"},{"index":233,"stateDescription":"0"},{"index":232,"stateDescription":"0"},{"index":234,"stateDescription":"0"},{"index":235,"stateDescription":"4"},{"index":236,"stateDescription":"2"},{"index":237,"stateDescription":"1"},{"index":238,"stateDescription":"4"},{"index":239,"stateDescription":"4"},{"index":241,"stateDescription":"4"},{"index":244,"stateDescription":"4"},{"index":240,"stateDescription":"3"},{"index":242,"stateDescription":"3"},{"index":243,"stateDescription":"3"},{"index":245,"stateDescription":"1"},{"index":246,"stateDescription":"1"},{"index":249,"stateDescription":"1"},{"index":247,"stateDescription":"3"},{"index":248,"stateDescription":"2"},{"index":250,"stateDescription":"2"},{"index":254,"stateDescription":"2"},{"index":252,"stateDescription":"0"},{"index":251,"stateDescription":"0"},{"index":253,"stateDescription":"0"},{"index":255,"stateDescription":"0"},{"index":257,"stateDescription":"0"},{"index":258,"stateDescription":"0"},{"index":256,"stateDescription":"1"},{"index":260,"stateDescription":"1"},{"index":259,"stateDescription":"2"},{"index":261,"stateDescription":"2"},{"index":262,"stateDescription":"2"},{"index":263,"stateDescription":"2"},{"index":264,"stateDescription":"2"},{"index":266,"stateDescription":"2"},{"index":265,"stateDescription":"3"},{"index":267,"stateDescription":"3"},{"index":268,"stateDescription":"3"},{"index":269,"stateDescription":"3"},{"index":270,"stateDescription":"4"},{"index":271,"stateDescription":"4"},{"index":272,"stateDescription":"4"},{"index":273,"stateDescription":"4"},{"index":274,"stateDescription":"4"},{"index":275,"stateDescription":"4"},{"index":276,"stateDescription":"4"},{"index":279,"stateDescription":"2"},{"index":277,"stateDescription":"3"},{"index":278,"stateDescription":"3"},{"index":281,"stateDescription":"3"},{"index":280,"stateDescription":"1"},{"index":283,"stateDescription":"4"},{"index":282,"stateDescription":"4"},{"index":284,"stateDescription":"1"},{"index":285,"stateDescription":"4"},{"index":288,"stateDescription":"1"},{"index":286,"stateDescription":"1"},{"index":287,"stateDescription":"1"},{"index":289,"stateDescription":"1"},{"index":290,"stateDescription":"1"},{"index":291,"stateDescription":"1"},{"index":292,"stateDescription":"1"},{"index":293,"stateDescription":"1"},{"index":295,"stateDescription":"1"},{"index":296,"stateDescription":"3"},{"index":294,"stateDescription":"3"},{"index":297,"stateDescription":"3"},{"index":298,"stateDescription":"3"},{"index":299,"stateDescription":"3"},{"index":300,"stateDescription":"3"},{"index":301,"stateDescription":"1"},{"index":304,"stateDescription":"1"},{"index":303,"stateDescription":"3"},{"index":302,"stateDescription":"3"},{"index":305,"stateDescription":"3"},{"index":307,"stateDescription":"3"},{"index":309,"stateDescription":"0"},{"index":306,"stateDescription":"0"},{"index":308,"stateDescription":"0"},{"index":311,"stateDescription":"0"},{"index":310,"stateDescription":"2"},{"index":312,"stateDescription":"3"},{"index":315,"stateDescription":"4"},{"index":313,"stateDescription":"4"},{"index":314,"stateDescription":"4"},{"index":316,"stateDescription":"4"},{"index":317,"stateDescription":"0"},{"index":319,"stateDescription":"0"},{"index":321,"stateDescription":"3"},{"index":318,"stateDescription":"3"},{"index":320,"stateDescription":"3"},{"index":323,"stateDescription":"4"},{"index":322,"stateDescription":"4"},{"index":324,"stateDescription":"4"},{"index":325,"stateDescription":"4"},{"index":326,"stateDescription":"1"},{"index":329,"stateDescription":"4"},{"index":327,"stateDescription":"4"},{"index":328,"stateDescription":"4"},{"index":330,"stateDescription":"4"},{"index":331,"stateDescription":"4"},{"index":332,"stateDescription":"4"},{"index":333,"stateDescription":"4"},{"index":334,"stateDescription":"4"},{"index":335,"stateDescription":"4"},{"index":336,"stateDescription":"1"},{"index":337,"stateDescription":"1"},{"index":339,"stateDescription":"4"},{"index":338,"stateDescription":"4"},{"index":340,"stateDescription":"1"},{"index":341,"stateDescription":"1"},{"index":342,"stateDescription":"1"},{"index":345,"stateDescription":"0"},{"index":344,"stateDescription":"4"},{"index":343,"stateDescription":"4"},{"index":346,"stateDescription":"4"},{"index":347,"stateDescription":"4"},{"index":349,"stateDescription":"4"},{"index":350,"stateDescription":"4"},{"index":351,"stateDescription":"2"},{"index":348,"stateDescription":"2"},{"index":353,"stateDescription":"0"},{"index":354,"stateDescription":"4"},{"index":352,"stateDescription":"4"},{"index":356,"stateDescription":"3"},{"index":358,"stateDescription":"3"},{"index":357,"stateDescription":"0"},{"index":355,"stateDescription":"0"},{"index":360,"stateDescription":"0"},{"index":361,"stateDescription":"0"},{"index":359,"stateDescription":"4"},{"index":365,"stateDescription":"0"},{"index":362,"stateDescription":"0"},{"index":363,"stateDescription":"0"},{"index":364,"stateDescription":"0"},{"index":366,"stateDescription":"0"},{"index":367,"stateDescription":"2"},{"index":368,"stateDescription":"2"},{"index":369,"stateDescription":"2"},{"index":370,"stateDescription":"0"},{"index":371,"stateDescription":"0"},{"index":375,"stateDescription":"0"},{"index":372,"stateDescription":"2"},{"index":373,"stateDescription":"2"},{"index":374,"stateDescription":"2"},{"index":376,"stateDescription":"2"},{"index":377,"stateDescription":"2"},{"index":378,"stateDescription":"0"},{"index":380,"stateDescription":"1"},{"index":381,"stateDescription":"4"},{"index":379,"stateDescription":"4"},{"index":382,"stateDescription":"4"},{"index":384,"stateDescription":"4"},{"index":383,"stateDescription":"2"},{"index":385,"stateDescription":"0"},{"index":386,"stateDescription":"0"},{"index":387,"stateDescription":"1"},{"index":388,"stateDescription":"0"},{"index":389,"stateDescription":"0"},{"index":390,"stateDescription":"0"},{"index":391,"stateDescription":"1"},{"index":393,"stateDescription":"1"},{"index":394,"stateDescription":"1"},{"index":396,"stateDescription":"1"},{"index":392,"stateDescription":"0"},{"index":395,"stateDescription":"0"},{"index":397,"stateDescription":"0"},{"index":399,"stateDescription":"0"},{"index":401,"stateDescription":"1"},{"index":398,"stateDescription":"1"},{"index":400,"stateDescription":"1"},{"index":402,"stateDescription":"1"},{"index":403,"stateDescription":"1"},{"index":404,"stateDescription":"1"},{"index":405,"stateDescription":"1"},{"index":406,"stateDescription":"1"},{"index":407,"stateDescription":"1"},{"index":408,"stateDescription":"1"},{"index":409,"stateDescription":"1"},{"index":410,"stateDescription":"1"},{"index":411,"stateDescription":"1"},{"index":414,"stateDescription":"0"},{"index":412,"stateDescription":"0"},{"index":413,"stateDescription":"0"},{"index":416,"stateDescription":"0"},{"index":417,"stateDescription":"1"},{"index":418,"stateDescription":"3"},{"index":419,"stateDescription":"4"},{"index":415,"stateDescription":"4"},{"index":420,"stateDescription":"4"},{"index":421,"stateDescription":"1"},{"index":422,"stateDescription":"1"},{"index":423,"stateDescription":"1"},{"index":424,"stateDescription":"1"},{"index":425,"stateDescription":"1"},{"index":429,"stateDescription":"1"},{"index":426,"stateDescription":"3"},{"index":427,"stateDescription":"3"},{"index":428,"stateDescription":"3"},{"index":430,"stateDescription":"0"},{"index":431,"stateDescription":"1"},{"index":432,"stateDescription":"3"},{"index":433,"stateDescription":"3"},{"index":434,"stateDescription":"3"},{"index":435,"stateDescription":"4"},{"index":436,"stateDescription":"4"},{"index":438,"stateDescription":"4"},{"index":437,"stateDescription":"2"},{"index":439,"stateDescription":"2"},{"index":440,"stateDescription":"2"},{"index":441,"stateDescription":"2"},{"index":444,"stateDescription":"2"},{"index":445,"stateDescription":"0"},{"index":442,"stateDescription":"0"},{"index":443,"stateDescription":"0"},{"index":446,"stateDescription":"0"},{"index":447,"stateDescription":"0"},{"index":448,"stateDescription":"0"},{"index":449,"stateDescription":"0"},{"index":450,"stateDescription":"0"},{"index":451,"stateDescription":"0"},{"index":452,"stateDescription":"2"},{"index":454,"stateDescription":"4"},{"index":453,"stateDescription":"4"},{"index":455,"stateDescription":"4"},{"index":456,"stateDescription":"4"},{"index":457,"stateDescription":"4"},{"index":458,"stateDescription":"4"},{"index":460,"stateDescription":"0"},{"index":459,"stateDescription":"0"},{"index":464,"stateDescription":"2"},{"index":461,"stateDescription":"2"},{"index":462,"stateDescription":"1"},{"index":463,"stateDescription":"1"},{"index":465,"stateDescription":"1"},{"index":466,"stateDescription":"1"},{"index":467,"stateDescription":"3"},{"index":468,"stateDescription":"3"},{"index":470,"stateDescription":"3"},{"index":469,"stateDescription":"1"},{"index":471,"stateDescription":"1"},{"index":472,"stateDescription":"2"},{"index":473,"stateDescription":"2"},{"index":474,"stateDescription":"2"},{"index":475,"stateDescription":"2"},{"index":476,"stateDescription":"3"},{"index":478,"stateDescription":"3"},{"index":479,"stateDescription":"3"},{"index":480,"stateDescription":"4"},{"index":477,"stateDescription":"4"},{"index":481,"stateDescription":"4"},{"index":482,"stateDescription":"4"},{"index":483,"stateDescription":"3"},{"index":484,"stateDescription":"3"},{"index":485,"stateDescription":"3"},{"index":487,"stateDescription":"4"},{"index":488,"stateDescription":"2"},{"index":486,"stateDescription":"2"},{"index":492,"stateDescription":"1"},{"index":489,"stateDescription":"1"},{"index":490,"stateDescription":"1"},{"index":491,"stateDescription":"1"},{"index":493,"stateDescription":"1"},{"index":494,"stateDescription":"1"},{"index":495,"stateDescription":"1"},{"index":496,"stateDescription":"1"},{"index":497,"stateDescription":"0"},{"index":498,"stateDescription":"3"},{"index":499,"stateDescription":"0"}]],"largest":{"0":0,"1":0,"2":0,"3":0,"4":0,"5":0,"6":0,"7":0,"8":0,"9":0,"10":0,"11":0,"12":0,"13":0,"14":0,"15":0,"16":0,"17":0,"18":0,"19":0,"20":0,"21":0,"22":0,"23":0,"24":0,"25":0,"26":0,"27":0,"28":0,"29":0,"30":0,"31":0,"32":0,"33":0,"34":0,"35":0,"36":0,"37":0,"38":0,"39":0,"40":0,"41":0,"42":0,"43":0,"44":0,"45":0,"46":0,"47":0,"48":0,"49":0,"50":0,"51":0,"52":0,"53":0,"54":0,"55":0,"56":0,"57":0,"58":0,"59":0,"60":0,"61":0,"62":0,"63":0,"64":0,"65":0,"66":0,"67":0,"68":0,"69":0,"70":0,"71":0,"72":0,"73":0,"74":0,"75":0,"76":0,"77":0,"78":0,"79":0,"80":0,"81":0,"82":0,"83":0,"84":0,"85":0,"86":0,"87":0,"88":0,"89":0,"90":0,"91":0,"92":0,"93":0,"94":0,"95":0,"96":0,"97":0,"98":0,"99":0,"100":0,"101":0,"102":0,"103":0,"104":0,"105":0,"106":0,"107":0,"108":0,"109":0,"110":0,"111":0,"112":0,"113":0,"114":0,"115":0,"116":0,"117":0,"118":0,"119":0,"120":0,"121":0,"122":0,"123":0,"124":0,"125":0,"126":0,"127":0,"128":0,"129":0,"130":0,"131":0,"132":0,"133":0,"134":0,"135":0,"136":0,"137":0,"138":0,"139":0,"140":0,"141":0,"142":0,"143":0,"144":0,"145":0,"146":0,"147":0,"148":0,"149":0,"150":0,"151":0,"152":0,"153":0,"154":0,"155":0,"156":0,"157":0,"158":0,"159":0,"160":0,"161":0,"162":0,"163":0,"164":0,"165":0,"166":0,"167":0,"168":0,"169":0,"170":0,"171":0,"172":0,"173":0,"174":0,"175":0,"176":0,"177":0,"178":0,"179":0,"180":0,"181":0,"182":0,"183":0,"184":0,"185":0,"186":0,"187":0,"188":0,"189":0,"190":0,"191":0,"192":0,"193":0,"194":0,"195":0,"196":0,"197":0,"198":0,"199":0,"200":0,"201":0,"202":0,"203":0,"204":0,"205":0,"206":0,"207":0,"208":0,"209":0,"210":0,"211":0,"212":0,"213":0,"214":0,"215":0,"216":0,"217":0,"218":0,"219":0,"220":0,"221":0,"222":0,"223":0,"224":0,"225":0,"226":0,"227":0,"228":0,"229":0,"230":0,"231":0,"232":0,"233":0,"234":0,"235":0,"236":0,"237":0,"238":0,"239":0,"240":0,"241":0,"242":0,"243":0,"244":0,"245":0,"246":0,"247":0,"248":0,"249":0,"250":0,"251":0,"252":0,"253":0,"254":0,"255":0,"256":0,"257":0,"258":0,"259":0,"260":0,"261":0,"262":0,"263":0,"264":0,"265":0,"266":0,"267":0,"268":0,"269":0,"270":0,"271":0,"272":0,"273":0,"274":0,"275":0,"276":0,"277":0,"278":0,"279":0,"280":0,"281":0,"282":0,"283":0,"284":0,"285":0,"286":0,"287":0,"288":0,"289":0,"290":0,"291":0,"292":0,"293":0,"294":0,"295":0,"296":0,"297":0,"298":0,"299":0,"300":0,"301":0,"302":0,"303":0,"304":0,"305":0,"306":0,"307":0,"308":0,"309":0,"310":0,"311":0,"312":0,"313":0,"314":0,"315":0,"316":0,"317":0,"318":0,"319":0,"320":0,"321":0,"322":0,"323":0,"324":0,"325":0,"326":0,"327":0,"328":0,"329":0,"330":0,"331":0,"332":0,"333":0,"334":0,"335":0,"336":0,"337":0,"338":0,"339":0,"340":0,"341":0,"342":0,"343":0,"344":0,"345":0,"346":0,"347":0,"348":0,"349":0,"350":0,"351":0,"352":0,"353":0,"354":0,"355":0,"356":0,"357":0,"358":0,"359":0,"360":0,"361":0,"362":0,"363":0,"364":0,"365":0,"366":0,"367":0,"368":0,"369":0,"370":0,"371":0,"372":0,"373":0,"374":0,"375":0,"376":0,"377":0,"378":0,"379":0,"380":0,"381":0,"382":0,"383":0,"384":0,"385":0,"386":0,"387":0,"388":0,"389":0,"390":0,"391":0,"392":0,"393":0,"394":0,"395":0,"396":0,"397":0,"398":0,"399":0,"400":0,"401":0,"402":0,"403":0,"404":0,"405":0,"406":0,"407":0,"408":0,"409":0,"410":0,"411":0,"412":0,"413":0,"414":0,"415":0,"416":0,"417":0,"418":0,"419":0,"420":0,"421":0,"422":0,"423":0,"424":0,"425":0,"426":0,"427":0,"428":0,"429":0,"430":0,"431":0,"432":0,"433":0,"434":0,"435":0,"436":0,"437":0,"438":0,"439":0,"440":0,"441":0,"442":0,"443":0,"444":0,"445":0,"446":0,"447":0,"448":0,"449":0,"450":0,"451":0,"452":0,"453":0,"454":0,"455":0,"456":0,"457":0,"458":0,"459":0,"460":0,"461":0,"462":0,"463":0,"464":0,"465":0,"466":0,"467":0,"468":0,"469":0,"470":0,"471":0,"472":0,"473":0,"474":0,"475":0,"476":0,"477":0,"478":0,"479":0,"480":0,"481":0,"482":0,"483":0,"484":0,"485":0,"486":0,"487":0,"488":0,"489":0,"490":0,"491":0,"492":0,"493":0,"494":0,"495":0,"496":0,"497":0,"498":0,"499":0}}]
+
+    render(data)
+</script>
+</body>
+</html>

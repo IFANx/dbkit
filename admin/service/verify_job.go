@@ -46,3 +46,38 @@ func GetVerifyJobPage(ctx *gin.Context) {
 		})
 	}
 }
+
+func GetVerifyJobDetail(ctx *gin.Context) {
+	jidStr := ctx.DefaultQuery("jid", "0")
+	jid, err := strconv.Atoi(jidStr)
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"ok":  false,
+			"err": err.Error(),
+		})
+		return
+	}
+	job, err := model.GetVerifyJobByJid(jid)
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"ok":  false,
+			"err": err.Error(),
+		})
+		return
+	}
+	report, _ := model.GetVerifyReportByJid(jid)
+	ctx.JSON(http.StatusOK, gin.H{
+		"ok": true,
+		"data": map[string]interface{}{
+			"job":    job,
+			"report": report,
+		},
+	})
+}
+
+func SubVerifyJob(ctx *gin.Context) {
+	ctx.JSON(http.StatusOK, gin.H{
+		"ok":  false,
+		"err": "功能待实现",
+	})
+}

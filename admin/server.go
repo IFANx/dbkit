@@ -21,20 +21,27 @@ func StartServer(port int) {
 	r.GET("/", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
 			"ok":   true,
-			"data": "hello, dbkit",
+			"data": "hello, DBKit",
 		})
 	})
+
 	r.GET("/TestJob/count", service.GetTestJobCount)
 	r.GET("/TestJob/page", service.GetTestJobPage)
+	r.GET("/TestJob/detail", service.GetTestJobDetail)
+	r.POST("/TestJob/sub", service.SubTestJob)
 
 	r.GET("/TestReport/count", service.GetTestReportCount)
 	r.GET("/TestReport/page", service.GetTestReportPage)
+	r.GET("/TestReport/detail", service.GetTestReportDetail)
 
 	r.GET("/VerifyJob/count", service.GetVerifyJobCount)
 	r.GET("/VerifyJob/page", service.GetVerifyJobPage)
+	r.GET("/VerifyJob/detail", service.GetVerifyJobDetail)
+	r.POST("/VerifyJob/sub", service.SubVerifyJob)
 
 	r.GET("/VerifyReport/count", service.GetVerifyReportCount)
 	r.GET("/VerifyReport/page", service.GetVerifyReportPage)
+	r.GET("/VerifyReport/detail", service.GetVerifyReportDetail)
 
 	log.Infof("服务器启动，在[%d]端口监听请求...", port)
 	err := r.Run("0.0.0.0:" + strconv.Itoa(port))

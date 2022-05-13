@@ -57,7 +57,7 @@ func GetTestReportDetail(ctx *gin.Context) {
 		})
 		return
 	}
-	report, err := model.GetTestReportByJid(rid)
+	report, err := model.GetTestReportByRid(rid)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{
 			"ok":  false,
