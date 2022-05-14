@@ -49,7 +49,7 @@ func GetVerifyJobPage(offset, limit int) ([]VerifyJob, error) {
 func GetVerifyJobByJid(jid int) (*VerifyJob, error) {
 	job := VerifyJob{}
 	sql := fmt.Sprintf("SELECT * FROM %s WHERE jid = %d", tableNameVerifyJob, jid)
-	err := db.Select(&job, sql)
+	err := db.Get(&job, sql)
 	if err != nil {
 		errMsg := fmt.Sprintf("查询VerifyJob出错: %s\n", err)
 		log.Warnf(errMsg)

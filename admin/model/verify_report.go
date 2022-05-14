@@ -45,7 +45,7 @@ func GetVerifyReportPage(offset, limit int) ([]TestReport, error) {
 func GetVerifyReportByRid(rid int) (*VerifyReport, error) {
 	report := VerifyReport{}
 	sql := fmt.Sprintf("SELECT * FROM %s WHERE rid = %d", tableNameVerifyReport, rid)
-	err := db.Select(&report, sql)
+	err := db.Get(&report, sql)
 	if err != nil {
 		errMsg := fmt.Sprintf("查询VerifyReports出错: %s\n", err)
 		log.Warnf(errMsg)
@@ -57,7 +57,7 @@ func GetVerifyReportByRid(rid int) (*VerifyReport, error) {
 func GetVerifyReportByJid(jid int) (*VerifyReport, error) {
 	report := VerifyReport{}
 	sql := fmt.Sprintf("SELECT * FROM %s WHERE jid = %d", tableNameVerifyReport, jid)
-	err := db.Select(&report, sql)
+	err := db.Get(&report, sql)
 	if err != nil {
 		errMsg := fmt.Sprintf("查询VerifyReports出错: %s\n", err)
 		log.Warnf(errMsg)

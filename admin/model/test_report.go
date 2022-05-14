@@ -25,7 +25,7 @@ type TestReport struct {
 func GetTestReportByJid(jid int) ([]TestReport, error) {
 	var reports []TestReport
 	sql := fmt.Sprintf("SELECT * FROM %s WHERE jid = %d", tableNameTestReport, jid)
-	err := db.Select(reports, sql)
+	err := db.Select(&reports, sql)
 	if err != nil {
 		errMsg := fmt.Sprintf("查询TestReports出错: %s\n", err)
 		log.Warnf(errMsg)
@@ -37,7 +37,7 @@ func GetTestReportByJid(jid int) ([]TestReport, error) {
 func GetTestReportByRid(rid int) (*TestReport, error) {
 	report := TestReport{}
 	sql := fmt.Sprintf("SELECT * FROM %s WHERE rid = %d", tableNameTestReport, rid)
-	err := db.Select(&report, sql)
+	err := db.Get(&report, sql)
 	if err != nil {
 		errMsg := fmt.Sprintf("查询TestReports出错: %s\n", err)
 		log.Warnf(errMsg)

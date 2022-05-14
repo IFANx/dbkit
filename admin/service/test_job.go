@@ -83,3 +83,10 @@ func SubTestJob(ctx *gin.Context) {
 		"err": "功能待实现",
 	})
 }
+
+func DeleteTestJob(ctx *gin.Context) {
+	ctx.JSON(http.StatusOK, gin.H{
+		"ok":  false,
+		"err": "功能待实现",
+	})
+}

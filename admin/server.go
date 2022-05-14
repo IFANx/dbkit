@@ -29,19 +29,23 @@ func StartServer(port int) {
 	r.GET("/TestJob/page", service.GetTestJobPage)
 	r.GET("/TestJob/detail", service.GetTestJobDetail)
 	r.POST("/TestJob/sub", service.SubTestJob)
+	r.GET("/TestJob/delete", service.DeleteTestJob)
 
 	r.GET("/TestReport/count", service.GetTestReportCount)
 	r.GET("/TestReport/page", service.GetTestReportPage)
 	r.GET("/TestReport/detail", service.GetTestReportDetail)
+	r.GET("/TestReport/delete", service.DeleteTestReport)
 
 	r.GET("/VerifyJob/count", service.GetVerifyJobCount)
 	r.GET("/VerifyJob/page", service.GetVerifyJobPage)
 	r.GET("/VerifyJob/detail", service.GetVerifyJobDetail)
 	r.POST("/VerifyJob/sub", service.SubVerifyJob)
+	r.GET("/VerifyJob/delete", service.DeleteVerifyJob)
 
 	r.GET("/VerifyReport/count", service.GetVerifyReportCount)
 	r.GET("/VerifyReport/page", service.GetVerifyReportPage)
 	r.GET("/VerifyReport/detail", service.GetVerifyReportDetail)
+	r.GET("/VerifyReport/delete", service.DeleteVerifyReport)
 
 	log.Infof("服务器启动，在[%d]端口监听请求...", port)
 	err := r.Run("0.0.0.0:" + strconv.Itoa(port))

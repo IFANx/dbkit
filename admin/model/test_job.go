@@ -50,7 +50,7 @@ func GetTestJobPage(offset, limit int) ([]TestJob, error) {
 func GetTestJobByJid(jid int) (*TestJob, error) {
 	job := TestJob{}
 	sql := fmt.Sprintf("SELECT * FROM %s WHERE jid = %d", tableNameTestJob, jid)
-	err := db.Select(&job, sql)
+	err := db.Get(&job, sql)
 	if err != nil {
 		errMsg := fmt.Sprintf("查询TestJob出错: %s\n", err)
 		log.Warnf(errMsg)
