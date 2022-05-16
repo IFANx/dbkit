@@ -47,6 +47,14 @@ func StartServer(port int) {
 	r.GET("/VerifyReport/detail", service.GetVerifyReportDetail)
 	r.GET("/VerifyReport/delete", service.DeleteVerifyReport)
 
+	r.GET("/TargetDSN/all", service.GetAllTargetDSN)
+	r.GET("/TargetDSN/type", service.GetTargetDSNByType)
+	r.GET("/TargetDSN/add", service.AddTargetDSN)
+	r.GET("/TargetDSN/check", service.CheckTargetDSN)
+	r.GET("/TargetDSN/delete", service.DeleteTargetDSN)
+
+	r.GET("/SysInfo/all", service.GetAllSysInfo)
+
 	log.Infof("服务器启动，在[%d]端口监听请求...", port)
 	err := r.Run("0.0.0.0:" + strconv.Itoa(port))
 	if err != nil {

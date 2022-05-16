@@ -22,6 +22,19 @@ type TestReport struct {
 	Deleted    int       `json:"Deleted" db:"deleted"`
 }
 
+type TestReportPageItem struct {
+	Rid        int       `json:"Rid" db:"rid"`
+	Jid        int       `json:"Jid" db:"jid"`
+	Target     string    `json:"Target" db:"target"`
+	Oracle     string    `json:"Oracle" db:"oracle"`
+	Category   string    `json:"Category" db:"category"`
+	ReportTime time.Time `json:"ReportTime" db:"report_time"`
+	State      string    `json:"State" db:"state"`
+	URL        string    `json:"URL" db:"url"`
+	Comments   string    `json:"Comments" db:"comments"`
+	Deleted    int       `json:"Deleted" db:"deleted"`
+}
+
 func GetTestReportByJid(jid int) ([]TestReport, error) {
 	var reports []TestReport
 	sql := fmt.Sprintf("SELECT * FROM %s WHERE jid = %d", tableNameTestReport, jid)
@@ -58,10 +71,12 @@ func GetTestReportCount() (int, error) {
 	return *count, nil
 }
 
-func GetTestReportPage(offset, limit int) ([]TestReport, error) {
-	var reports []TestReport
-	sql := fmt.Sprintf("SELECT * FROM %s WHERE deleted = 0 ORDER BY jid LIMIT %d,%d",
-		tableNameTestReport, offset, limit)
+func GetTestReportPage(offset, limit int) ([]TestReportPageItem, error) {
+	var reports []TestReportPageItem
+	sql := fmt.Sprintf("select rid,tr.jid,target,oracle,category,"+
+		"report_time,tr.state,url,tr.comments,tr.deleted from %s as tr"+
+		" join %s as tj on tr.jid=tj.jid WHERE tr.deleted = 0 ORDER BY tr.jid LIMIT %d,%d",
+		tableNameTestReport, tableNameTestJob, offset, limit)
 	err := db.Select(&reports, sql)
 	if err != nil {
 		errMsg := fmt.Sprintf("查询TstJob出错: %s\n", err)

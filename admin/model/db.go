@@ -16,6 +16,7 @@ const (
 	tableNameTestStatistic = "test_statistic"
 	tableNameVerifyJob     = "verify_job"
 	tableNameVerifyReport  = "verify_report"
+	tableNameTargetDSN     = "target_dsn"
 )
 
 func init() {

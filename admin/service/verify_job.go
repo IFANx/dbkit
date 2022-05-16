@@ -85,6 +85,6 @@ func SubVerifyJob(ctx *gin.Context) {
 func DeleteVerifyJob(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"ok":  false,
-		"err": "功能待实现",
+		"err": "暂不允许删除操作",
 	})
 }

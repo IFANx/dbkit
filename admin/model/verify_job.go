@@ -10,10 +10,24 @@ import (
 type VerifyJob struct {
 	Jid       int       `json:"Jid" db:"jid"`
 	DSN       string    `json:"DSN" db:"dsn"`
-	DBName    string    `json:"DBName" db:"dbname"`
+	DBName    string    `json:"DBName" db:"db_name"`
 	Target    string    `json:"Target" db:"target"`
+	Model     string    `json:"Model" db:"model"`
 	Op        int       `json:"Op" db:"op"`
 	State     int       `json:"State" db:"state"`
+	Comments  string    `json:"comments" db:"comments"`
+	CreatedAt time.Time `json:"CreatedAt" db:"created_at"`
+	Deleted   int       `json:"Deleted" db:"deleted"`
+}
+
+type VerifyJobPageItem struct {
+	Jid       int       `json:"Jid" db:"jid"`
+	Target    string    `json:"Target" db:"target"`
+	Model     string    `json:"Model" db:"model"`
+	Op        int       `json:"Op" db:"op"`
+	State     int       `json:"State" db:"state"`
+	Rid       int       `json:"Rid" db:"rid"`
+	Pass      int       `json:"Pass" db:"pass"`
 	Comments  string    `json:"comments" db:"comments"`
 	CreatedAt time.Time `json:"CreatedAt" db:"created_at"`
 	Deleted   int       `json:"Deleted" db:"deleted"`
@@ -33,10 +47,12 @@ func GetVerifyJobCount() (int, error) {
 	return *count, nil
 }
 
-func GetVerifyJobPage(offset, limit int) ([]VerifyJob, error) {
-	var jobs []VerifyJob
-	sql := fmt.Sprintf("SELECT * FROM %s WHERE deleted = 0 ORDER BY jid LIMIT %d,%d",
-		tableNameVerifyJob, offset, limit)
+func GetVerifyJobPage(offset, limit int) ([]VerifyJobPageItem, error) {
+	var jobs []VerifyJobPageItem
+	sql := fmt.Sprintf("select vj.jid,target,model,state, IFNULL(rid, 0) as rid, IFNULL(pass, 0) as pass,"+
+		"vj.op, vj.comments, vj.created_at,vj.deleted from %s as vj left outer join %s as vr on vj.jid=vr.jid "+
+		"WHERE vj.deleted = 0 ORDER BY vj.jid LIMIT %d,%d",
+		tableNameVerifyJob, tableNameVerifyReport, offset, limit)
 	err := db.Select(&jobs, sql)
 	if err != nil {
 		errMsg := fmt.Sprintf("查询VerifyJob出错: %s\n", err)
