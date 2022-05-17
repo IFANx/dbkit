@@ -30,6 +30,7 @@ func StartServer(port int) {
 	r.GET("/TestJob/detail", service.GetTestJobDetail)
 	r.POST("/TestJob/sub", service.SubTestJob)
 	r.GET("/TestJob/delete", service.DeleteTestJob)
+	r.GET("/TestJob/abort", service.AbortTestJob)
 
 	r.GET("/TestReport/count", service.GetTestReportCount)
 	r.GET("/TestReport/page", service.GetTestReportPage)
@@ -41,6 +42,7 @@ func StartServer(port int) {
 	r.GET("/VerifyJob/detail", service.GetVerifyJobDetail)
 	r.POST("/VerifyJob/sub", service.SubVerifyJob)
 	r.GET("/VerifyJob/delete", service.DeleteVerifyJob)
+	r.GET("/VerifyJob/abort", service.AbortVerifyJob)
 
 	r.GET("/VerifyReport/count", service.GetVerifyReportCount)
 	r.GET("/VerifyReport/page", service.GetVerifyReportPage)

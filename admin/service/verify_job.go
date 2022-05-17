@@ -88,3 +88,10 @@ func DeleteVerifyJob(ctx *gin.Context) {
 		"err": "暂不允许删除操作",
 	})
 }
+
+func AbortVerifyJob(ctx *gin.Context) {
+	ctx.JSON(http.StatusOK, gin.H{
+		"ok":  false,
+		"err": "暂不允许手动终止任务",
+	})
+}
