@@ -28,6 +28,12 @@ func GenCreateIndexStmt(table *internal.Table) stmt.CreateIndexStmt {
 		}
 	}
 
+	if randomly.RandIntGap(1, 10) == 1 { //partial index
+		predicate := GenPredicate(table)
+		indexedColumns = append(indexedColumns, " WHERE ")
+		indexedColumns = append(indexedColumns, predicate)
+	}
+
 	return stmt.CreateIndexStmt{
 		IndexName: idxName,
 		TableName: table.Name,
