@@ -4,12 +4,13 @@ import (
 	"dbkit/admin"
 	"dbkit/internal"
 	"dbkit/internal/mysql"
+
 	log "github.com/sirupsen/logrus"
 )
 
 func main() {
 	defer func() {
-		log.Info("运行结束，清理资源")
+		log.Info("End of run, clean up resources")
 		clean()
 	}()
 	admin.StartServer(8080)

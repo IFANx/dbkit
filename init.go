@@ -3,12 +3,13 @@ package main
 import (
 	"dbkit/internal"
 	"dbkit/internal/util"
-	log "github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"io"
 	"math/rand"
 	"os"
 	"time"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 var logFile *os.File
@@ -29,12 +30,12 @@ func init() {
 	if util.CheckFileIsExist(logFileName) { //如果文件存在
 		logFile, err = os.OpenFile(logFileName, os.O_APPEND, 0666) //打开文件
 		if err != nil {
-			log.Fatalf("打开日志文件失败")
+			log.Fatalf("Failed to open log file.")
 		}
 	} else {
 		logFile, err = os.Create(logFileName)
 		if err != nil {
-			log.Fatalf("创建日志文件失败")
+			log.Fatalf("Failed to create log file.")
 		}
 	}
 	mw := io.MultiWriter(os.Stdout, logFile)
@@ -44,6 +45,6 @@ func init() {
 	conn := state.GetDataSourceConn()
 	err = conn.Ping()
 	if err != nil {
-		log.Fatalf("连接MySQL数据源失败，请确认DBKit基础数据库连接参数无误")
+		log.Fatalf("Failed to build connection.")
 	}
 }
