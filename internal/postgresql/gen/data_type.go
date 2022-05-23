@@ -1,7 +1,8 @@
-package cockroachdb
+package gen
 
 import (
 	"dbkit/internal/common"
+
 	log "github.com/sirupsen/logrus"
 )
 
