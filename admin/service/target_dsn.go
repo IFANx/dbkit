@@ -39,7 +39,7 @@ func GetTargetDSNByType(ctx *gin.Context) {
 }
 
 func AddTargetDSN(ctx *gin.Context) {
-	tp := ctx.DefaultPostForm("type", "mysql")
+	tp := ctx.DefaultPostForm("type", "")
 	host := ctx.DefaultPostForm("host", "127.0.0.1")
 	user := ctx.DefaultPostForm("user", "root")
 	pwd := ctx.DefaultPostForm("pwd", "")
@@ -51,6 +51,13 @@ func AddTargetDSN(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
 			"ok":  false,
 			"err": err.Error(),
+		})
+		return
+	}
+	if tp != "mysql" && tp != "tidb" && tp != "mariadb" && tp != "postgresql" && tp != "cockroachdb" {
+		ctx.JSON(http.StatusOK, gin.H{
+			"ok":  false,
+			"err": "Database type is not supported:" + tp,
 		})
 		return
 	}

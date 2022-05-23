@@ -45,7 +45,7 @@ func GetTargetDSNByType(tp string) ([]TargetDSN, error) {
 
 func AddTargetDSN(tp, host, user, pwd, dbName, params string, port int) (int, error) {
 	sql := fmt.Sprintf("INSERT INTO %s(db_type, db_host, db_port, db_user, db_pwd, db_name, params) "+
-		"VALUES (%s, %s, %d, %s, %s, %s, %s)", tableNameTargetDSN, tp, host, port, user, pwd, dbName, params)
+		"VALUES ('%s', '%s', '%d', '%s', '%s', '%s', '%s')", tableNameTargetDSN, tp, host, port, user, pwd, dbName, params)
 	execRes, err := db.Exec(sql)
 	if err != nil {
 		errMsg := fmt.Sprintf("新增连接参数出错: %s\n", err)
