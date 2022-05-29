@@ -38,6 +38,21 @@ func GetTargetDSNByType(ctx *gin.Context) {
 	}
 }
 
+func GetAllAvailableTypeVersionMap(ctx *gin.Context) {
+	verMap, err := model.GetAvailableTypeVersionMap()
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"ok":  false,
+			"err": err.Error(),
+		})
+	} else {
+		ctx.JSON(http.StatusOK, gin.H{
+			"ok":   true,
+			"data": verMap,
+		})
+	}
+}
+
 func GetAvailableVersionByType(ctx *gin.Context) {
 	tp := ctx.DefaultQuery("type", "mysql")
 	dsnMap, err := model.GetAvailableDSNVersionByType(tp)

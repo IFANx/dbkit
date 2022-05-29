@@ -54,7 +54,8 @@ func StartServer(port int) {
 	r.POST("/TargetDSN/add", service.AddTargetDSN)
 	r.GET("/TargetDSN/check", service.CheckTargetDSN)
 	r.GET("/TargetDSN/delete", service.DeleteTargetDSN)
-	r.GET("/TargetDSN/available", service.GetAvailableVersionByType)
+	r.GET("/TargetDSN/typeAvailable", service.GetAvailableVersionByType)
+	r.GET("/TargetDSN/allAvailable", service.GetAllAvailableTypeVersionMap)
 
 	r.GET("/SysInfo/all", service.GetAllSysInfo)
 

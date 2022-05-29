@@ -45,6 +45,18 @@ func GetTargetDSNByType(tp string) ([]TargetDSN, error) {
 	return dsnList, nil
 }
 
+func GetAllAvailableDSN() ([]TargetDSN, error) {
+	var dsnList []TargetDSN
+	sql := fmt.Sprintf("SELECT * FROM %s WHERE state = 1 AND deleted = 0", tableNameTargetDSN)
+	err := db.Select(&dsnList, sql)
+	if err != nil {
+		errMsg := fmt.Sprintf("查询可用连接参数出错: %s\n", err)
+		log.Warnf(errMsg)
+		return nil, errors.New(errMsg)
+	}
+	return dsnList, nil
+}
+
 func GetAvailableDSNByType(tp string) ([]TargetDSN, error) {
 	var dsnList []TargetDSN
 	sql := fmt.Sprintf("SELECT * FROM %s WHERE db_type = '%s' AND state = 1 AND deleted = 0",
@@ -56,6 +68,36 @@ func GetAvailableDSNByType(tp string) ([]TargetDSN, error) {
 		return nil, errors.New(errMsg)
 	}
 	return dsnList, nil
+}
+
+func GetAllAvailableDSNVersion() (map[string]map[string]string, error) {
+	typeList := []string{"mysql", "tidb", "mariadb", "sqlite", "postgresql", "cockroachdb"}
+	res := make(map[string]map[string]string)
+	for _, tp := range typeList {
+		verDsnMap, err := GetAvailableDSNVersionByType(tp)
+		if err != nil {
+			res[tp] = make(map[string]string)
+		}
+		res[tp] = verDsnMap
+	}
+	return res, nil
+}
+
+func GetAvailableTypeVersionMap() (map[string][]string, error) {
+	dsnList, err := GetAllAvailableDSN()
+	if err != nil {
+		return nil, err
+	}
+	typeList := []string{"mysql", "tidb", "mariadb", "sqlite", "postgresql", "cockroachdb"}
+	verMap := make(map[string][]string)
+	for _, tp := range typeList {
+		verMap[tp] = make([]string, 0)
+	}
+	for _, dsn := range dsnList {
+		version := dsn.Version
+		verMap[dsn.DBType] = append(verMap[dsn.DBType], version)
+	}
+	return verMap, nil
 }
 
 func GetAvailableDSNVersionByType(tp string) (map[string]string, error) {
