@@ -38,6 +38,22 @@ func GetTargetDSNByType(ctx *gin.Context) {
 	}
 }
 
+func GetAvailableVersionByType(ctx *gin.Context) {
+	tp := ctx.DefaultQuery("type", "mysql")
+	dsnMap, err := model.GetAvailableDSNVersionByType(tp)
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"ok":  false,
+			"err": err.Error(),
+		})
+	} else {
+		ctx.JSON(http.StatusOK, gin.H{
+			"ok":   true,
+			"data": dsnMap,
+		})
+	}
+}
+
 func AddTargetDSN(ctx *gin.Context) {
 	tp := ctx.DefaultPostForm("type", "")
 	host := ctx.DefaultPostForm("host", "127.0.0.1")
@@ -124,6 +140,15 @@ func CheckTargetDSN(ctx *gin.Context) {
 	}
 	version, err := model.GetTargetDSNVersion(dsn.DBType, dsn.DBHost, dsn.DBUser,
 		dsn.DBPwd, dsn.DBName, dsn.Params, dsn.DBPort)
+	if err != nil {
+		_ = model.UpdateStateAndVersionByTid(tid, -1, "-")
+		ctx.JSON(http.StatusOK, gin.H{
+			"ok":  false,
+			"err": err.Error(),
+		})
+		return
+	}
+	err = model.UpdateStateAndVersionByTid(tid, 1, version)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{
 			"ok":  false,

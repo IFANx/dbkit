@@ -16,6 +16,8 @@ type TargetDSN struct {
 	DBPwd   string `json:"DBPwd" db:"db_pwd"`
 	DBName  string `json:"DBName" db:"db_name"`
 	Params  string `json:"Params" db:"params"`
+	State   int    `json:"State" db:"state"`
+	Version string `json:"Version" db:"version"`
 	Deleted string `json:"Deleted" db:"deleted"`
 }
 
@@ -41,6 +43,34 @@ func GetTargetDSNByType(tp string) ([]TargetDSN, error) {
 		return nil, errors.New(errMsg)
 	}
 	return dsnList, nil
+}
+
+func GetAvailableDSNByType(tp string) ([]TargetDSN, error) {
+	var dsnList []TargetDSN
+	sql := fmt.Sprintf("SELECT * FROM %s WHERE db_type = '%s' AND state = 1 AND deleted = 0",
+		tableNameTargetDSN, tp)
+	err := db.Select(&dsnList, sql)
+	if err != nil {
+		errMsg := fmt.Sprintf("查询可用连接参数出错: %s\n", err)
+		log.Warnf(errMsg)
+		return nil, errors.New(errMsg)
+	}
+	return dsnList, nil
+}
+
+func GetAvailableDSNVersionByType(tp string) (map[string]string, error) {
+	dsnList, err := GetAvailableDSNByType(tp)
+	if err != nil {
+		return nil, err
+	}
+	verDsnMap := make(map[string]string)
+	for _, dsn := range dsnList {
+		version := dsn.Version
+		dsnStr := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?%s",
+			dsn.DBUser, dsn.DBPwd, dsn.DBHost, dsn.DBPort, dsn.DBName, dsn.Params)
+		verDsnMap[version] = dsnStr
+	}
+	return verDsnMap, nil
 }
 
 func AddTargetDSN(tp, host, user, pwd, dbName, params string, port int) (int, error) {
@@ -92,4 +122,27 @@ func GetTargetDSNByTid(tid int) (*TargetDSN, error) {
 		return nil, err
 	}
 	return &dsn, nil
+}
+
+func UpdateStateAndVersionByTid(tid, state int, version string) error {
+	sql := fmt.Sprintf("UPDATE %s SET state = %d, version = '%s' WHERE tid = %d",
+		tableNameTargetDSN, state, version, tid)
+	_, err := db.Exec(sql)
+	if err != nil {
+		errMsg := fmt.Sprintf("更新连接状态出错: %s\n", err)
+		log.Warnf(errMsg)
+		return errors.New(errMsg)
+	}
+	return nil
+}
+
+func ClearAllDSNStateAndVersion() error {
+	sql := fmt.Sprintf("UPDATE %s SET state = 0, version = '-'", tableNameTargetDSN)
+	_, err := db.Exec(sql)
+	if err != nil {
+		errMsg := fmt.Sprintf("更新连接状态出错: %s\n", err)
+		log.Warnf(errMsg)
+		return errors.New(errMsg)
+	}
+	return nil
 }

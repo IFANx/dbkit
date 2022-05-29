@@ -40,6 +40,13 @@ func init() {
 		log.Panic(err.Error())
 		return
 	}
+
+	err = ClearAllDSNStateAndVersion()
+	if err != nil {
+		log.Info("初始化DSN连接状态和版本出错")
+	} else {
+		log.Info("初始化DSN连接状态和版本成功")
+	}
 }
 
 func CloseDB() {
