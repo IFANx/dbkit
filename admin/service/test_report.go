@@ -64,12 +64,22 @@ func GetTestReportDetail(ctx *gin.Context) {
 			"err": err.Error(),
 		})
 		return
-	} else {
-		ctx.JSON(http.StatusOK, gin.H{
-			"ok":   true,
-			"data": report,
-		})
 	}
+	job, err := model.GetTestJobByJid(report.Jid)
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"ok":  false,
+			"err": err.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"ok": true,
+		"data": map[string]interface{}{
+			"job":    job,
+			"report": report,
+		},
+	})
 }
 
 func DeleteTestReport(ctx *gin.Context) {
