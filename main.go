@@ -13,7 +13,7 @@ func main() {
 		log.Info("End of run, clean up resources")
 		clean()
 	}()
-	admin.StartServer(8080)
+	admin.StartServer(9999)
 }
 
 func RunMySQLQueryTest() {
