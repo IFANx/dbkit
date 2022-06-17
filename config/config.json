@@ -1,24 +1,9 @@
 {
-  "Oracle": "query",
 
   "DataSource": {
-    "port": 3306,
+    "port": 13102,
     "host": "127.0.0.1",
     "username": "root",
-    "password": "tobeno.1"
-  },
-
-  "Target": "mysql",
-
-  "mysql": {
-    "dbname": "test",
-    "port": 3306,
-    "host": "127.0.0.1",
-    "username": "root",
-    "password": "tobeno.1"
-  },
-
-  "sqlite": {
-    "dbname": "test"
+    "password": "root"
   }
 }
