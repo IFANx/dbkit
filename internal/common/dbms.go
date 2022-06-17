@@ -1,8 +1,9 @@
 package common
 
 import (
-	log "github.com/sirupsen/logrus"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type DBMS struct {
@@ -38,7 +39,7 @@ func GetDBMSFromStr(dbms string) DBMS {
 	dbms = strings.ToLower(dbms)
 	val, ok := DBMSMap[dbms]
 	if !ok {
-		log.Errorf("不支持数据库名称：%s", dbms)
+		log.Errorf("Do not support %s", dbms)
 	}
 	return val
 }

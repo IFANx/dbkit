@@ -4,12 +4,13 @@ import (
 	"dbkit/config"
 	"dbkit/internal/common"
 	"fmt"
+	"sync"
+
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
-	"sync"
 )
 
 type GlobalState struct {
@@ -28,7 +29,7 @@ var once sync.Once
 func GetState() *GlobalState {
 	once.Do(func() {
 		globalState = makeGlobalState()
-		log.Info("全局状态初始化成功")
+		log.Info("Initialize global state")
 	})
 	return globalState
 }
@@ -37,12 +38,12 @@ func makeGlobalState() *GlobalState {
 	// 从配置文件读取配置
 	err := viper.ReadInConfig()
 	if err != nil {
-		log.Fatalf("读取配置文件错误")
+		log.Fatalf("Fail to read config")
 	}
 	dbKitConfig := config.DBKitConfig{}
 	err = viper.Unmarshal(&dbKitConfig)
 	if err != nil {
-		log.Fatalf("解析配置文件错误")
+		log.Fatalf("Fail to parse config")
 	}
 
 	state := GlobalState{
@@ -59,7 +60,7 @@ func makeGlobalState() *GlobalState {
 		dataSource.Username, dataSource.Password, dataSource.Host, dataSource.Port)
 	state.DataSource, err = sqlx.Open("mysql", connStr)
 	if err != nil {
-		log.Fatalf("连接MySQL数据源失败，请确认DBKit基础数据库连接参数无误")
+		log.Fatalf("Fail to connect database")
 	}
 	for _, dbms := range common.DBMSSet {
 		db, res := state.initConnPool(dbms)
@@ -76,7 +77,7 @@ func (state *GlobalState) GetDataSourceConn() *sqlx.DB {
 
 func (state *GlobalState) GetConnPool(dbms common.DBMS) *sqlx.DB {
 	if state.ConnStates[dbms] != 0 {
-		log.Errorf("获取%s连接失败，连接参数未配置或连接失败", dbms)
+		log.Errorf("Fail to connect %s", dbms)
 	}
 	return state.Connections[dbms]
 }
@@ -121,18 +122,18 @@ func (state *GlobalState) initConnPool(dbms common.DBMS) (*sqlx.DB, int) {
 		connStr := fmt.Sprintf("./db/%s.db", sqLiteConfig.DBName)
 		db, err = sqlx.Open("sqlite3", connStr)
 	default:
-		log.Fatalf("该类型数据库当前不支持:%s", dbms)
+		log.Fatalf("Do not support %s", dbms)
 	}
 
 	if err != nil {
-		log.Warnf("%s连接失败:%s", dbms, err)
+		log.Warnf("Fail to connect %s [%s]", dbms, err)
 		return nil, -1
 	}
 	err = db.Ping()
 	if err != nil {
-		log.Warnf("%s连接失败:%s", dbms, err)
+		log.Warnf("Fail to connect %s [%s]", dbms, err)
 		return nil, -1
 	}
-	log.Infof("%s连接成功", dbms)
+	log.Infof("Connect %s", dbms)
 	return db, 1
 }

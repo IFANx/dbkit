@@ -4,9 +4,10 @@ import (
 	"dbkit/internal/common"
 	"dbkit/internal/common/stmt"
 	"dbkit/internal/randomly"
+	"time"
+
 	"github.com/jmoiron/sqlx"
 	log "github.com/sirupsen/logrus"
-	"time"
 )
 
 type TestContext struct {
@@ -75,7 +76,7 @@ func (ctx *TestContext) Queryx(query string) (*sqlx.Rows, error) {
 func (ctx *TestContext) QuerySQL(query string) ([][]interface{}, error) {
 	rows, err := ctx.Conn.Queryx(query)
 	if err != nil {
-		log.Warnf("查询语句执行错误: [%s]，原因: %s", query, err)
+		log.Warnf("Fail to query: %s, cause: %s", query, err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -83,7 +84,7 @@ func (ctx *TestContext) QuerySQL(query string) ([][]interface{}, error) {
 	for rows.Next() {
 		cols, err := rows.SliceScan()
 		if err != nil {
-			log.Warnf("查询语句执行错误: [%s]，原因: %s", query, err)
+			log.Warnf("Fail to query: %s, cause: %s", query, err)
 			return nil, err
 		}
 		res = append(res, cols)
@@ -104,14 +105,14 @@ func (ctx *TestContext) Query(stmt stmt.SelectStmt) ([][]interface{}, error) {
 func (ctx *TestContext) ExecSQLIgnoreRes(sql string) {
 	_, err := ctx.Conn.Exec(sql)
 	if err != nil {
-		log.Warnf("语句执行出错:[%s]，原因：%s", sql, err)
+		log.Warnf("Fail to execute: %s, cause: %s", sql, err)
 	}
 }
 
 func (ctx *TestContext) ExecSQL(sql string) error {
 	_, err := ctx.Conn.Exec(sql)
 	if err != nil {
-		log.Warnf("语句执行出错:[%s]，原因：%s", sql, err)
+		log.Warnf("Fail to execute: %s, cause: %s", sql, err)
 	}
 	return err
 }
@@ -119,12 +120,12 @@ func (ctx *TestContext) ExecSQL(sql string) error {
 func (ctx *TestContext) ExecSQLAffectedRow(sql string) (int, error) {
 	res, err := ctx.Conn.Exec(sql)
 	if err != nil {
-		log.Warnf("语句执行出错:[%s]，原因：%s", sql, err)
+		log.Warnf("Fail to execute: %s, cause: %s", sql, err)
 		return 0, err
 	}
 	count, err := res.RowsAffected()
 	if err != nil {
-		log.Warnf("语句执行出错:[%s]，原因：%s", sql, err)
+		log.Warnf("Fail to execute: %s, cause: %s", sql, err)
 		return 0, err
 	}
 	return int(count), err
@@ -141,7 +142,7 @@ func (ctx *TestContext) ExecDelete(stmt stmt.DeleteStmt) (int, error) {
 func (ctx *TestContext) ExecInsert(stmt stmt.InsertStmt) error {
 	_, err := ctx.Conn.Exec(stmt.String())
 	if err != nil {
-		log.Warnf("语句执行出错:[%s]，原因：%s", stmt.String(), err)
+		log.Warnf("Fail to execute: %s, cause: %s", stmt.String(), err)
 	}
 	return err
 }
