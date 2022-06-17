@@ -4,6 +4,7 @@ import (
 	"dbkit/internal/common"
 	"dbkit/internal/randomly"
 	"fmt"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -23,26 +24,26 @@ type Table struct {
 func (table *Table) Build() {
 	table.DropTable()
 	stmt := table.DBProvider.GenCreateTableStmt(table)
-	log.Infof("生成数据表创建语句：%s", stmt.String())
+	log.Infof("Create table statement: %s", stmt.String())
 	err := table.TestCtx.ExecSQL(stmt.String())
 	if err != nil {
-		log.Infof("创建数据表失败：%s", err)
+		log.Infof("Fail to create table: %s", err)
 	}
 	table.UpdateSchema()
 	for i := 0; i < randomly.RandIntGap(1, 3); i++ {
 		stmt := table.DBProvider.GenCreateIndexStmt(table)
-		log.Infof("生成索引创建语句：%s", stmt.String())
+		log.Infof("Create index statement: %s", stmt.String())
 		err := table.TestCtx.ExecSQL(stmt.String())
 		if err != nil {
-			log.Infof("创建索引失败：%s", err)
+			log.Infof("Fail to create index: %s", err)
 		}
 	}
 	for i := 0; i < randomly.RandIntGap(5, 10); i++ {
 		stmt := table.DBProvider.GenInsertStmt(table)
-		log.Infof("生成数据插入语句：%s", stmt.String())
+		log.Infof("Insert statement: %s", stmt.String())
 		err := table.TestCtx.ExecSQL(stmt.String())
 		if err != nil {
-			log.Infof("插入记录失败：%s", err)
+			log.Infof("Fail to insert data: %s", err)
 		}
 	}
 	table.UpdateSchema()
@@ -57,7 +58,7 @@ func (table *Table) UpdateSchema() {
 	case common.MYSQL, common.MARIADB, common.TIDB:
 		rows, err := table.TestCtx.Queryx("desc " + table.Name)
 		if err != nil {
-			log.Warnf("获取表格结构信息失败")
+			log.Warnf("Fail to get table structure: %s", err)
 		}
 		defer rows.Close()
 		res := make(map[string]interface{})
@@ -89,7 +90,7 @@ func (table *Table) UpdateSchema() {
 			"where table_schema = '%s' and table_name = '%s'", table.DBName, table.Name)
 		rows, err = table.TestCtx.Queryx(sql)
 		if err != nil {
-			log.Warnf("获取表格索引信息失败：[%s]", err)
+			log.Warnf("Fail to get index: %s", err)
 		}
 	}
 }
