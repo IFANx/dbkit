@@ -11,16 +11,16 @@ type DeleteStmt struct {
 	Table      internal.Table
 	Partitions []string
 	Where      AstNode
-	OrderBy    AstNode
+	OrderBy    []*internal.Column
 	OrderOpt   OrderOption
 	Limit      int
 }
 
 func (stmt *DeleteStmt) String() string {
 	res := "DELETE "
-	delOptDict := []string{"LOW_PRIORITY", "QUICK", "IGNORE"}
+	delOptDict := []string{"LOW_PRIORITY", "IGNORE"}
 	optionStrList := make([]string, 0)
-	for opt := range stmt.Options {
+	for _, opt := range stmt.Options {
 		optionStrList = append(optionStrList, delOptDict[opt])
 	}
 	res += strings.Join(optionStrList, " ")
@@ -33,7 +33,11 @@ func (stmt *DeleteStmt) String() string {
 		res += "WHERE " + stmt.Where.String() + " "
 	}
 	if stmt.OrderBy != nil {
-		res += "ORDER BY " + stmt.OrderBy.String() + " "
+		orderByList := make([]string, 0)
+		for _, col := range stmt.OrderBy {
+			optionStrList = append(orderByList, col.Name)
+		}
+		res += "ORDER BY " + strings.Join(optionStrList, " ")
 	}
 	if stmt.OrderOpt > -1 {
 		orderOptDict := []string{"ASC", "DESC"}
