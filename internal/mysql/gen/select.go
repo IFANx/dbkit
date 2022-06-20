@@ -8,7 +8,7 @@ import (
 
 func GenSelectStmt(table *internal.Table) stmt.SelectStmt {
 	predicate := GenPredicate(table)
-	selectedColumns := randomly.RandomPickNotEmptyStr(table.ColumnNames)
+	selectedColumns := randomly.RandPickNotEmptyStr(table.ColumnNames)
 	postFix := randomly.RandIntGap(0, 5)
 	return stmt.SelectStmt{
 		TableName: table.Name,

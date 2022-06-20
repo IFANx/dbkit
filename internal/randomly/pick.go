@@ -1,6 +1,9 @@
 package randomly
 
-import "math/rand"
+import (
+	"dbkit/internal"
+	"math/rand"
+)
 
 func RandPickOne(candidates []interface{}) interface{} {
 	if candidates == nil || len(candidates) == 0 {
@@ -26,7 +29,7 @@ func RandPickN(candidates []interface{}, x int) []interface{} {
 	return candidates[:x]
 }
 
-func RandomPickNotEmpty(candidates []interface{}) []interface{} {
+func RandPickNotEmpty(candidates []interface{}) []interface{} {
 	if candidates == nil || len(candidates) == 0 {
 		panic("empty candidates slice")
 	}
@@ -62,7 +65,7 @@ func RandPickNInt(candidates []int, x int) []int {
 	return candidates[:x]
 }
 
-func RandomPickNotEmptyInt(candidates []int) []int {
+func RandPickNotEmptyInt(candidates []int) []int {
 	if candidates == nil || len(candidates) == 0 {
 		panic("empty candidates slice")
 	}
@@ -98,7 +101,7 @@ func RandPickNStr(candidates []string, x int) []string {
 	return candidates[:x]
 }
 
-func RandomPickNotEmptyStr(candidates []string) []string {
+func RandPickNotEmptyStr(candidates []string) []string {
 	if candidates == nil || len(candidates) == 0 {
 		panic("empty candidates slice")
 	}
@@ -108,4 +111,11 @@ func RandomPickNotEmptyStr(candidates []string) []string {
 		candidates[i], candidates[j] = candidates[j], candidates[i]
 	})
 	return candidates[:x]
+}
+
+func RandPickOneCol(candidates []*internal.Column) *internal.Column {
+	if candidates == nil || len(candidates) == 0 {
+		panic("empty candidates slice")
+	}
+	return candidates[RandIntGap(0, len(candidates))]
 }

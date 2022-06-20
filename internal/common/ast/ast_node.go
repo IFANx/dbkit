@@ -11,8 +11,8 @@ func (dt DataType) String() string {
 type NodeType = int
 
 const (
-	NodeTypeConst = iota
-	NodeTypeTabRef
+	NodeTypeTabRef = iota
+	NodeTypeConst
 	NodeTypeColRef
 	NodeTypeUnaryPreOp
 	NodeTypeUnaryPostOp

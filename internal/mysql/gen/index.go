@@ -11,7 +11,7 @@ import (
 func GenCreateIndexStmt(table *internal.Table) stmt.CreateIndexStmt {
 	table.IndexCount++
 	idxName := fmt.Sprintf("i%d", table.IndexCount)
-	candidateColumns := randomly.RandomPickNotEmptyStr(table.ColumnNames)
+	candidateColumns := randomly.RandPickNotEmptyStr(table.ColumnNames)
 	indexedColumns := make([]string, 0)
 	for _, colName := range candidateColumns {
 		column := table.Columns[colName]

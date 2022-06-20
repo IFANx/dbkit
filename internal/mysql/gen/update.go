@@ -8,7 +8,7 @@ import (
 
 func GenUpdateStmt(table *internal.Table) stmt.UpdateStmt {
 	predicate := GenPredicate(table)
-	updatedColumns := randomly.RandomPickNotEmptyStr(table.ColumnNames)
+	updatedColumns := randomly.RandPickNotEmptyStr(table.ColumnNames)
 	colValMap := make(map[string]string)
 	for _, colName := range updatedColumns {
 		colType := table.Columns[colName].Type

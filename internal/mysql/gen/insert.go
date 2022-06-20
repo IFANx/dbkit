@@ -8,7 +8,7 @@ import (
 )
 
 func GenInsertStmt(table *internal.Table) stmt.InsertStmt {
-	insertedColumns := randomly.RandomPickNotEmptyStr(table.ColumnNames)
+	insertedColumns := randomly.RandPickNotEmptyStr(table.ColumnNames)
 	for colName, column := range table.Columns {
 		if (column.NotNull || column.Primary) &&
 			!util.CheckStrExists(colName, insertedColumns) {
