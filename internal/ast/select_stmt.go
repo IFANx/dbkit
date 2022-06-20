@@ -28,13 +28,18 @@ func (stmt *SelectStmt) String() string {
 	selOptDict := []string{"ALL", "DISTINCT", "DISTINCTROW", "HIGH_PRIORITY", "STRAIGHT_JOIN",
 		"SQL_SMALL_RESULT", "SQL_BIG_RESULT", "SQL_BUFFER_RESULT", "SQL_NO_CACHE", "SQL_CALC_FOUND_ROWS"}
 	optionStrList := make([]string, 0)
-	for opt := range stmt.Options {
+	for _, opt := range stmt.Options {
 		optionStrList = append(optionStrList, selOptDict[opt])
 	}
 	res += strings.Join(optionStrList, " ")
 	res += " FROM "
 	if stmt.Join == nil {
-		res += stmt.Tables[0].Name
+		tableNameList := make([]string, 0)
+		for _, tab := range stmt.Tables {
+			tableNameList = append(tableNameList, tab.Name)
+		}
+		res += strings.Join(tableNameList, ",")
+		// res += stmt.Tables[0].Name
 	} else {
 		res += stmt.Join.String()
 		res += " ON " + stmt.JoinOn.String()
@@ -123,7 +128,7 @@ type JoinNode struct {
 }
 
 func (node *JoinNode) Name() string {
-	return "Constant"
+	return "Join"
 }
 
 func (node *JoinNode) Type() NodeType {

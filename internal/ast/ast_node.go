@@ -6,12 +6,10 @@ import (
 )
 
 // DataType TODO
-type DataType struct {
-	Name string
-}
-
-func (dt DataType) String() string {
-	return dt.Name
+type DataType interface {
+	Name() string
+	DBMS() string
+	String() string
 }
 
 type NodeType = int

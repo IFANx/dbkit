@@ -59,7 +59,10 @@ func (generator *exprGenerator) genColumn() ast.AstNode {
 }
 
 func (generator *exprGenerator) genConstant() ast.AstNode {
-	return nil
+	return &ast.ConstNode{
+		ConstType: ast.DataType{},
+		Value:     "",
+	}
 }
 
 func (generator *exprGenerator) genUnaryPreExpr(depth int) ast.AstNode {
@@ -116,8 +119,9 @@ func (generator *exprGenerator) genInExpr(depth int) ast.AstNode {
 }
 
 func (generator *exprGenerator) genCastExpr(depth int) ast.AstNode {
+	expr := generator.genExpression(depth + 1)
 	return &ast.CastOpNode{
-		Expr:       nil,
+		Expr:       expr,
 		TargetType: ast.DataType{},
 	}
 }
