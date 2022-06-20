@@ -52,6 +52,7 @@ func GenerateDeleteStmt(table *internal.Table, partitions []string) *ast.DeleteS
 		orderByOpt = -1
 	}
 
+	// 待修改
 	// 需要添加控制选项的开关
 	if randomly.RandBool() && orderByOpt == -1 {
 

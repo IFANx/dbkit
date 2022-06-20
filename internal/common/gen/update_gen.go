@@ -8,11 +8,11 @@ import (
 	"time"
 )
 
-func GenerateUpdateStmt(table *internal.Table, partitions []string) *ast.DeleteStmt {
+func GenerateUpdateStmt(table *internal.Table, partitions []string) *ast.UpdateStmt {
 	// 需要添加控制选项的开关
 	updOption := []int{0, 1, 2}
 	rand.Seed(time.Now().UnixNano())
-	optNum := rand.Intn(len(updOption) + 1) // 从0到delOption的长度中随机选一个数
+	optNum := rand.Intn(len(updOption) + 1) // 从0到updOption的长度中随机选一个数
 	switch optNum {
 	case 0:
 		updOption = nil
@@ -32,23 +32,26 @@ func GenerateUpdateStmt(table *internal.Table, partitions []string) *ast.DeleteS
 		neededColumns = append(neededColumns, col)
 	}
 
-	// 待修改
-	updExprList := make([]ast.AstNode, 0)
-	for i := 0; i < randomly.RandIntGap(1, 5); i++ {
-		updExprList = append(updExprList, GenerateExpr(neededColumns, 3))
+	var updColumns []*internal.Column
+	updColNum := rand.Intn(len(neededColumns)) + 1
+	updColumns = GenerateRandColumns(neededColumns, updColNum)
+
+	updExprList := make([]ast.AstNode, updColNum)
+	for i := 0; i < updColNum; i++ {
+		if randomly.RandBool() {
+			updExprList = append(updExprList) // 待修改
+		} else {
+			updExprList = append(updExprList, GenerateExpr(updColumns, 3))
+		}
 	}
 
 	// 需要添加控制选项的开关
-	colNum := rand.Intn(len(neededColumns) + 1)
-	orderByColumns := make([]*internal.Column, len(neededColumns))
-	if colNum == 0 {
+	var orderByColumns []*internal.Column
+	orderNum := rand.Intn(len(neededColumns) + 1)
+	if orderNum == 0 {
 		orderByColumns = nil
 	} else {
-		copy(orderByColumns, neededColumns)
-		for i := len(neededColumns); i > colNum; i-- {
-			r := rand.Intn(len(orderByColumns))
-			orderByColumns = append(orderByColumns[:r], orderByColumns[r+1:]...)
-		}
+		orderByColumns = GenerateRandColumns(neededColumns, orderNum)
 	}
 
 	var orderByOpt ast.OrderOption
@@ -58,18 +61,30 @@ func GenerateUpdateStmt(table *internal.Table, partitions []string) *ast.DeleteS
 		orderByOpt = -1
 	}
 
+	// 待修改
 	// 需要添加控制选项的开关
 	if randomly.RandBool() && orderByOpt == -1 {
 
 	}
 
-	return &ast.DeleteStmt{
+	return &ast.UpdateStmt{
 		Options:    updOption,
 		Table:      *table,
 		Partitions: partitions,
+		UpdateCol:  updColumns,
 		Where:      GenerateExpr(neededColumns, 5),
 		OrderBy:    orderByColumns,
 		OrderOpt:   orderByOpt,
 		Limit:      -1,
 	}
+}
+
+func GenerateRandColumns(neededColumns []*internal.Column, colNum int) []*internal.Column {
+	orderByColumns := make([]*internal.Column, len(neededColumns))
+	copy(orderByColumns, neededColumns)
+	for i := len(neededColumns); i > colNum; i-- {
+		r := rand.Intn(len(orderByColumns))
+		orderByColumns = append(orderByColumns[:r], orderByColumns[r+1:]...)
+	}
+	return orderByColumns
 }

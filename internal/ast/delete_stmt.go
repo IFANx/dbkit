@@ -27,7 +27,7 @@ func (stmt *DeleteStmt) String() string {
 	res += " FROM "
 	res += stmt.Table.Name
 	if stmt.Partitions != nil && len(stmt.Partitions) > 0 {
-		res += "PARTITION(" + strings.Join(stmt.Partitions, ",") + ") "
+		res += " PARTITION(" + strings.Join(stmt.Partitions, ",") + ") "
 	}
 	if stmt.Where != nil {
 		res += "WHERE " + stmt.Where.String() + " "

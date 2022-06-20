@@ -10,6 +10,7 @@ type UpdateStmt struct {
 	Options    []UpdateOption
 	Table      internal.Table
 	Partitions []string
+	UpdateCol  []*internal.Column
 	UpdateExpr []AstNode // 结构待调整
 	Where      AstNode
 	OrderBy    []*internal.Column
@@ -30,11 +31,15 @@ func (stmt *UpdateStmt) String() string {
 		res += "PARTITION(" + strings.Join(stmt.Partitions, ",") + ") "
 	}
 	res += " SET "
-
-	// 缺少UpdateExpr
-
+	for i, expr := range stmt.UpdateExpr {
+		if i != 0 {
+			res += ", "
+		}
+		res += stmt.UpdateCol[i].Name + " = "
+		res += expr.String()
+	}
 	if stmt.Where != nil {
-		res += "WHERE " + stmt.Where.String() + " "
+		res += " WHERE " + stmt.Where.String() + " "
 	}
 	if stmt.OrderBy != nil {
 		orderByList := make([]string, 0)
