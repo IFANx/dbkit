@@ -48,7 +48,7 @@ func GenerateUpdateStmt(table *internal.Table, partitions []string) *ast.UpdateS
 	}
 
 	var orderByOpt ast.OrderOption
-	if rand.Intn(2) == 1 {
+	if rand.Intn(2) == 1 && orderNum != 0 {
 		orderByOpt = rand.Intn(2)
 	} else {
 		orderByOpt = -1

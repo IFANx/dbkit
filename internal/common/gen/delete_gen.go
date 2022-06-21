@@ -25,12 +25,12 @@ func GenerateDeleteStmt(table *internal.Table, partitions []string) *ast.DeleteS
 	}
 
 	// 需要添加控制选项的开关
-	colNum := rand.Intn(len(neededColumns) + 1)
+	orderNum := rand.Intn(len(neededColumns) + 1)
 	var orderByColumns []*internal.Column
-	if colNum == 0 {
+	if orderNum == 0 {
 		orderByColumns = nil
 	} else {
-		if colNum == len(neededColumns) {
+		if orderNum == len(neededColumns) {
 			orderByColumns = make([]*internal.Column, 0)
 			for _, v := range rand.Perm(len(neededColumns)) {
 				orderByColumns = append(orderByColumns, neededColumns[v])
@@ -38,7 +38,7 @@ func GenerateDeleteStmt(table *internal.Table, partitions []string) *ast.DeleteS
 		} else {
 			orderByColumns = make([]*internal.Column, len(neededColumns))
 			copy(orderByColumns, neededColumns)
-			for i := len(neededColumns); i > colNum; i-- {
+			for i := len(neededColumns); i > orderNum; i-- {
 				r := rand.Intn(len(orderByColumns))
 				orderByColumns = append(orderByColumns[:r], orderByColumns[r+1:]...)
 			}
@@ -46,7 +46,7 @@ func GenerateDeleteStmt(table *internal.Table, partitions []string) *ast.DeleteS
 	}
 
 	var orderByOpt ast.OrderOption
-	if rand.Intn(2) == 1 {
+	if rand.Intn(2) == 1 && orderNum != 0 {
 		orderByOpt = rand.Intn(2)
 	} else {
 		orderByOpt = -1
