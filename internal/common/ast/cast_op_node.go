@@ -1,8 +1,10 @@
 package ast
 
+import "dbkit/internal/common"
+
 type CastOpNode struct {
 	Expr       AstNode
-	TargetType DataType
+	TargetType common.DataType
 }
 
 func (node *CastOpNode) Name() string {
@@ -14,5 +16,5 @@ func (node *CastOpNode) Type() NodeType {
 }
 
 func (node *CastOpNode) String() string {
-	return "CAST((" + node.Expr.String() + ") AS " + node.TargetType.String() + ")"
+	return "CAST((" + node.Expr.String() + ") AS " + node.TargetType.Name() + ")"
 }

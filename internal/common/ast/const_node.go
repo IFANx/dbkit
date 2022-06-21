@@ -1,7 +1,9 @@
 package ast
 
+import "dbkit/internal/common"
+
 type ConstNode struct {
-	ConstType DataType
+	ConstType common.DataType
 	Value     string
 }
 
