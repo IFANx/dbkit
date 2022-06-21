@@ -7,7 +7,7 @@ import (
 )
 
 type DeleteStmt struct {
-	Options    []DeleteOption
+	Option     DeleteOption
 	Table      internal.Table
 	Partitions []string
 	Where      AstNode
@@ -18,12 +18,9 @@ type DeleteStmt struct {
 
 func (stmt *DeleteStmt) String() string {
 	res := "DELETE "
-	delOptDict := []string{"LOW_PRIORITY", "IGNORE"}
-	optionStrList := make([]string, 0)
-	for _, opt := range stmt.Options {
-		optionStrList = append(optionStrList, delOptDict[opt])
+	if stmt.Option == 1 {
+		res += "IGNORE "
 	}
-	res += strings.Join(optionStrList, " ")
 	res += " FROM "
 	res += stmt.Table.Name
 	if stmt.Partitions != nil && len(stmt.Partitions) > 0 {
@@ -35,9 +32,9 @@ func (stmt *DeleteStmt) String() string {
 	if stmt.OrderBy != nil {
 		orderByList := make([]string, 0)
 		for _, col := range stmt.OrderBy {
-			optionStrList = append(orderByList, col.Name)
+			orderByList = append(orderByList, col.Name)
 		}
-		res += "ORDER BY " + strings.Join(optionStrList, " ")
+		res += "ORDER BY " + strings.Join(orderByList, " ")
 	}
 	if stmt.OrderOpt > -1 {
 		orderOptDict := []string{"ASC", "DESC"}
@@ -52,6 +49,5 @@ func (stmt *DeleteStmt) String() string {
 type DeleteOption = int
 
 const (
-	DelOptLowPriority = iota
-	DelOptIgnore
+	DelOptIgnore = 1
 )
