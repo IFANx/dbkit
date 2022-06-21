@@ -11,14 +11,12 @@ func GenerateUpdateStmt(table *internal.Table, partitions []string) *ast.UpdateS
 	rand.Seed(time.Now().UnixNano())
 	// 需要添加控制选项的开关
 	updOption := 0
-	randBool := rand.Intn(2) // 0和1中随机选一个数
-	if randBool == 1 {
+	if rand.Intn(2) == 1 {
 		updOption = 1
 	}
 
 	// 需要添加控制选项的开关
-	randBool = rand.Intn(2)
-	if randBool == 1 {
+	if rand.Intn(2) == 0 {
 		partitions = nil
 	}
 
@@ -33,8 +31,7 @@ func GenerateUpdateStmt(table *internal.Table, partitions []string) *ast.UpdateS
 
 	updExprList := make([]ast.AstNode, updColNum)
 	for i := 0; i < updColNum; i++ {
-		randBool = rand.Intn(2)
-		if randBool == 1 {
+		if rand.Intn(2) == 1 {
 			updExprList = append(updExprList) // 待修改
 		} else {
 			updExprList = append(updExprList, GenerateExpr(updColumns, 3))
@@ -51,8 +48,7 @@ func GenerateUpdateStmt(table *internal.Table, partitions []string) *ast.UpdateS
 	}
 
 	var orderByOpt ast.OrderOption
-	randBool = rand.Intn(2)
-	if randBool == 1 {
+	if rand.Intn(2) == 1 {
 		orderByOpt = rand.Intn(2)
 	} else {
 		orderByOpt = -1
@@ -60,8 +56,7 @@ func GenerateUpdateStmt(table *internal.Table, partitions []string) *ast.UpdateS
 
 	// 待修改
 	// 需要添加控制选项的开关
-	randBool = rand.Intn(2)
-	if randBool == 1 && orderByOpt == -1 {
+	if rand.Intn(2) == 1 && orderByOpt == -1 {
 
 	}
 
@@ -78,11 +73,19 @@ func GenerateUpdateStmt(table *internal.Table, partitions []string) *ast.UpdateS
 }
 
 func GenerateRandColumns(neededColumns []*internal.Column, colNum int) []*internal.Column {
-	orderByColumns := make([]*internal.Column, len(neededColumns))
-	copy(orderByColumns, neededColumns)
-	for i := len(neededColumns); i > colNum; i-- {
-		r := rand.Intn(len(orderByColumns))
-		orderByColumns = append(orderByColumns[:r], orderByColumns[r+1:]...)
+	var orderByColumns []*internal.Column
+	if colNum == len(neededColumns) {
+		orderByColumns = make([]*internal.Column, 0)
+		for _, v := range rand.Perm(len(neededColumns)) {
+			orderByColumns = append(orderByColumns, neededColumns[v])
+		}
+	} else {
+		orderByColumns = make([]*internal.Column, len(neededColumns))
+		copy(orderByColumns, neededColumns)
+		for i := len(neededColumns); i > colNum; i-- {
+			r := rand.Intn(len(orderByColumns))
+			orderByColumns = append(orderByColumns[:r], orderByColumns[r+1:]...)
+		}
 	}
 	return orderByColumns
 }
