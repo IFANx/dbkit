@@ -1,13 +1,13 @@
 package gen
 
 import (
-	"dbkit/internal"
+	"dbkit/internal/common"
 	"dbkit/internal/common/stmt"
 	"dbkit/internal/randomly"
 	"strconv"
 )
 
-func GenCreateTableStmt(table *internal.Table) stmt.CreateTableStmt {
+func GenCreateTableStmt(table *common.Table) stmt.CreateTableStmt {
 	var (
 		colNames   []string
 		colTypes   = make(map[string]string)

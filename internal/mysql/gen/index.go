@@ -1,14 +1,13 @@
 package gen
 
 import (
-	"dbkit/internal"
 	"dbkit/internal/common"
 	"dbkit/internal/common/stmt"
 	"dbkit/internal/randomly"
 	"fmt"
 )
 
-func GenCreateIndexStmt(table *internal.Table) stmt.CreateIndexStmt {
+func GenCreateIndexStmt(table *common.Table) stmt.CreateIndexStmt {
 	table.IndexCount++
 	idxName := fmt.Sprintf("i%d", table.IndexCount)
 	candidateColumns := randomly.RandPickNotEmptyStr(table.ColumnNames)

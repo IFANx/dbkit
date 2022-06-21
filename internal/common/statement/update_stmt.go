@@ -1,7 +1,7 @@
 package statement
 
 import (
-	"dbkit/internal"
+	"dbkit/internal/common"
 	"dbkit/internal/common/ast"
 	"strconv"
 	"strings"
@@ -9,12 +9,12 @@ import (
 
 type UpdateStmt struct {
 	Option     UpdateOption
-	Table      internal.Table
+	Table      common.Table
 	Partitions []string
-	UpdateCol  []*internal.Column
+	UpdateCol  []*common.Column
 	UpdateExpr []ast.AstNode // 结构待调整
 	Where      ast.AstNode
-	OrderBy    []*internal.Column
+	OrderBy    []*common.Column
 	OrderOpt   OrderOption
 	Limit      int
 }

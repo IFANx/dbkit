@@ -1,26 +1,26 @@
 package gen
 
 import (
-	"dbkit/internal"
+	"dbkit/internal/common"
 	"dbkit/internal/common/ast"
 	"dbkit/internal/common/statement"
 	"dbkit/internal/randomly"
 	"math/rand"
 )
 
-func GenerateSelectStmt(tables []*internal.Table) *statement.SelectStmt {
+func GenerateSelectStmt(tables []*common.Table) *statement.SelectStmt {
 	selOptList := make([]statement.SelectOption, 0)
 	selOptIdx := randomly.RandIntGap(-1, statement.SelOptSqlCalcFoundRows+1)
 	if selOptIdx > -1 {
 		selOptList = append(selOptList, selOptIdx)
 	}
-	neededTables := make([]*internal.Table, 0)
+	neededTables := make([]*common.Table, 0)
 	if randomly.RandBool() && len(tables) > 1 {
 		neededTables = RandPickNotEmptyTab(tables)
 	} else {
 		neededTables = append(neededTables, tables[0])
 	}
-	neededColumns := make([]*internal.Column, 0)
+	neededColumns := make([]*common.Column, 0)
 	for _, tab := range neededTables {
 		for _, col := range tab.Columns {
 			neededColumns = append(neededColumns, col)
@@ -62,7 +62,7 @@ func GenerateSelectStmt(tables []*internal.Table) *statement.SelectStmt {
 	}
 }
 
-func GenerateJoinAst(tables []*internal.Table) ast.AstNode {
+func GenerateJoinAst(tables []*common.Table) ast.AstNode {
 	var preNode, curNode ast.AstNode
 	preNode = &statement.JoinNode{
 		JoinType: randomly.RandIntGap(statement.JoinTypeInner, statement.JoinTypeNatural+1),
@@ -80,7 +80,7 @@ func GenerateJoinAst(tables []*internal.Table) ast.AstNode {
 	return curNode
 }
 
-func RandPickNotEmptyTab(candidates []*internal.Table) []*internal.Table {
+func RandPickNotEmptyTab(candidates []*common.Table) []*common.Table {
 	if candidates == nil || len(candidates) == 0 {
 		panic("empty candidates slice")
 	}

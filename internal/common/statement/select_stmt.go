@@ -1,7 +1,7 @@
 package statement
 
 import (
-	"dbkit/internal"
+	"dbkit/internal/common"
 	"dbkit/internal/common/ast"
 	"strconv"
 	"strings"
@@ -10,7 +10,7 @@ import (
 type SelectStmt struct {
 	Options    []SelectOption
 	SelectExpr []ast.AstNode
-	Tables     []*internal.Table
+	Tables     []*common.Table
 	Join       ast.AstNode
 	JoinOn     ast.AstNode
 	Partitions []string

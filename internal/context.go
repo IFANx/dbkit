@@ -21,7 +21,7 @@ type TestContext struct {
 	SqlCount     int64
 	TestRunCount int64
 	ReportCount  int64
-	Tables       []*Table
+	Tables       []*common.Table
 }
 
 func NewTestContext() *TestContext {
@@ -40,7 +40,7 @@ func NewTestContext() *TestContext {
 		SqlCount:     0,
 		TestRunCount: 0,
 		ReportCount:  0,
-		Tables:       make([]*Table, 0),
+		Tables:       make([]*common.Table, 0),
 	}
 }
 

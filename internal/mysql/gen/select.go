@@ -1,12 +1,12 @@
 package gen
 
 import (
-	"dbkit/internal"
+	"dbkit/internal/common"
 	"dbkit/internal/common/stmt"
 	"dbkit/internal/randomly"
 )
 
-func GenSelectStmt(table *internal.Table) stmt.SelectStmt {
+func GenSelectStmt(table *common.Table) stmt.SelectStmt {
 	predicate := GenPredicate(table)
 	selectedColumns := randomly.RandPickNotEmptyStr(table.ColumnNames)
 	postFix := randomly.RandIntGap(0, 5)

@@ -1,9 +1,11 @@
 package ast
 
-import "dbkit/internal"
+import (
+	"dbkit/internal/common"
+)
 
 type ColRefNode struct {
-	Column *internal.Column
+	Column *common.Column
 }
 
 func (node *ColRefNode) Name() string {

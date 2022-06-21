@@ -1,7 +1,7 @@
 package gen
 
 import (
-	"dbkit/internal"
+	"dbkit/internal/common"
 	"dbkit/internal/randomly"
 	"fmt"
 	"reflect"
@@ -10,15 +10,15 @@ import (
 )
 
 type ExprGen struct {
-	table      *internal.Table
+	table      *common.Table
 	depthLimit int
 }
 
-func NewExprGen(table *internal.Table, depthLimit int) *ExprGen {
+func NewExprGen(table *common.Table, depthLimit int) *ExprGen {
 	return &ExprGen{table, depthLimit}
 }
 
-func GenPredicate(table *internal.Table) string {
+func GenPredicate(table *common.Table) string {
 	exprGen := NewExprGen(table, 6)
 	expr := exprGen.GenExpr(0)
 	if expr == "" {

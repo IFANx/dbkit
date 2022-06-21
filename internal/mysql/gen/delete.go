@@ -1,11 +1,11 @@
 package gen
 
 import (
-	"dbkit/internal"
+	"dbkit/internal/common"
 	"dbkit/internal/common/stmt"
 )
 
-func GenDeleteStmt(table *internal.Table) stmt.DeleteStmt {
+func GenDeleteStmt(table *common.Table) stmt.DeleteStmt {
 	predicate := GenPredicate(table)
 	return stmt.DeleteStmt{
 		TableName: table.Name,

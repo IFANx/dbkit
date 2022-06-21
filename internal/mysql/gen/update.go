@@ -1,12 +1,12 @@
 package gen
 
 import (
-	"dbkit/internal"
+	"dbkit/internal/common"
 	"dbkit/internal/common/stmt"
 	"dbkit/internal/randomly"
 )
 
-func GenUpdateStmt(table *internal.Table) stmt.UpdateStmt {
+func GenUpdateStmt(table *common.Table) stmt.UpdateStmt {
 	predicate := GenPredicate(table)
 	updatedColumns := randomly.RandPickNotEmptyStr(table.ColumnNames)
 	colValMap := make(map[string]string)

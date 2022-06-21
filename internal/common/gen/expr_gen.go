@@ -1,18 +1,18 @@
 package gen
 
 import (
-	"dbkit/internal"
+	"dbkit/internal/common"
 	"dbkit/internal/common/ast"
 	"dbkit/internal/randomly"
 )
 
-func GenerateExpr(columns []*internal.Column, depthLimit int) ast.AstNode {
+func GenerateExpr(columns []*common.Column, depthLimit int) ast.AstNode {
 	generator := exprGenerator{columns: columns, depLimit: depthLimit}
 	return generator.genExpression(0)
 }
 
 type exprGenerator struct {
-	columns  []*internal.Column
+	columns  []*common.Column
 	depLimit int
 	// provider 提供各种getConstant、getUnaryPreOp、getBinaryOp、getFunc等方法
 }
@@ -134,7 +134,7 @@ func (generator *exprGenerator) genFuncExpr(depth int) ast.AstNode {
 	}
 }
 
-func RandPickOneCol(candidates []*internal.Column) *internal.Column {
+func RandPickOneCol(candidates []*common.Column) *common.Column {
 	if candidates == nil || len(candidates) == 0 {
 		panic("empty candidates slice")
 	}

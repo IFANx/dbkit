@@ -18,7 +18,7 @@ func NewMySQLTrocTester(testCtx *internal.TestContext) *MySQLTrocTester {
 func (tester *MySQLTrocTester) RunTest() {
 	state := internal.GetState()
 	ctx := tester.TestCtx
-	table := &internal.Table{
+	table := &common.Table{
 		TestCtx:    tester.TestCtx,
 		DBMS:       common.MYSQL,
 		Name:       "t",

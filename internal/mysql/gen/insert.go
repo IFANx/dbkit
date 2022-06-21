@@ -1,13 +1,13 @@
 package gen
 
 import (
-	"dbkit/internal"
+	"dbkit/internal/common"
 	"dbkit/internal/common/stmt"
 	"dbkit/internal/randomly"
 	"dbkit/internal/util"
 )
 
-func GenInsertStmt(table *internal.Table) stmt.InsertStmt {
+func GenInsertStmt(table *common.Table) stmt.InsertStmt {
 	insertedColumns := randomly.RandPickNotEmptyStr(table.ColumnNames)
 	for colName, column := range table.Columns {
 		if (column.NotNull || column.Primary) &&

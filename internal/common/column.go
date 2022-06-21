@@ -1,11 +1,9 @@
-package internal
-
-import "dbkit/internal/common"
+package common
 
 type Column struct {
 	Table      *Table
 	Name       string
-	Type       common.DataType
+	Type       DataType
 	NotNull    bool
 	Unique     bool
 	Primary    bool

@@ -1,9 +1,11 @@
 package ast
 
-import "dbkit/internal"
+import (
+	"dbkit/internal/common"
+)
 
 type TabRefNode struct {
-	Table *internal.Table
+	Table *common.Table
 }
 
 func (node *TabRefNode) Name() string {

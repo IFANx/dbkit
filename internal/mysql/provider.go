@@ -1,7 +1,6 @@
 package mysql
 
 import (
-	"dbkit/internal"
 	"dbkit/internal/common"
 	"dbkit/internal/common/stmt"
 	"dbkit/internal/mysql/gen"
@@ -17,26 +16,26 @@ func (provider *MySQLProvider) ParseDataType(name string) common.DataType {
 	return gen.ParseDataType(name)
 }
 
-func (provider *MySQLProvider) GenCreateTableStmt(table *internal.Table) stmt.CreateTableStmt {
+func (provider *MySQLProvider) GenCreateTableStmt(table *common.Table) stmt.CreateTableStmt {
 	return gen.GenCreateTableStmt(table)
 }
 
-func (provider *MySQLProvider) GenCreateIndexStmt(table *internal.Table) stmt.CreateIndexStmt {
+func (provider *MySQLProvider) GenCreateIndexStmt(table *common.Table) stmt.CreateIndexStmt {
 	return gen.GenCreateIndexStmt(table)
 }
 
-func (provider *MySQLProvider) GenInsertStmt(table *internal.Table) stmt.InsertStmt {
+func (provider *MySQLProvider) GenInsertStmt(table *common.Table) stmt.InsertStmt {
 	return gen.GenInsertStmt(table)
 }
 
-func (provider *MySQLProvider) GenUpdateStmt(table *internal.Table) stmt.UpdateStmt {
+func (provider *MySQLProvider) GenUpdateStmt(table *common.Table) stmt.UpdateStmt {
 	return gen.GenUpdateStmt(table)
 }
 
-func (provider *MySQLProvider) GenSelectStmt(table *internal.Table) stmt.SelectStmt {
+func (provider *MySQLProvider) GenSelectStmt(table *common.Table) stmt.SelectStmt {
 	return gen.GenSelectStmt(table)
 }
 
-func (provider *MySQLProvider) GenDeleteStmt(table *internal.Table) stmt.DeleteStmt {
+func (provider *MySQLProvider) GenDeleteStmt(table *common.Table) stmt.DeleteStmt {
 	return gen.GenDeleteStmt(table)
 }

@@ -21,7 +21,7 @@ func NewMySQLQueryTester(testCtx *internal.TestContext) *MySQLQueryTester {
 func (tester *MySQLQueryTester) RunTest() {
 	state := internal.GetState()
 	ctx := tester.TestCtx
-	table := &internal.Table{
+	table := &common.Table{
 		TestCtx:    tester.TestCtx,
 		DBMS:       common.MYSQL,
 		Name:       "t",
@@ -41,7 +41,7 @@ func (tester *MySQLQueryTester) RunTest() {
 	}
 }
 
-func NoRECWithCtx(ctx *internal.TestContext, table *internal.Table, predicate string) {
+func NoRECWithCtx(ctx *internal.TestContext, table *common.Table, predicate string) {
 	norec := stmt.SelectStmt{
 		TableName: table.Name,
 		Targets:   []string{"count(1)"},
@@ -79,7 +79,7 @@ func NoRECWithCtx(ctx *internal.TestContext, table *internal.Table, predicate st
 	}
 }
 
-func TLPWithCtx(ctx *internal.TestContext, table *internal.Table, predicate string) {
+func TLPWithCtx(ctx *internal.TestContext, table *common.Table, predicate string) {
 	target := randomly.RandPickOneStr(table.ColumnNames)
 	targets := []string{target}
 	tlpOrigin := stmt.SelectStmt{

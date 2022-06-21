@@ -1,14 +1,14 @@
 package gen
 
 import (
-	"dbkit/internal"
+	"dbkit/internal/common"
 	"dbkit/internal/common/ast"
 	"dbkit/internal/common/statement"
 	"math/rand"
 	"time"
 )
 
-func GenerateUpdateStmt(table *internal.Table, partitions []string) *statement.UpdateStmt {
+func GenerateUpdateStmt(table *common.Table, partitions []string) *statement.UpdateStmt {
 	rand.Seed(time.Now().UnixNano())
 	// 需要添加控制选项的开关
 	updOption := 0
@@ -21,12 +21,12 @@ func GenerateUpdateStmt(table *internal.Table, partitions []string) *statement.U
 		partitions = nil
 	}
 
-	neededColumns := make([]*internal.Column, 0)
+	neededColumns := make([]*common.Column, 0)
 	for _, col := range table.Columns {
 		neededColumns = append(neededColumns, col)
 	}
 
-	var updColumns []*internal.Column
+	var updColumns []*common.Column
 	updColNum := rand.Intn(len(neededColumns)) + 1
 	updColumns = GenerateRandColumns(neededColumns, updColNum)
 
@@ -40,7 +40,7 @@ func GenerateUpdateStmt(table *internal.Table, partitions []string) *statement.U
 	}
 
 	// 需要添加控制选项的开关
-	var orderByColumns []*internal.Column
+	var orderByColumns []*common.Column
 	orderNum := rand.Intn(len(neededColumns) + 1)
 	if orderNum == 0 {
 		orderByColumns = nil
@@ -73,15 +73,15 @@ func GenerateUpdateStmt(table *internal.Table, partitions []string) *statement.U
 	}
 }
 
-func GenerateRandColumns(neededColumns []*internal.Column, colNum int) []*internal.Column {
-	var orderByColumns []*internal.Column
+func GenerateRandColumns(neededColumns []*common.Column, colNum int) []*common.Column {
+	var orderByColumns []*common.Column
 	if colNum == len(neededColumns) {
-		orderByColumns = make([]*internal.Column, 0)
+		orderByColumns = make([]*common.Column, 0)
 		for _, v := range rand.Perm(len(neededColumns)) {
 			orderByColumns = append(orderByColumns, neededColumns[v])
 		}
 	} else {
-		orderByColumns = make([]*internal.Column, len(neededColumns))
+		orderByColumns = make([]*common.Column, len(neededColumns))
 		copy(orderByColumns, neededColumns)
 		for i := len(neededColumns); i > colNum; i-- {
 			r := rand.Intn(len(orderByColumns))
