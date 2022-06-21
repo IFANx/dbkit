@@ -3,47 +3,48 @@ package gen
 import (
 	"dbkit/internal/common"
 	"dbkit/internal/randomly"
-	log "github.com/sirupsen/logrus"
 	"strconv"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 func GetRandomMySQLDataType() common.DataType {
-	return MySQLDataType(randomly.RandIntGap(TypeBit, TypeJson+1))
+	return MySQLDataType(randomly.RandIntGap(TypeBigInt, TypeYear))
 }
 
 type MySQLDataType int
 
 const (
-	TypeBit = iota
-	TypeBool
-	TypeTinyInt
-	TypeSmallInt
-	TypeMediumInt
-	TypeInt
-	TypeBigInt
-	TypeFloat
-	TypeDouble
-	TypeDecimal
-	TypeChar
-	TypeVarchar
-	TypeText
-	TypeTinyText
-	TypeMediumText
-	TypeLongText
+	TypeBigInt = iota
 	TypeBinary
-	TypeVarBinary
+	TypeBit
 	TypeBlob
-	TypeTinyBlob
-	TypeLongBlob
-	TypeEnum
-	TypeSet
+	TypeBool
+	TypeChar
 	TypeDate
-	TypeTime
 	TypeDateTime
-	TypeTimestamp
-	TypeYear
+	TypeDecimal
+	TypeDouble
+	TypeEnum
+	TypeFloat
+	TypeInt
 	TypeJson
+	TypeLongBlob
+	TypeLongText
+	TypeMediumInt
+	TypeMediumText
+	TypeSet
+	TypeSmallInt
+	TypeText
+	TypeTime
+	TypeTimestamp
+	TypeTinyBlob
+	TypeTinyInt
+	TypeTinyText
+	TypeVarBinary
+	TypeVarchar
+	TypeYear
 )
 
 func (dataType MySQLDataType) DBMS() common.DBMS {

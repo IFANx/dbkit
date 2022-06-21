@@ -43,7 +43,7 @@ func GenerateSelectStmt(tables []*common.Table) *statement.SelectStmt {
 		orderByOpt = randomly.RandIntGap(0, 2)
 	}
 	var forOpt statement.ForOption
-	forOpt = randomly.RandIntGap(statement.ForOptShare-1, statement.ForOptUpdate+1)
+	forOpt = randomly.RandIntGap(statement.ForOptShare-1, statement.ForOptUpdate)
 	return &statement.SelectStmt{
 		Options:    selOptList,
 		SelectExpr: selExprList,
@@ -65,13 +65,13 @@ func GenerateSelectStmt(tables []*common.Table) *statement.SelectStmt {
 func GenerateJoinAst(tables []*common.Table) ast.AstNode {
 	var preNode, curNode ast.AstNode
 	preNode = &statement.JoinNode{
-		JoinType: randomly.RandIntGap(statement.JoinTypeInner, statement.JoinTypeNatural+1),
+		JoinType: randomly.RandIntGap(statement.JoinTypeInner, statement.JoinTypeNatural),
 		Left:     &ast.TabRefNode{Table: tables[0]},
 		Right:    nil,
 	}
 	for _, tab := range tables[1:] {
 		curNode = &statement.JoinNode{
-			JoinType: randomly.RandIntGap(statement.JoinTypeInner, statement.JoinTypeNatural+1),
+			JoinType: randomly.RandIntGap(statement.JoinTypeInner, statement.JoinTypeNatural),
 			Left:     preNode,
 			Right:    &ast.TabRefNode{Table: tab},
 		}

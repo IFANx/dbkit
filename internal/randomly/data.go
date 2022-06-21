@@ -10,7 +10,7 @@ func SetSeed(seed int64) {
 }
 
 func RandIntGap(min int, max int) int {
-	return min + rand.Intn(max-min)
+	return min + rand.Intn(max-min+1)
 }
 
 func RandInt32() int32 {

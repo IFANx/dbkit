@@ -18,9 +18,7 @@ func (stmt *CreateTableStmt) String() string {
 	for idx, col := range stmt.Columns {
 		colDefs[idx] = col.Name + " " + strconv.Itoa(col.Type)
 		colConstrDic := []string{" UNIQUE ", " NOT NULL ", " PRIMARY KEY "}
-		for _, colConstr := range col.Constraint {
-			colDefs[idx] += colConstrDic[colConstr]
-		}
+		colDefs[idx] += colConstrDic[col.Constraint[0]] //TODO
 	}
 	tabOps := make([]string, 0)
 	for key, val := range stmt.TableOptions {
@@ -32,28 +30,28 @@ func (stmt *CreateTableStmt) String() string {
 }
 
 type Column struct {
-	Table      *CreateTableStmt
 	Name       string
 	Type       ColumnType
-	Constraint []ColumnConstraint
-	Length     int
-	ValueCache []string
+	Constraint []ColumnOptions
 }
 
 type ColumnType = int
 
 const (
-	INT = iota
-	DOUBLE
-	CHAR
-	VARCHAR
-	BLOB
+	ColTypeBlob = iota
+	ColTypeChar
+	ColTypeDouble
+	ColTypeInt
+	ColTypeVarchar
 )
 
-type ColumnConstraint = int
+type ColumnOptions = int
 
 const (
-	NotNull = iota
-	Unique
-	Primary
+	ColOptColumnFormat = iota
+	ColOptComment
+	ColOptNullOrNotNull
+	ColOptPrimaryKey
+	ColOptStorage
+	ColOptUnique
 )
