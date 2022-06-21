@@ -25,7 +25,9 @@ func GenerateCreateTableStmt(tableName string) *statement.CreateTableStmt {
 	}
 
 	return &statement.CreateTableStmt{
-		TableName: tableName,
-		Columns:   columns,
+		TableName:       tableName,
+		Columns:         columns,
+		TableOptions:    nil,
+		PartitionOption: 1,
 	}
 }
