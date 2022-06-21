@@ -7,7 +7,7 @@ import (
 )
 
 type UpdateStmt struct {
-	Options    []UpdateOption
+	Option     UpdateOption
 	Table      internal.Table
 	Partitions []string
 	UpdateCol  []*internal.Column
@@ -20,15 +20,12 @@ type UpdateStmt struct {
 
 func (stmt *UpdateStmt) String() string {
 	res := "UPDATE "
-	selOptDict := []string{"LOW_PRIORITY", "IGNORE"}
-	optionStrList := make([]string, 0)
-	for _, opt := range stmt.Options {
-		optionStrList = append(optionStrList, selOptDict[opt])
+	if stmt.Option == 1 {
+		res += "IGNORE "
 	}
-	res += strings.Join(optionStrList, " ")
 	res += stmt.Table.Name
 	if stmt.Partitions != nil && len(stmt.Partitions) > 0 {
-		res += "PARTITION(" + strings.Join(stmt.Partitions, ",") + ") "
+		res += " PARTITION(" + strings.Join(stmt.Partitions, ",") + ") "
 	}
 	res += " SET "
 	for i, expr := range stmt.UpdateExpr {
@@ -44,9 +41,9 @@ func (stmt *UpdateStmt) String() string {
 	if stmt.OrderBy != nil {
 		orderByList := make([]string, 0)
 		for _, col := range stmt.OrderBy {
-			optionStrList = append(orderByList, col.Name)
+			orderByList = append(orderByList, col.Name)
 		}
-		res += "ORDER BY " + strings.Join(optionStrList, " ")
+		res += "ORDER BY " + strings.Join(orderByList, " ")
 	}
 	if stmt.OrderOpt > -1 {
 		orderOptDict := []string{"ASC", "DESC"}
@@ -61,6 +58,5 @@ func (stmt *UpdateStmt) String() string {
 type UpdateOption = int
 
 const (
-	UptOptLowPriority = iota
-	UptOptIgnore
+	UpdOptIgnore = 1
 )

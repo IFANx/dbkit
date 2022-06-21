@@ -3,27 +3,22 @@ package gen
 import (
 	"dbkit/internal"
 	"dbkit/internal/ast"
-	"dbkit/internal/randomly"
 	"math/rand"
 	"time"
 )
 
 func GenerateUpdateStmt(table *internal.Table, partitions []string) *ast.UpdateStmt {
-	// 需要添加控制选项的开关
-	updOption := []int{0, 1, 2}
 	rand.Seed(time.Now().UnixNano())
-	optNum := rand.Intn(len(updOption) + 1) // 从0到updOption的长度中随机选一个数
-	switch optNum {
-	case 0:
-		updOption = nil
-	case 1:
-		one := rand.Intn(len(updOption))
-		updOption = append(updOption[one : one+1])
-	case 2:
-
-	}
 	// 需要添加控制选项的开关
-	if randomly.RandBool() {
+	updOption := 0
+	randBool := rand.Intn(2) // 0和1中随机选一个数
+	if randBool == 1 {
+		updOption = 1
+	}
+
+	// 需要添加控制选项的开关
+	randBool = rand.Intn(2)
+	if randBool == 1 {
 		partitions = nil
 	}
 
@@ -38,7 +33,8 @@ func GenerateUpdateStmt(table *internal.Table, partitions []string) *ast.UpdateS
 
 	updExprList := make([]ast.AstNode, updColNum)
 	for i := 0; i < updColNum; i++ {
-		if randomly.RandBool() {
+		randBool = rand.Intn(2)
+		if randBool == 1 {
 			updExprList = append(updExprList) // 待修改
 		} else {
 			updExprList = append(updExprList, GenerateExpr(updColumns, 3))
@@ -55,7 +51,8 @@ func GenerateUpdateStmt(table *internal.Table, partitions []string) *ast.UpdateS
 	}
 
 	var orderByOpt ast.OrderOption
-	if randomly.RandBool() {
+	randBool = rand.Intn(2)
+	if randBool == 1 {
 		orderByOpt = rand.Intn(2)
 	} else {
 		orderByOpt = -1
@@ -63,12 +60,13 @@ func GenerateUpdateStmt(table *internal.Table, partitions []string) *ast.UpdateS
 
 	// 待修改
 	// 需要添加控制选项的开关
-	if randomly.RandBool() && orderByOpt == -1 {
+	randBool = rand.Intn(2)
+	if randBool == 1 && orderByOpt == -1 {
 
 	}
 
 	return &ast.UpdateStmt{
-		Options:    updOption,
+		Option:     updOption,
 		Table:      *table,
 		Partitions: partitions,
 		UpdateCol:  updColumns,

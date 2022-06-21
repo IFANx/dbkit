@@ -3,27 +3,21 @@ package gen
 import (
 	"dbkit/internal"
 	"dbkit/internal/ast"
-	"dbkit/internal/randomly"
 	"math/rand"
 	"time"
 )
 
 func GenerateDeleteStmt(table *internal.Table, partitions []string) *ast.DeleteStmt {
-	// 需要添加控制选项的开关
-	delOption := []int{0, 1, 2}
 	rand.Seed(time.Now().UnixNano())
-	optNum := rand.Intn(len(delOption) + 1) // 从0到delOption的长度中随机选一个数
-	switch optNum {
-	case 0:
-		delOption = nil
-	case 1:
-		one := rand.Intn(len(delOption))
-		delOption = append(delOption[one : one+1])
-	case 2:
-
+	// 需要添加控制选项的开关
+	delOption := 0
+	randBool := rand.Intn(2) // 0和1中随机选一个数
+	if randBool == 1 {
+		delOption = 1
 	}
 	// 需要添加控制选项的开关
-	if randomly.RandBool() {
+	randBool = rand.Intn(2)
+	if randBool == 1 {
 		partitions = nil
 	}
 
@@ -46,7 +40,8 @@ func GenerateDeleteStmt(table *internal.Table, partitions []string) *ast.DeleteS
 	}
 
 	var orderByOpt ast.OrderOption
-	if randomly.RandBool() {
+	randBool = rand.Intn(2)
+	if randBool == 1 {
 		orderByOpt = rand.Intn(2)
 	} else {
 		orderByOpt = -1
@@ -54,12 +49,13 @@ func GenerateDeleteStmt(table *internal.Table, partitions []string) *ast.DeleteS
 
 	// 待修改
 	// 需要添加控制选项的开关
-	if randomly.RandBool() && orderByOpt == -1 {
+	randBool = rand.Intn(2)
+	if randBool == 1 && orderByOpt == -1 {
 
 	}
 
 	return &ast.DeleteStmt{
-		Options:    delOption,
+		Option:     delOption,
 		Table:      *table,
 		Partitions: partitions,
 		Where:      GenerateExpr(neededColumns, 5),
