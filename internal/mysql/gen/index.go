@@ -35,9 +35,9 @@ func GenCreateIndexStmt(table *internal.Table) stmt.CreateIndexStmt {
 	}
 
 	return stmt.CreateIndexStmt{
-		IndexName:    idxName,
-		TableName:    table.Name,
-		Columns:      indexedColumns,
-		OptionCreate: randomly.RandIntGap(stmt.UNIQUE, stmt.SPATIAL),
+		IndexName: idxName,
+		TableName: table.Name,
+		Columns:   indexedColumns,
+		Unique:    randomly.RandBool(),
 	}
 }

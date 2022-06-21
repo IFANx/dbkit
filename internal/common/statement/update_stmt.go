@@ -1,7 +1,8 @@
-package ast
+package statement
 
 import (
 	"dbkit/internal"
+	"dbkit/internal/common/ast"
 	"strconv"
 	"strings"
 )
@@ -11,8 +12,8 @@ type UpdateStmt struct {
 	Table      internal.Table
 	Partitions []string
 	UpdateCol  []*internal.Column
-	UpdateExpr []AstNode // 结构待调整
-	Where      AstNode
+	UpdateExpr []ast.AstNode // 结构待调整
+	Where      ast.AstNode
 	OrderBy    []*internal.Column
 	OrderOpt   OrderOption
 	Limit      int

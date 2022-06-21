@@ -1,4 +1,4 @@
-package stmt
+package statement
 
 import (
 	"strings"

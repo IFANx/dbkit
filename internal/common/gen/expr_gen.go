@@ -54,7 +54,7 @@ func (generator *exprGenerator) genLeafNode() ast.AstNode {
 }
 
 func (generator *exprGenerator) genColumn() ast.AstNode {
-	selColumn := randomly.RandPickOneCol(generator.columns)
+	selColumn := RandPickOneCol(generator.columns)
 	return &ast.ColRefNode{Column: selColumn}
 }
 
@@ -132,4 +132,11 @@ func (generator *exprGenerator) genFuncExpr(depth int) ast.AstNode {
 		ArgCount: 0,
 		ExprList: nil,
 	}
+}
+
+func RandPickOneCol(candidates []*internal.Column) *internal.Column {
+	if candidates == nil || len(candidates) == 0 {
+		panic("empty candidates slice")
+	}
+	return candidates[randomly.RandIntGap(0, len(candidates))]
 }

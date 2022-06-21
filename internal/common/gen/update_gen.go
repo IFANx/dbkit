@@ -2,12 +2,13 @@ package gen
 
 import (
 	"dbkit/internal"
-	"dbkit/internal/ast"
+	"dbkit/internal/common/ast"
+	"dbkit/internal/common/statement"
 	"math/rand"
 	"time"
 )
 
-func GenerateUpdateStmt(table *internal.Table, partitions []string) *ast.UpdateStmt {
+func GenerateUpdateStmt(table *internal.Table, partitions []string) *statement.UpdateStmt {
 	rand.Seed(time.Now().UnixNano())
 	// 需要添加控制选项的开关
 	updOption := 0
@@ -47,7 +48,7 @@ func GenerateUpdateStmt(table *internal.Table, partitions []string) *ast.UpdateS
 		orderByColumns = GenerateRandColumns(neededColumns, orderNum)
 	}
 
-	var orderByOpt ast.OrderOption
+	var orderByOpt statement.OrderOption
 	if rand.Intn(2) == 1 && orderNum != 0 {
 		orderByOpt = rand.Intn(2)
 	} else {
@@ -60,7 +61,7 @@ func GenerateUpdateStmt(table *internal.Table, partitions []string) *ast.UpdateS
 
 	}
 
-	return &ast.UpdateStmt{
+	return &statement.UpdateStmt{
 		Option:     updOption,
 		Table:      *table,
 		Partitions: partitions,

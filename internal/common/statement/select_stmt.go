@@ -1,22 +1,23 @@
-package ast
+package statement
 
 import (
 	"dbkit/internal"
+	"dbkit/internal/common/ast"
 	"strconv"
 	"strings"
 )
 
 type SelectStmt struct {
 	Options    []SelectOption
-	SelectExpr []AstNode
+	SelectExpr []ast.AstNode
 	Tables     []*internal.Table
-	Join       AstNode
-	JoinOn     AstNode
+	Join       ast.AstNode
+	JoinOn     ast.AstNode
 	Partitions []string
-	Where      AstNode
-	GroupBy    AstNode
-	Having     AstNode
-	OrderBy    AstNode
+	Where      ast.AstNode
+	GroupBy    ast.AstNode
+	Having     ast.AstNode
+	OrderBy    ast.AstNode
 	OrderOpt   OrderOption
 	Limit      int
 	Offset     int
@@ -123,16 +124,16 @@ const (
 
 type JoinNode struct {
 	JoinType JoinType
-	Left     AstNode
-	Right    AstNode
+	Left     ast.AstNode
+	Right    ast.AstNode
 }
 
 func (node *JoinNode) Name() string {
 	return "Join"
 }
 
-func (node *JoinNode) Type() NodeType {
-	return NodeTypeJoin
+func (node *JoinNode) Type() ast.NodeType {
+	return ast.NodeTypeJoin
 }
 
 func (node *JoinNode) String() string {

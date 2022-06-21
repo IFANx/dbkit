@@ -1,7 +1,8 @@
-package ast
+package statement
 
 import (
 	"dbkit/internal"
+	"dbkit/internal/common/ast"
 	"strconv"
 	"strings"
 )
@@ -10,7 +11,7 @@ type DeleteStmt struct {
 	Option     DeleteOption
 	Table      internal.Table
 	Partitions []string
-	Where      AstNode
+	Where      ast.AstNode
 	OrderBy    []*internal.Column
 	OrderOpt   OrderOption
 	Limit      int

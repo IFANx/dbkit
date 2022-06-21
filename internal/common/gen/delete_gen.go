@@ -2,12 +2,12 @@ package gen
 
 import (
 	"dbkit/internal"
-	"dbkit/internal/ast"
+	"dbkit/internal/common/statement"
 	"math/rand"
 	"time"
 )
 
-func GenerateDeleteStmt(table *internal.Table, partitions []string) *ast.DeleteStmt {
+func GenerateDeleteStmt(table *internal.Table, partitions []string) *statement.DeleteStmt {
 	rand.Seed(time.Now().UnixNano())
 	// 需要添加控制选项的开关
 	delOption := 0
@@ -45,7 +45,7 @@ func GenerateDeleteStmt(table *internal.Table, partitions []string) *ast.DeleteS
 		}
 	}
 
-	var orderByOpt ast.OrderOption
+	var orderByOpt statement.OrderOption
 	if rand.Intn(2) == 1 && orderNum != 0 {
 		orderByOpt = rand.Intn(2)
 	} else {
@@ -58,7 +58,7 @@ func GenerateDeleteStmt(table *internal.Table, partitions []string) *ast.DeleteS
 
 	}
 
-	return &ast.DeleteStmt{
+	return &statement.DeleteStmt{
 		Option:     delOption,
 		Table:      *table,
 		Partitions: partitions,
