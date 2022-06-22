@@ -1,15 +1,11 @@
 package statement
 
-import (
-	"strings"
-)
-
 type CreateIndexStmt struct { //lack index_option
 	OptionCreate    CreateOption
 	IndexName       string
 	TypeIndex       IndexType
 	TableName       string
-	Columns         []string //incomplete
+	ColumnName      string //incomplete
 	OptionAlgorithm AlgorithmOption
 	OptionLock      LockOption
 }
@@ -17,9 +13,9 @@ type CreateIndexStmt struct { //lack index_option
 type CreateOption = int
 
 const (
-	CreOptUnique = iota
-	CreOptFullText
+	CreOptFullText = iota
 	CreOptSpatial
+	CreOptUnique
 )
 
 type IndexType = int
@@ -32,24 +28,24 @@ const (
 type AlgorithmOption = int
 
 const (
-	AlgorDefault = iota
+	AlgorCopy = iota
+	AlgorDefault
 	AlgorInplace
-	AlgorCopy
 )
 
 type LockOption = int
 
 const (
 	LockDefault = iota
+	LockExclusive
 	LockNone
 	LockShared
-	LockExclusive
 )
 
 func (stmt *CreateIndexStmt) String() string {
 	sql := "CREATE"
 	if stmt.OptionCreate != -1 {
-		creOptDic := []string{" UNIQUE ", " FULLTEXT ", " SPATIAL "}
+		creOptDic := []string{" FULLTEXT ", " SPATIAL ", " UNIQUE "}
 		sql += creOptDic[stmt.OptionCreate]
 	}
 	sql += "INDEX "
@@ -60,13 +56,13 @@ func (stmt *CreateIndexStmt) String() string {
 	}
 	sql += "ON "
 	sql += stmt.TableName
-	sql += "(" + strings.Join(stmt.Columns, ",") + ")"
+	sql += "(" + stmt.ColumnName + ")"
 	if stmt.OptionAlgorithm != -1 {
-		algOptDic := []string{" DEFAULT ", " INPLACE ", " COPY "}
+		algOptDic := []string{" COPY ", " DEFAULT ", " INPLACE "}
 		sql += " ALGORITHM =" + algOptDic[stmt.OptionAlgorithm]
 	}
 	if stmt.OptionLock != -1 {
-		lockOptDic := []string{" DEFAULT ", " NONE ", " SHARED ", " EXCLUSIVE "}
+		lockOptDic := []string{" DEFAULT ", " EXCLUSIVE ", " NONE ", " SHARED "}
 		sql += " LOCK =" + lockOptDic[stmt.OptionLock]
 	}
 
