@@ -22,10 +22,12 @@ func RandPickN(candidates []interface{}, x int) []interface{} {
 	if n == x {
 		return candidates
 	}
+	elements := make([]interface{}, len(candidates))
+	copy(elements, candidates)
 	rand.Shuffle(n, func(i, j int) {
-		candidates[i], candidates[j] = candidates[j], candidates[i]
+		elements[i], elements[j] = elements[j], elements[i]
 	})
-	return candidates[:x]
+	return elements[:x]
 }
 
 func RandPickNotEmpty(candidates []interface{}) []interface{} {
@@ -34,10 +36,12 @@ func RandPickNotEmpty(candidates []interface{}) []interface{} {
 	}
 	n := len(candidates)
 	x := RandIntGap(1, n)
+	elements := make([]interface{}, len(candidates))
+	copy(elements, candidates)
 	rand.Shuffle(n, func(i, j int) {
-		candidates[i], candidates[j] = candidates[j], candidates[i]
+		elements[i], elements[j] = elements[j], elements[i]
 	})
-	return candidates[:x]
+	return elements[:x]
 }
 
 func RandPickOneInt(candidates []int) int {
@@ -58,10 +62,12 @@ func RandPickNInt(candidates []int, x int) []int {
 	if n == x {
 		return candidates
 	}
+	elements := make([]int, len(candidates))
+	copy(elements, candidates)
 	rand.Shuffle(n, func(i, j int) {
-		candidates[i], candidates[j] = candidates[j], candidates[i]
+		elements[i], elements[j] = elements[j], elements[i]
 	})
-	return candidates[:x]
+	return elements[:x]
 }
 
 func RandPickNotEmptyInt(candidates []int) []int {
@@ -70,10 +76,12 @@ func RandPickNotEmptyInt(candidates []int) []int {
 	}
 	n := len(candidates)
 	x := RandIntGap(1, n)
+	elements := make([]int, len(candidates))
+	copy(elements, candidates)
 	rand.Shuffle(n, func(i, j int) {
-		candidates[i], candidates[j] = candidates[j], candidates[i]
+		elements[i], elements[j] = elements[j], elements[i]
 	})
-	return candidates[:x]
+	return elements[:x]
 }
 
 func RandPickOneStr(candidates []string) string {
@@ -94,10 +102,12 @@ func RandPickNStr(candidates []string, x int) []string {
 	if n == x {
 		return candidates
 	}
+	elements := make([]string, len(candidates))
+	copy(elements, candidates)
 	rand.Shuffle(n, func(i, j int) {
-		candidates[i], candidates[j] = candidates[j], candidates[i]
+		elements[i], elements[j] = elements[j], elements[i]
 	})
-	return candidates[:x]
+	return elements[:x]
 }
 
 func RandPickNotEmptyStr(candidates []string) []string {
@@ -106,8 +116,10 @@ func RandPickNotEmptyStr(candidates []string) []string {
 	}
 	n := len(candidates)
 	x := RandIntGap(1, n)
+	elements := make([]string, len(candidates))
+	copy(elements, candidates)
 	rand.Shuffle(n, func(i, j int) {
-		candidates[i], candidates[j] = candidates[j], candidates[i]
+		elements[i], elements[j] = elements[j], elements[i]
 	})
-	return candidates[:x]
+	return elements[:x]
 }

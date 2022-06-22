@@ -59,9 +59,10 @@ func (generator *exprGenerator) genColumn() ast.AstNode {
 }
 
 func (generator *exprGenerator) genConstant() ast.AstNode {
+	dataType := GetRandomMySQLDataType()
 	return &ast.ConstNode{
 		ConstType: GetRandomMySQLDataType(),
-		Value:     "",
+		Value:     dataType.GenRandomVal(),
 	}
 }
 
@@ -127,10 +128,15 @@ func (generator *exprGenerator) genCastExpr(depth int) ast.AstNode {
 }
 
 func (generator *exprGenerator) genFuncExpr(depth int) ast.AstNode {
+	myFunc := GetRandomMySQLFunc()
+	exprList := make([]ast.AstNode, myFunc.argCnt)
+	for i := 0; i < myFunc.argCnt; i++ {
+		exprList[i] = generator.genExpression(depth + 1)
+	}
 	return &ast.FuncOpNode{
-		FuncName: "",
-		ArgCount: 0,
-		ExprList: nil,
+		FuncName: myFunc.name,
+		ArgCount: myFunc.argCnt,
+		ExprList: exprList,
 	}
 }
 
