@@ -14,20 +14,52 @@ func GenerateCreateTableStmt(tableName string) *statement.CreateTableStmt {
 
 	candidates := make([]int, 0)
 
-	for i := statement.ColOptColumnFormat; i < statement.ColOptUnique; {
+	for i := statement.ColOptColumnFormat - 1; i < statement.ColOptUnique; i++ {
 		candidates = append(candidates, i)
 	}
 
+	hasPrimaryKey := false
+
 	for i := 0; i < colNum; i++ {
 		columns[i].Name = "c" + strconv.Itoa(i)
-		columns[i].Type = randomly.RandIntGap(gen.TypeBigInt, gen.TypeYear)
-		columns[i].Constraint = randomly.RandPickNotEmptyInt(candidates)
+		columns[i].Type = gen.MySQLDataType(randomly.RandIntGap(gen.TypeBigInt, gen.TypeYear))
+		constraint := randomly.RandPickNotEmptyInt(candidates)
+		isNull := false
+		for idx, val := range constraint {
+			if val == statement.ColOptNull {
+				isNull = true
+			} else if val == statement.ColOptPrimaryKey {
+				if !hasPrimaryKey && !isNull && columns[i].Type.CanBePrimary() {
+					hasPrimaryKey = true
+				} else {
+					constraint[idx] = -1
+				}
+			}
+		}
+		columns[i].Constraint = constraint
 	}
+
+	candidates = make([]int, 0)
+
+	for i := statement.TabOptAutoIncrement - 1; i < statement.TabOptStatsSamplePages; i++ {
+		candidates = append(candidates, i)
+	}
+	candidates = randomly.RandPickNotEmptyInt(candidates)
+
+	var tableEngine statement.TableEngines = statement.TabEngInnoDB
+	for _, val := range candidates {
+		if val == statement.TabOptEngine {
+			tableEngine = statement.TableEngines(randomly.RandIntGap(statement.TabEngArchive, statement.TabEngMyISAM))
+		}
+	}
+
+	partOpt := statement.PartitionOptions(randomly.RandIntGap(statement.PartOptHASH-1, statement.PartOptKEY))
 
 	return &statement.CreateTableStmt{
 		TableName:       tableName,
 		Columns:         columns,
-		TableOptions:    nil,
-		PartitionOption: 1,
+		TableOptions:    candidates,
+		TableEngine:     tableEngine,
+		PartitionOption: partOpt,
 	}
 }

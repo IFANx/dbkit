@@ -1,6 +1,7 @@
 package statement
 
 import (
+	"dbkit/internal/mysql/gen"
 	"dbkit/internal/randomly"
 	"strconv"
 	"strings"
@@ -10,6 +11,7 @@ type CreateTableStmt struct {
 	TableName       string
 	Columns         []Column
 	TableOptions    []TableOption
+	TableEngine     TableEngines
 	PartitionOption PartitionOptions
 }
 
@@ -48,7 +50,8 @@ func (stmt *CreateTableStmt) String() string {
 			sql += strconv.Itoa(randomly.RandPickNInt([]int{0, 1}, 1)[0])
 		} else if tabOpt == TabOptEngine {
 			sql += "ENGINE = "
-			sql += randomly.RandPickOneStr([]string{"InnoDB", "MyISAM", "MEMORY", "HEAP", "CSV", "ARCHIVE"})
+			tabEngDic := []string{"ARCHIVE", "CSV", "HEAP", "InnoDB", "MEMORY", "MyISAM"}
+			sql += tabEngDic[stmt.TableEngine]
 		} else if tabOpt == TabOptInsertMethod {
 			sql += "INSERT_METHOD = "
 			sql += randomly.RandPickOneStr([]string{"NO", "FIRST", "LAST"})
@@ -73,12 +76,14 @@ func (stmt *CreateTableStmt) String() string {
 		} else if tabOpt == TabOptStatsSamplePages {
 			sql += "STATS_SAMPLE_PAGES = "
 			sql += strconv.Itoa(randomly.RandIntGap(1, 10))
+		} else if tabOpt == -1 {
+			//do nothing
 		} else {
 			panic("Unsupported table option")
 		}
 	}
 
-	if randomly.RandBool() {
+	if randomly.RandBool() || stmt.PartitionOption == -1 {
 		return sql
 	}
 
@@ -117,7 +122,7 @@ func (stmt *CreateTableStmt) String() string {
 
 type Column struct {
 	Name       string
-	Type       ColumnType
+	Type       gen.MySQLDataType
 	Constraint []ColumnOptions
 }
 
@@ -129,12 +134,10 @@ func (col *Column) String() string {
 			colExpr += randomly.RandPickOneStr([]string{"FIXED", "DYNAMIC", "DEFAULT"})
 		} else if colOpt == ColOptComment {
 			colExpr += "COMMENT " + randomly.RandAlphabetStrLen(4)
-		} else if colOpt == ColOptNullOrNotNull {
-			if randomly.RandBool() {
-				colExpr += "NULL"
-			} else {
-				colExpr += "NOT NULL"
-			}
+		} else if colOpt == ColOptNotNull {
+			colExpr += "NOT NULL"
+		} else if colOpt == ColOptNull {
+			colExpr += "NULL"
 		} else if colOpt == ColOptPrimaryKey {
 			colExpr += "PRIMARY KEY"
 		} else if colOpt == ColOptStorage {
@@ -145,6 +148,8 @@ func (col *Column) String() string {
 			if randomly.RandBool() {
 				colExpr += " KEY"
 			}
+		} else if colOpt == -1 {
+			//do nothing
 		} else {
 			panic("Unsupported column constraint")
 		}
@@ -152,14 +157,13 @@ func (col *Column) String() string {
 	return colExpr
 }
 
-type ColumnType = int
-
 type ColumnOptions = int
 
 const (
 	ColOptColumnFormat = iota
 	ColOptComment
-	ColOptNullOrNotNull
+	ColOptNotNull
+	ColOptNull
 	ColOptPrimaryKey
 	ColOptStorage
 	ColOptUnique
@@ -182,6 +186,17 @@ const (
 	TabOptStatsAutoRecalc         //Specifies whether to automatically recalculate persistent statistics for an InnoDB table.
 	TabOptStatsPersistent         //Specifies whether to enable persistent statistics for an InnoDB table.
 	TabOptStatsSamplePages        //The number of index pages to sample when estimating cardinality and other statistics for an indexed column, such as those calculated by ANALYZE TABLE.
+)
+
+type TableEngines int
+
+const (
+	TabEngArchive = iota
+	TabEngCSV
+	TabEngHeap
+	TabEngInnoDB
+	TabEngMemory
+	TabEngMyISAM
 )
 
 type PartitionOptions int

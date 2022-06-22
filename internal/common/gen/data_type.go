@@ -295,5 +295,4 @@ func (dataType MySQLDataType) GenRandomVal() string {
 		log.Infof("Unsupported data type: %v", dataType)
 		panic("Unreachable")
 	}
-	return ""
 }
