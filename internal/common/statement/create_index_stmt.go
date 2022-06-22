@@ -17,33 +17,33 @@ type CreateIndexStmt struct { //lack index_option
 type CreateOption = int
 
 const (
-	UNIQUE = iota
-	FULLTEXT
-	SPATIAL
+	CreOptUnique = iota
+	CreOptFullText
+	CreOptSpatial
 )
 
 type IndexType = int
 
 const (
-	BTREE = iota
-	HASH
+	IndexBtree = iota
+	IndexHash
 )
 
 type AlgorithmOption = int
 
 const (
-	DEFAULT = iota
-	INPLACE
-	COPY
+	AlgorDefault = iota
+	AlgorInplace
+	AlgorCopy
 )
 
 type LockOption = int
 
 const (
-	// DEFAULT = iota
-	NONE = iota + 1
-	SHARED
-	EXCLUSIVE
+	LockDefault = iota
+	LockNone
+	LockShared
+	LockExclusive
 )
 
 func (stmt *CreateIndexStmt) String() string {
