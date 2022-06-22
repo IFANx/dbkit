@@ -4,89 +4,111 @@ import (
 	"dbkit/internal/common"
 	"dbkit/internal/common/ast"
 	"dbkit/internal/common/statement"
+	"dbkit/internal/randomly"
 	"math/rand"
 	"time"
 )
 
-func GenerateUpdateStmt(table *common.Table, partitions []string) *statement.UpdateStmt {
+func GenerateUpdateStmt(tables []*common.Table, partitions []string) *statement.UpdateStmt {
 	rand.Seed(time.Now().UnixNano())
+	updOptList := make([]statement.DeleteOption, 0)
 	// 需要添加控制选项的开关
-	updOption := 0
-	if rand.Intn(2) == 1 {
-		updOption = 1
-	}
-
-	// 需要添加控制选项的开关
-	if rand.Intn(2) == 0 {
-		partitions = nil
-	}
-
-	neededColumns := make([]*common.Column, 0)
-	for _, col := range table.Columns {
-		neededColumns = append(neededColumns, col)
-	}
-
-	var updColumns []*common.Column
-	updColNum := rand.Intn(len(neededColumns)) + 1
-	updColumns = GenerateRandColumns(neededColumns, updColNum)
-
-	updExprList := make([]ast.AstNode, updColNum)
-	for i := 0; i < updColNum; i++ {
-		if rand.Intn(2) == 1 {
-			updExprList = append(updExprList) // 待修改
+	if true { // 可以生成参数
+		// 需要引擎参数
+		if true { // innodb引擎
+			if randomly.RandBool() {
+				updOptList = RandPickOptions(updOptList, statement.UpdOptIgnore)
+			} else {
+				updOptList = nil
+			}
 		} else {
-			updExprList = append(updExprList, GenerateExpr(updColumns, 3))
+			if randomly.RandBool() {
+				updOptList = RandPickOptions(updOptList, statement.UpdOptLowPriority)
+			} else {
+				updOptList = nil
+			}
 		}
 	}
 
+	parList := make([]string, 0)
 	// 需要添加控制选项的开关
-	var orderByColumns []*common.Column
-	orderNum := rand.Intn(len(neededColumns) + 1)
-	if orderNum == 0 {
-		orderByColumns = nil
-	} else {
-		orderByColumns = GenerateRandColumns(neededColumns, orderNum)
+	if true { // 可以生成partition
+		if randomly.RandBool() && len(partitions) > 0 {
+			parList = RandPickStrings(partitions)
+		}
 	}
 
-	var orderByOpt statement.OrderOption
-	if rand.Intn(2) == 1 && orderNum != 0 {
-		orderByOpt = rand.Intn(2)
+	neededTables := make([]*common.Table, 0)
+	// 需要单多表参数
+	if true { // 只支持单表的方法
+		neededTables = append(neededTables, tables[0])
 	} else {
-		orderByOpt = -1
+		if randomly.RandBool() && len(tables) > 1 { // 多表
+			neededTables = RandPickNotEmptyTab(tables)
+		} else {
+			neededTables = append(neededTables, tables[0])
+		}
+	}
+
+	neededColumns := make([]*common.Column, 0)
+	for _, tab := range neededTables {
+		for _, col := range tab.Columns {
+			neededColumns = append(neededColumns, col)
+		}
+	}
+
+	var joinAst, joinOnAst ast.AstNode
+	if len(neededTables) > 1 && randomly.RandBool() {
+		joinAst = GenerateJoinAst(neededTables)
+		joinOnAst = GenerateExpr(neededColumns, 3)
+	}
+
+	var updColumns []*common.Column
+	updColNum := randomly.RandIntGap(1, len(neededColumns))
+	updColumns = RandPickColumns(neededColumns)
+
+	updExprList := make([]string, 0)
+	for i := 0; i < updColNum; i++ {
+		if true { // 待修改
+			updExprList = append(updExprList, updColumns[i].Type.GenRandomVal())
+		} else {
+			// 待修改
+			//updExprList = append(updExprList, GenerateExpr(updColumns, 3))
+		}
+	}
+
+	orderByColumns := make([]*common.Column, 0)
+	if len(tables) > 0 {
+		// 需要添加控制选项的开关
+		if true { // 可以生成ORDER BY
+			if randomly.RandBool() {
+				orderByColumns = RandPickColumns(neededColumns)
+			}
+		}
+	}
+
+	orderByOpt := -1
+	if randomly.RandBool() && len(orderByColumns) > 0 {
+		orderByOpt = randomly.RandIntGap(0, 1)
 	}
 
 	// 待修改
 	// 需要添加控制选项的开关
-	if rand.Intn(2) == 1 && orderByOpt == -1 {
+	if randomly.RandBool() && orderByOpt == -1 {
 
 	}
 
 	return &statement.UpdateStmt{
-		Option:     updOption,
-		Table:      *table,
-		Partitions: partitions,
+		Options:    updOptList,
+		Tables:     neededTables,
+		Join:       joinAst,
+		JoinOn:     joinOnAst,
+		Partitions: parList,
 		UpdateCol:  updColumns,
+		UpdateExpr: updExprList,
 		Where:      GenerateExpr(neededColumns, 5),
 		OrderBy:    orderByColumns,
 		OrderOpt:   orderByOpt,
 		Limit:      -1,
 	}
-}
-
-func GenerateRandColumns(neededColumns []*common.Column, colNum int) []*common.Column {
-	var orderByColumns []*common.Column
-	if colNum == len(neededColumns) {
-		orderByColumns = make([]*common.Column, 0)
-		for _, v := range rand.Perm(len(neededColumns)) {
-			orderByColumns = append(orderByColumns, neededColumns[v])
-		}
-	} else {
-		orderByColumns = make([]*common.Column, len(neededColumns))
-		copy(orderByColumns, neededColumns)
-		for i := len(neededColumns); i > colNum; i-- {
-			r := rand.Intn(len(orderByColumns))
-			orderByColumns = append(orderByColumns[:r], orderByColumns[r+1:]...)
-		}
-	}
-	return orderByColumns
 }
