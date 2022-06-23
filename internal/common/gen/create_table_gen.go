@@ -60,6 +60,21 @@ func GenerateCreateTableStmt(tableName string) *statement.CreateTableStmt {
 		}
 	}
 
+	for idx, val := range candidates {
+		if val == statement.TabOptChecksum || val == statement.TabOptDelayKeyWrite || val == statement.TabOptPackKeys {
+			if tableEngine != statement.TabEngMyISAM {
+				candidates[idx] = -1
+			}
+		} else if val == statement.TabOptCompression || val == statement.TabOptStatsAutoRecalc || val == statement.TabOptStatsPersistent {
+			if tableEngine != statement.TabEngInnoDB {
+				candidates[idx] = -1
+			}
+		}
+	}
+
+	tableOptions := make([]int, 0)
+	copy(tableOptions, candidates)
+
 	partOpt := statement.PartitionOptions(randomly.RandIntGap(statement.PartOptHASH-1, statement.PartOptKEY))
 	partCol := columns[randomly.RandIntGap(0, colNum-1)]
 	partCols := make([]statement.Column, 0)
@@ -72,7 +87,7 @@ func GenerateCreateTableStmt(tableName string) *statement.CreateTableStmt {
 	return &statement.CreateTableStmt{
 		TableName:          tableName,
 		Columns:            columns,
-		TableOptions:       candidates,
+		TableOptions:       tableOptions,
 		AutoIncrement:      randomly.RandIntGap(1, 10),
 		AvgRowLength:       randomly.RandIntGap(1, 10),
 		Compression:        statement.Compressions(randomly.RandIntGap(statement.CompreLZ4, statement.CompreZLIB)),
