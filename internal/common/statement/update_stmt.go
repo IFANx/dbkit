@@ -8,11 +8,13 @@ import (
 )
 
 type UpdateStmt struct {
-	Option     UpdateOption
-	Table      common.Table
+	Options    []UpdateOption
+	Tables     []*common.Table
+	Join       ast.AstNode
+	JoinOn     ast.AstNode
 	Partitions []string
 	UpdateCol  []*common.Column
-	UpdateExpr []ast.AstNode // 结构待调整
+	UpdateExpr []string // 结构待调整
 	Where      ast.AstNode
 	OrderBy    []*common.Column
 	OrderOpt   OrderOption
@@ -21,30 +23,50 @@ type UpdateStmt struct {
 
 func (stmt *UpdateStmt) String() string {
 	res := "UPDATE "
-	if stmt.Option == 1 {
-		res += "IGNORE "
+	if stmt.Options != nil && len(stmt.Options) > 0 {
+		updOptDict := []string{"IGNORE", "LOW_PRIORITY"}
+		optionStrList := make([]string, 0)
+		for _, opt := range stmt.Options {
+			optionStrList = append(optionStrList, updOptDict[opt])
+		}
+		res += strings.Join(optionStrList, " ")
+		res += " "
 	}
-	res += stmt.Table.Name
+	if stmt.Join == nil {
+		tableNameList := make([]string, 0)
+		for _, tab := range stmt.Tables {
+			tableNameList = append(tableNameList, tab.Name)
+		}
+		res += strings.Join(tableNameList, ",")
+		res += " "
+		// res += stmt.Tables[0].Name
+	} else {
+		res += stmt.Join.String()
+		res += " ON " + stmt.JoinOn.String()
+		res += " "
+	}
 	if stmt.Partitions != nil && len(stmt.Partitions) > 0 {
-		res += " PARTITION(" + strings.Join(stmt.Partitions, ",") + ") "
+		res += "PARTITION(" + strings.Join(stmt.Partitions, ",") + ") "
 	}
-	res += " SET "
+	res += "SET "
 	for i, expr := range stmt.UpdateExpr {
 		if i != 0 {
 			res += ", "
 		}
 		res += stmt.UpdateCol[i].Name + " = "
-		res += expr.String()
+		res += expr
 	}
+	res += " "
 	if stmt.Where != nil {
-		res += " WHERE " + stmt.Where.String() + " "
+		res += "WHERE " + stmt.Where.String() + " "
 	}
-	if stmt.OrderBy != nil {
+	if stmt.OrderBy != nil && len(stmt.OrderBy) > 0 {
 		orderByList := make([]string, 0)
 		for _, col := range stmt.OrderBy {
 			orderByList = append(orderByList, col.Name)
 		}
 		res += "ORDER BY " + strings.Join(orderByList, " ")
+		res += " "
 	}
 	if stmt.OrderOpt > -1 {
 		orderOptDict := []string{"ASC", "DESC"}
@@ -59,5 +81,6 @@ func (stmt *UpdateStmt) String() string {
 type UpdateOption = int
 
 const (
-	UpdOptIgnore = 1
+	UpdOptIgnore = iota
+	UpdOptLowPriority
 )

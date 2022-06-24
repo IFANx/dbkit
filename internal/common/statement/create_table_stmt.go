@@ -2,26 +2,40 @@ package statement
 
 import (
 	"dbkit/internal/mysql/gen"
-	"dbkit/internal/randomly"
 	"strconv"
 	"strings"
 )
 
 type CreateTableStmt struct {
-	TableName       string
-	Columns         []Column
-	TableOptions    []TableOption
-	TableEngine     TableEngines
-	PartitionOption PartitionOptions
+	TableName          string
+	Columns            []Column
+	TableOptions       []TableOption
+	AutoIncrement      int
+	AvgRowLength       int
+	Compression        Compressions
+	DelayKeyWrite      bool
+	TableEngine        TableEngines
+	InsertMethod       InsertMethods
+	KeyBlockSize       int
+	MaxRows            int
+	MinRows            int
+	PackKey            int
+	StatsAutoRecalc    int
+	StatsPersistent    int
+	StatsSamplePages   int
+	PartitionOption    PartitionOptions
+	PartitionColumn    Column
+	PartitionAlgorithm int
+	PartitionColumns   []Column
 }
 
 func (stmt *CreateTableStmt) String() string {
 	sql := "CREATE"
 	//TODO support temporary tables in the schema
 	sql += " TABLE"
-	if randomly.RandBool() {
-		sql += " IF NOT EXISTS"
-	}
+	// if randomly.RandBool() {
+	// 	sql += " IF NOT EXISTS"
+	// }
 	sql += " " + stmt.TableName
 	//TODO support LIKE
 	sql += "("
@@ -35,47 +49,65 @@ func (stmt *CreateTableStmt) String() string {
 	for _, tabOpt := range stmt.TableOptions {
 		if tabOpt == TabOptAutoIncrement {
 			sql += "AUTO_INCREMENT = "
-			sql += strconv.Itoa(randomly.RandIntGap(1, 10))
+			sql += strconv.Itoa(stmt.AutoIncrement)
 		} else if tabOpt == TabOptAvgRowLength {
 			sql += "AVG_ROW_LENGTH = "
-			sql += strconv.Itoa(randomly.RandIntGap(1, 10))
+			sql += strconv.Itoa(stmt.AvgRowLength)
 		} else if tabOpt == TabOptChecksum {
 			sql += "CHECKSUM = 1"
 		} else if tabOpt == TabOptCompression {
 			sql += "COMPRESSION = '"
-			sql += randomly.RandPickOneStr([]string{"ZLIB", "LZ4", "NONE"})
+			compreDic := []string{"ZLIB", "LZ4", "NONE"}
+			sql += compreDic[stmt.Compression]
 			sql += "'"
 		} else if tabOpt == TabOptDelayKeyWrite { //Set this to 1 if you want to delay key updates for the table until the table is closed.
 			sql += "DELAY_KEY_WRITE = "
-			sql += strconv.Itoa(randomly.RandPickNInt([]int{0, 1}, 1)[0])
+			if stmt.DelayKeyWrite {
+				sql += strconv.Itoa(1)
+			} else {
+				sql += strconv.Itoa(0)
+			}
 		} else if tabOpt == TabOptEngine {
 			sql += "ENGINE = "
 			tabEngDic := []string{"ARCHIVE", "CSV", "HEAP", "InnoDB", "MEMORY", "MyISAM"}
 			sql += tabEngDic[stmt.TableEngine]
 		} else if tabOpt == TabOptInsertMethod {
 			sql += "INSERT_METHOD = "
-			sql += randomly.RandPickOneStr([]string{"NO", "FIRST", "LAST"})
+			insertMethods := []string{"NO", "FIRST", "LAST"}
+			sql += insertMethods[stmt.InsertMethod]
 		} else if tabOpt == TabOptKeyBlockSize {
 			sql += "KEY_BLOCK_SIZE = "
-			sql += strconv.Itoa(randomly.RandIntGap(1, 10))
+			sql += strconv.Itoa(stmt.KeyBlockSize)
 		} else if tabOpt == TabOptMaxRows {
 			sql += "MAX_ROWS = "
-			sql += strconv.Itoa(randomly.RandIntGap(5, 10))
+			sql += strconv.Itoa(stmt.MaxRows)
 		} else if tabOpt == TabOptMinRows {
 			sql += "MIN_ROWS = "
-			sql += strconv.Itoa(randomly.RandIntGap(1, 5))
+			sql += strconv.Itoa(stmt.MinRows)
 		} else if tabOpt == TabOptPackKeys { //Set this option to 1 if you want to have smaller indexes.
 			sql += "PACK_KEYS = "
-			sql += randomly.RandPickOneStr([]string{"1", "0", "DEFAULT"})
+			if stmt.PackKey == -1 {
+				sql += "DEFAULT"
+			} else {
+				sql += strconv.Itoa(stmt.PackKey)
+			}
 		} else if tabOpt == TabOptStatsAutoRecalc {
 			sql += "STATS_AUTO_RECALC = "
-			sql += randomly.RandPickOneStr([]string{"1", "0", "DEFAULT"})
+			if stmt.StatsAutoRecalc == -1 {
+				sql += "DEFAULT"
+			} else {
+				sql += strconv.Itoa(stmt.PackKey)
+			}
 		} else if tabOpt == TabOptStatsPersistent {
 			sql += "STATS_PERSISTENT = "
-			sql += randomly.RandPickOneStr([]string{"1", "0", "DEFAULT"})
+			if stmt.StatsPersistent == -1 {
+				sql += "DEFAULT"
+			} else {
+				sql += strconv.Itoa(stmt.PackKey)
+			}
 		} else if tabOpt == TabOptStatsSamplePages {
 			sql += "STATS_SAMPLE_PAGES = "
-			sql += strconv.Itoa(randomly.RandIntGap(1, 10))
+			sql += strconv.Itoa(stmt.StatsSamplePages)
 		} else if tabOpt == -1 {
 			//do nothing
 		} else {
@@ -83,33 +115,38 @@ func (stmt *CreateTableStmt) String() string {
 		}
 	}
 
-	if randomly.RandBool() || stmt.PartitionOption == -1 {
+	if stmt.PartitionOption == -1 {
 		return sql
 	}
 
 	sql += " PARTITION BY"
 	if stmt.PartitionOption == PartOptHASH {
-		if randomly.RandBool() {
-			sql += " LINEAR"
-		}
+		// if randomly.RandBool() {
+		// 	sql += " LINEAR"
+		// }
 		sql += " HASH("
-		sql += stmt.Columns[randomly.RandIntGap(0, len(stmt.Columns)-1)].Name
+		sql += stmt.PartitionColumn.Name
 		sql += ")"
 	} else if stmt.PartitionOption == PartOptKEY {
-		if randomly.RandBool() {
-			sql += " LINEAR"
-		}
+		// if randomly.RandBool() {
+		// 	sql += " LINEAR"
+		// }
 		sql += " KEY"
-		if randomly.RandBool() {
+		if stmt.PartitionAlgorithm == -1 {
+
+		} else if stmt.PartitionAlgorithm == 0 {
 			sql += " ALGORITHM="
-			sql += strconv.Itoa(randomly.RandPickNInt([]int{1, 2}, 1)[0])
+			sql += strconv.Itoa(1)
+		} else if stmt.PartitionAlgorithm == 1 {
+			sql += " ALGORITHM="
+			sql += strconv.Itoa(2)
+		} else {
+			panic("Unsupported algorithm")
 		}
 		sql += " ("
 		colNames := make([]string, 0)
-		for _, col := range stmt.Columns {
-			if randomly.RandBool() {
-				colNames = append(colNames, col.Name)
-			}
+		for _, col := range stmt.PartitionColumns {
+			colNames = append(colNames, col.Name)
 		}
 		sql += strings.Join(colNames, ",")
 		sql += ")"
@@ -124,6 +161,9 @@ type Column struct {
 	Name       string
 	Type       gen.MySQLDataType
 	Constraint []ColumnOptions
+	ColForMat  ColFormats
+	Comment    string
+	Storage    StorageOption
 }
 
 func (col *Column) String() string {
@@ -131,9 +171,10 @@ func (col *Column) String() string {
 	for _, colOpt := range col.Constraint {
 		if colOpt == ColOptColumnFormat {
 			colExpr += "COLUMN_FORMAT "
-			colExpr += randomly.RandPickOneStr([]string{"FIXED", "DYNAMIC", "DEFAULT"})
+			colFormatDic := []string{"FIXED", "DYNAMIC", "DEFAULT"}
+			colExpr += colFormatDic[col.ColForMat]
 		} else if colOpt == ColOptComment {
-			colExpr += "COMMENT " + randomly.RandAlphabetStrLen(4)
+			colExpr += "COMMENT " + col.Comment
 		} else if colOpt == ColOptNotNull {
 			colExpr += "NOT NULL"
 		} else if colOpt == ColOptNull {
@@ -142,12 +183,13 @@ func (col *Column) String() string {
 			colExpr += "PRIMARY KEY"
 		} else if colOpt == ColOptStorage {
 			colExpr += "STORAGE "
-			colExpr += randomly.RandPickOneStr([]string{"DISK", "MEMORY"})
+			storageOptionDic := []string{"DISK", "MEMORY"}
+			colExpr += storageOptionDic[col.Storage]
 		} else if colOpt == ColOptUnique {
 			colExpr += "UNIQUE"
-			if randomly.RandBool() {
-				colExpr += " KEY"
-			}
+			// if randomly.RandBool() {
+			// 	colExpr += " KEY"
+			// }
 		} else if colOpt == -1 {
 			//do nothing
 		} else {
@@ -169,6 +211,21 @@ const (
 	ColOptUnique
 )
 
+type ColFormats int
+
+const (
+	ColForMatDEFAULT = iota
+	ColForMatDYNAMIC
+	ColForMatFixed
+)
+
+type StorageOption int
+
+const (
+	StorageDisk = iota
+	StorageMemory
+)
+
 type TableOption = int
 
 const (
@@ -188,6 +245,14 @@ const (
 	TabOptStatsSamplePages        //The number of index pages to sample when estimating cardinality and other statistics for an indexed column, such as those calculated by ANALYZE TABLE.
 )
 
+type Compressions int
+
+const (
+	CompreLZ4 = iota
+	CompreNONE
+	CompreZLIB
+)
+
 type TableEngines int
 
 const (
@@ -197,6 +262,14 @@ const (
 	TabEngInnoDB
 	TabEngMemory
 	TabEngMyISAM
+)
+
+type InsertMethods int
+
+const (
+	InsertFirst = iota
+	InsertLast
+	InsertNo
 )
 
 type PartitionOptions int
