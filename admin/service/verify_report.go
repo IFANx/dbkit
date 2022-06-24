@@ -73,8 +73,26 @@ func GetVerifyReportDetail(ctx *gin.Context) {
 }
 
 func DeleteVerifyReport(ctx *gin.Context) {
+	ridStr := ctx.Query("rid")
+	rid, err := strconv.Atoi(ridStr)
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"ok":  false,
+			"err": err.Error(),
+		})
+		return
+	}
+
+	err = model.DeleteVerifyReport(rid)
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"ok":  false,
+			"err": err.Error(),
+		})
+		return
+	}
 	ctx.JSON(http.StatusOK, gin.H{
-		"ok":  false,
-		"err": "暂不允许删除操作",
+		"ok":   true,
+		"data": rid,
 	})
 }

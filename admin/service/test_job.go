@@ -85,9 +85,27 @@ func SubTestJob(ctx *gin.Context) {
 }
 
 func DeleteTestJob(ctx *gin.Context) {
+	jidStr := ctx.Query("jid")
+	jid, err := strconv.Atoi(jidStr)
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"ok":  false,
+			"err": err.Error(),
+		})
+		return
+	}
+
+	err = model.DeleteTestJob(jid)
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"ok":  false,
+			"err": err.Error(),
+		})
+		return
+	}
 	ctx.JSON(http.StatusOK, gin.H{
-		"ok":  false,
-		"err": "暂不允许删除操作",
+		"ok":   true,
+		"data": jid,
 	})
 }
 

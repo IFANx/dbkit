@@ -107,32 +107,28 @@ func AddTargetDSN(ctx *gin.Context) {
 }
 
 func DeleteTargetDSN(ctx *gin.Context) {
-	ctx.JSON(http.StatusOK, gin.H{
-		"ok":  false,
-		"err": "暂不允许删除操作",
-	})
-	//tidStr := ctx.Query("tid")
-	//tid, err := strconv.Atoi(tidStr)
-	//if err != nil {
-	//	ctx.JSON(http.StatusOK, gin.H{
-	//		"ok":  false,
-	//		"err": err.Error(),
-	//	})
-	//	return
-	//}
+	tidStr := ctx.Query("tid")
+	tid, err := strconv.Atoi(tidStr)
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"ok":  false,
+			"err": err.Error(),
+		})
+		return
+	}
 
-	//err = model.DeleteTargetDSN(tid)
-	//if err != nil {
-	//	ctx.JSON(http.StatusOK, gin.H{
-	//		"ok":  false,
-	//		"err": err.Error(),
-	//	})
-	//	return
-	//}
-	//ctx.JSON(http.StatusOK, gin.H{
-	//	"ok":   true,
-	//	"data": tid,
-	//})
+	err = model.DeleteTargetDSN(tid)
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"ok":  false,
+			"err": err.Error(),
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"ok":   true,
+		"data": tid,
+	})
 }
 
 func CheckTargetDSN(ctx *gin.Context) {

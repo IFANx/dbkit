@@ -65,3 +65,14 @@ func GetVerifyReportByJid(jid int) (*VerifyReport, error) {
 	}
 	return &report, nil
 }
+
+func DeleteVerifyReport(rid int) error {
+	sql := fmt.Sprintf("UPDATE %s SET deleted = 1 WHERE rid = %d", tableNameVerifyReport, rid)
+	_, err := db.Exec(sql)
+	if err != nil {
+		errMsg := fmt.Sprintf("删除VerifyReport失败：%s\n", err)
+		log.Warnf(errMsg)
+		return errors.New(errMsg)
+	}
+	return nil
+}

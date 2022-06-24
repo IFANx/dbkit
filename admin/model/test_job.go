@@ -59,6 +59,17 @@ func GetTestJobByJid(jid int) (*TestJob, error) {
 	return &job, nil
 }
 
+func DeleteTestJob(jid int) error {
+	sql := fmt.Sprintf("UPDATE %s SET deleted = 1 WHERE jid = %d", tableNameTestJob, jid)
+	_, err := db.Exec(sql)
+	if err != nil {
+		errMsg := fmt.Sprintf("删除TestJob失败：%s\n", err)
+		log.Warnf(errMsg)
+		return errors.New(errMsg)
+	}
+	return nil
+}
+
 func AbortTestJob(jid int) error {
 	sql := fmt.Sprintf("UPDATE %s SET state = -1 WHERE jid = %d AND state = 1", tableNameTestJob, jid)
 	_, err := db.Exec(sql)

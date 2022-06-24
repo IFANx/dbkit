@@ -85,3 +85,14 @@ func GetTestReportPage(offset, limit int) ([]TestReportPageItem, error) {
 	}
 	return reports, nil
 }
+
+func DeleteTestReport(rid int) error {
+	sql := fmt.Sprintf("UPDATE %s SET deleted = 1 WHERE rid = %d", tableNameTestReport, rid)
+	_, err := db.Exec(sql)
+	if err != nil {
+		errMsg := fmt.Sprintf("删除TestReport失败：%s\n", err)
+		log.Warnf(errMsg)
+		return errors.New(errMsg)
+	}
+	return nil
+}
