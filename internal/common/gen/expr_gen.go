@@ -6,14 +6,20 @@ import (
 	"dbkit/internal/randomly"
 )
 
+func GenerateExprWithAggregate(columns []*common.Column, depthLimit int) ast.AstNode {
+	generator := exprGenerator{columns: columns, depLimit: depthLimit, allowAggregate: true}
+	return generator.genExpression(0)
+}
+
 func GenerateExpr(columns []*common.Column, depthLimit int) ast.AstNode {
-	generator := exprGenerator{columns: columns, depLimit: depthLimit}
+	generator := exprGenerator{columns: columns, depLimit: depthLimit, allowAggregate: false}
 	return generator.genExpression(0)
 }
 
 type exprGenerator struct {
-	columns  []*common.Column
-	depLimit int
+	columns        []*common.Column
+	depLimit       int
+	allowAggregate bool
 	// provider 提供各种getConstant、getUnaryPreOp、getBinaryOp、getFunc等方法
 }
 
@@ -21,7 +27,12 @@ func (generator *exprGenerator) genExpression(depth int) ast.AstNode {
 	if depth >= generator.depLimit {
 		return generator.genLeafNode()
 	}
-	nodeType := randomly.RandIntGap(ast.NodeTypeConst, ast.NodeTypeFuncOp)
+	var nodeType ast.NodeType
+	if generator.allowAggregate {
+		nodeType = randomly.RandIntGap(ast.NodeTypeConst, ast.NodeTypeAggregateOp)
+	} else {
+		nodeType = randomly.RandIntGap(ast.NodeTypeConst, ast.NodeTypeFuncOp)
+	}
 	switch nodeType {
 	case ast.NodeTypeColRef:
 		return generator.genColumn()
@@ -41,6 +52,8 @@ func (generator *exprGenerator) genExpression(depth int) ast.AstNode {
 		return generator.genCastExpr(depth)
 	case ast.NodeTypeFuncOp:
 		return generator.genFuncExpr(depth)
+	case ast.NodeTypeAggregateOp:
+		return generator.genAggregateExpr(depth)
 	}
 	panic("未知的节点类型")
 }
@@ -137,6 +150,15 @@ func (generator *exprGenerator) genFuncExpr(depth int) ast.AstNode {
 		FuncName: myFunc.name,
 		ArgCount: myFunc.argCnt,
 		ExprList: exprList,
+	}
+}
+
+func (generator *exprGenerator) genAggregateExpr(depth int) ast.AstNode {
+	myAggregate := GetRandomMySQLAggregate()
+	col := generator.genColumn().(*ast.ColRefNode)
+	return &ast.AggregateNode{
+		FuncName: myAggregate.name,
+		Column:   col,
 	}
 }
 

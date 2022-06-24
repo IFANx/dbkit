@@ -13,6 +13,7 @@ const (
 	NodeTypeInOp
 	NodeTypeCastOp
 	NodeTypeFuncOp
+	NodeTypeAggregateOp
 	NodeTypeJoin
 	NodeTypePartition
 )

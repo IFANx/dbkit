@@ -18,6 +18,7 @@ type Table struct {
 	Indexes       map[string]*Index
 	IndexCount    int
 	HasPrimaryKey bool
+	// partition & storage engine
 }
 
 func (table *Table) Build() {

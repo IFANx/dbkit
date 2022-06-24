@@ -28,7 +28,7 @@ func GenerateSelectStmt(tables []*common.Table) *statement.SelectStmt {
 	}
 	selExprList := make([]ast.AstNode, 0)
 	for i := 0; i < randomly.RandIntGap(1, 5); i++ {
-		selExprList = append(selExprList, GenerateExpr(neededColumns, 3))
+		selExprList = append(selExprList, GenerateExprWithAggregate(neededColumns, 3))
 	}
 	var joinAst, joinOnAst ast.AstNode
 	if len(neededTables) > 1 && randomly.RandBool() {

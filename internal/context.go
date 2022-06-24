@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"dbkit/config"
 	"dbkit/internal/common"
 	"dbkit/internal/common/stmt"
 	"dbkit/internal/randomly"
@@ -24,17 +25,15 @@ type TestContext struct {
 	Tables       []*common.Table
 }
 
-func NewTestContext() *TestContext {
-	state := GetState()
-	config := state.Config
+func NewTestContext(config config.TestConfig) *TestContext {
 	testID := config.Oracle + time.Now().Format("060102150405") + randomly.RandAlphabetStrLen(5)
-	target := common.GetDBMSFromStr(config.Target)
+	targetDbms := common.GetDBMSFromStr(config.Target)
 	return &TestContext{
 		TestID:       testID,
 		Oracle:       config.Oracle,
-		Target:       target,
+		Target:       targetDbms,
 		DBTester:     nil,
-		Conn:         state.Connections[target],
+		Conn:         config.Conn,
 		StartTime:    time.Time{},
 		EndTime:      time.Time{},
 		SqlCount:     0,
