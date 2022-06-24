@@ -2,9 +2,6 @@ package main
 
 import (
 	"dbkit/admin"
-	"dbkit/internal"
-	"dbkit/internal/mysql"
-
 	log "github.com/sirupsen/logrus"
 )
 
@@ -17,9 +14,9 @@ func main() {
 }
 
 func RunMySQLQueryTest() {
-	testCtx := internal.NewTestContext()
-	tester := mysql.NewMySQLQueryTester(testCtx)
-	testCtx.SetTester(tester)
-	state.Tests = append(state.Tests)
-	testCtx.Start()
+	//testCtx := internal.NewTestContext()
+	//tester := mysql.NewMySQLQueryTester(testCtx)
+	//testCtx.SetTester(tester)
+	//state.Tasks = append(state.Tasks)
+	//testCtx.Start()
 }

@@ -2,6 +2,7 @@ package gen
 
 import (
 	"dbkit/internal/common"
+	"dbkit/internal/common/dbms"
 	"dbkit/internal/common/stmt"
 	"dbkit/internal/randomly"
 	"fmt"
@@ -18,8 +19,8 @@ func GenCreateIndexStmt(table *common.Table) stmt.CreateIndexStmt {
 			indexedColumns = append(indexedColumns, colName)
 		} else if column.Type.IsString() {
 			switch table.DBMS {
-			case common.MYSQL:
-			case common.MARIADB:
+			case dbms.MYSQL:
+			case dbms.MARIADB:
 				indexedColumns = append(indexedColumns, colName+"(5)")
 			default:
 				indexedColumns = append(indexedColumns, colName)

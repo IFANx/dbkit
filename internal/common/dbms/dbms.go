@@ -1,4 +1,4 @@
-package common
+package dbms
 
 import (
 	"strings"
@@ -11,23 +11,21 @@ type DBMS struct {
 	Alias string
 }
 
-func (dbms *DBMS) String() string {
+func (dbms DBMS) String() string {
 	return dbms.Name
 }
 
 var (
-	MYSQL       = DBMS{DBMySQLName, DBMySQLAlias}
-	MARIADB     = DBMS{DBMARIADBName, DBMARIADBAlias}
-	TIDB        = DBMS{DBTiDBName, DBTiDBAlias}
-	COCKROACHDB = DBMS{DBCockroachName, DBCockroachDBAlias}
-	ZNBASE      = DBMS{DBZNBaseName, DBZNBaseAlias}
-	SQLITE      = DBMS{DBSQLiteName, DBSQLiteAlias}
+	MYSQL       = DBMS{MySQLName, MySQLAlias}
+	MARIADB     = DBMS{MARIADBName, DBMARIADBAlias}
+	TIDB        = DBMS{TiDBName, DBTiDBAlias}
+	COCKROACHDB = DBMS{CockroachName, DBCockroachDBAlias}
+	ZNBASE      = DBMS{ZNBaseName, DBZNBaseAlias}
+	SQLITE      = DBMS{SQLiteName, DBSQLiteAlias}
 )
 
-var DBMSSet = []DBMS{MYSQL, MARIADB, TIDB, SQLITE}
-
 var DBMSMap = map[string]DBMS{
-	DBMySQLAlias:       MYSQL,
+	MySQLAlias:         MYSQL,
 	DBMARIADBAlias:     MARIADB,
 	DBTiDBAlias:        TIDB,
 	DBCockroachDBAlias: COCKROACHDB,

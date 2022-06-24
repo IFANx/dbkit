@@ -1,6 +1,7 @@
 package common
 
 import (
+	"dbkit/internal/common/dbms"
 	"dbkit/internal/randomly"
 	"fmt"
 
@@ -9,7 +10,7 @@ import (
 
 type Table struct {
 	TestCtx       SqlExecutor
-	DBMS          DBMS
+	DBMS          dbms.DBMS
 	DBProvider    Provider
 	Name          string
 	DBName        string
@@ -55,7 +56,7 @@ func (table *Table) DropTable() {
 
 func (table *Table) UpdateSchema() {
 	switch table.DBMS {
-	case MYSQL, MARIADB, TIDB:
+	case dbms.MYSQL, dbms.MARIADB, dbms.TIDB:
 		rows, err := table.TestCtx.Queryx("desc " + table.Name)
 		if err != nil {
 			log.Warnf("Fail to get table structure: %s", err)

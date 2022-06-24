@@ -1,7 +1,7 @@
 package stmt
 
 import (
-	"dbkit/internal/common/txn"
+	"dbkit/internal/common/isolation"
 )
 
 type BeginStmt struct{}
@@ -17,7 +17,7 @@ func (stmt *RollbackStmt) String() string {
 }
 
 type SetIsolationStmt struct {
-	Isolation txn.IsolationLevel
+	Isolation isolation.IsolationLevel
 }
 
 func (stmt *SetIsolationStmt) String() string {

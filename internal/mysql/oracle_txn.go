@@ -3,15 +3,16 @@ package mysql
 import (
 	"dbkit/internal"
 	"dbkit/internal/common"
+	"dbkit/internal/common/dbms"
 	"dbkit/internal/mysql/gen"
 	log "github.com/sirupsen/logrus"
 )
 
 type MySQLTrocTester struct {
-	TestCtx *internal.TestContext
+	TestCtx *internal.TaskContext
 }
 
-func NewMySQLTrocTester(testCtx *internal.TestContext) *MySQLTrocTester {
+func NewMySQLTrocTester(testCtx *internal.TaskContext) *MySQLTrocTester {
 	return &MySQLTrocTester{TestCtx: testCtx}
 }
 
@@ -20,7 +21,7 @@ func (tester *MySQLTrocTester) RunTest() {
 	ctx := tester.TestCtx
 	table := &common.Table{
 		TestCtx:    tester.TestCtx,
-		DBMS:       common.MYSQL,
+		DBMS:       dbms.MYSQL,
 		Name:       "t",
 		DBName:     state.Config.MySQL.DBName,
 		DBProvider: &MySQLProvider{},

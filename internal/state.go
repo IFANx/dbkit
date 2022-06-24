@@ -12,7 +12,7 @@ import (
 
 type GlobalState struct {
 	Config     *config.DBKitConfig
-	Tests      []*TestContext
+	Tasks      []*TaskContext
 	DataSource *sqlx.DB
 	TableCount int
 }
@@ -43,7 +43,7 @@ func makeGlobalState() *GlobalState {
 
 	state := GlobalState{
 		Config:     &dbKitConfig,
-		Tests:      make([]*TestContext, 0),
+		Tasks:      make([]*TaskContext, 0),
 		DataSource: nil,
 	}
 
@@ -63,8 +63,8 @@ func (state *GlobalState) GetDataSourceConn() *sqlx.DB {
 	return state.DataSource
 }
 
-func (state *GlobalState) buildTestContext(config config.TestConfig) *TestContext {
-	ctx := NewTestContext(config)
-	state.Tests = append(state.Tests, ctx)
+func (state *GlobalState) buildTestContext(submit *TaskSubmit) *TaskContext {
+	ctx := NewTestContext(submit)
+	state.Tasks = append(state.Tasks, ctx)
 	return ctx
 }

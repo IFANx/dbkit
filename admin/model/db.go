@@ -3,6 +3,7 @@ package model
 import (
 	"dbkit/config"
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
@@ -21,7 +22,7 @@ const (
 
 func init() {
 	// 指定配置文件路径
-	viper.SetConfigFile("./config/config.json")
+	viper.SetConfigFile("config.json")
 	err := viper.ReadInConfig()
 	if err != nil {
 		panic("读取全局配置文件出错")

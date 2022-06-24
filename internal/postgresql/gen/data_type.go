@@ -1,7 +1,7 @@
 package gen
 
 import (
-	"dbkit/internal/common"
+	"dbkit/internal/common/dbms"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -26,8 +26,8 @@ const (
 	TypeTimestamp
 )
 
-func (dataType CockroachDataType) DBMS() common.DBMS {
-	return common.COCKROACHDB
+func (dataType CockroachDataType) DBMS() dbms.DBMS {
+	return dbms.COCKROACHDB
 }
 
 func (dataType CockroachDataType) Name() string {

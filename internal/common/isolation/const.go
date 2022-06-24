@@ -1,4 +1,4 @@
-package txn
+package isolation
 
 const (
 	IsolationRUName  = "Read Uncommitted"

@@ -1,8 +1,9 @@
 package internal
 
 import (
-	"dbkit/config"
 	"dbkit/internal/common"
+	"dbkit/internal/common/dbms"
+	"dbkit/internal/common/oracle"
 	"dbkit/internal/common/stmt"
 	"dbkit/internal/randomly"
 	"time"
@@ -11,10 +12,20 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type TestContext struct {
+type TaskSubmit struct {
+	Oracle    string
+	Target    []string
+	DSN       []string
+	DBName    []string
+	TimeLimit float32
+	Comments  string
+}
+
+type TaskContext struct {
 	TestID       string
-	Oracle       string
-	Target       common.DBMS
+	Submit       *TaskSubmit
+	Oracle       oracle.Oracle
+	Target       dbms.DBMS
 	DBTester     Tester
 	Conn         *sqlx.DB
 	StartTime    time.Time
@@ -25,15 +36,21 @@ type TestContext struct {
 	Tables       []*common.Table
 }
 
-func NewTestContext(config config.TestConfig) *TestContext {
-	testID := config.Oracle + time.Now().Format("060102150405") + randomly.RandAlphabetStrLen(5)
-	targetDbms := common.GetDBMSFromStr(config.Target)
-	return &TestContext{
+func NewTestContext(submit *TaskSubmit) *TaskContext {
+	conn, err := sqlx.Open("mysql", submit.DSN[0])
+	if err != nil {
+		log.Fatalf("Fail to connect database")
+	}
+	testID := submit.Oracle + time.Now().Format("060102150405") + randomly.RandAlphabetStrLen(5)
+	targetDbms := dbms.GetDBMSFromStr(submit.Target[0])
+	testOracle := oracle.GetOracleFromStr(submit.Oracle)
+	return &TaskContext{
 		TestID:       testID,
-		Oracle:       config.Oracle,
+		Submit:       submit,
+		Oracle:       testOracle,
 		Target:       targetDbms,
 		DBTester:     nil,
-		Conn:         config.Conn,
+		Conn:         conn,
 		StartTime:    time.Time{},
 		EndTime:      time.Time{},
 		SqlCount:     0,
@@ -43,36 +60,36 @@ func NewTestContext(config config.TestConfig) *TestContext {
 	}
 }
 
-func (ctx *TestContext) SetTester(tester Tester) {
+func (ctx *TaskContext) SetTester(tester Tester) {
 	ctx.DBTester = tester
 }
 
-func (ctx *TestContext) Start() {
+func (ctx *TaskContext) Start() {
 	ctx.StartTime = time.Now()
 	ctx.DBTester.RunTest()
 }
 
-func (ctx *TestContext) End() {
+func (ctx *TaskContext) End() {
 	ctx.EndTime = time.Now()
 }
 
-func (ctx *TestContext) CountSQL() {
+func (ctx *TaskContext) CountSQL() {
 	ctx.SqlCount++
 }
 
-func (ctx *TestContext) CountTestRun() {
+func (ctx *TaskContext) CountTestRun() {
 	ctx.TestRunCount++
 }
 
-func (ctx *TestContext) CountReport() {
+func (ctx *TaskContext) CountReport() {
 	ctx.ReportCount++
 }
 
-func (ctx *TestContext) Queryx(query string) (*sqlx.Rows, error) {
+func (ctx *TaskContext) Queryx(query string) (*sqlx.Rows, error) {
 	return ctx.Conn.Queryx(query)
 }
 
-func (ctx *TestContext) QuerySQL(query string) ([][]interface{}, error) {
+func (ctx *TaskContext) QuerySQL(query string) ([][]interface{}, error) {
 	rows, err := ctx.Conn.Queryx(query)
 	if err != nil {
 		log.Warnf("Fail to query: %s, cause: %s", query, err)
@@ -91,9 +108,9 @@ func (ctx *TestContext) QuerySQL(query string) ([][]interface{}, error) {
 	return res, nil
 }
 
-func (ctx *TestContext) Query(stmt stmt.SelectStmt) ([][]interface{}, error) {
+func (ctx *TaskContext) Query(stmt stmt.SelectStmt) ([][]interface{}, error) {
 	var query string
-	if ctx.Target == common.TIDB {
+	if ctx.Target == dbms.TIDB {
 		query = stmt.StringInMode()
 	} else {
 		query = stmt.String()
@@ -101,14 +118,14 @@ func (ctx *TestContext) Query(stmt stmt.SelectStmt) ([][]interface{}, error) {
 	return ctx.QuerySQL(query)
 }
 
-func (ctx *TestContext) ExecSQLIgnoreRes(sql string) {
+func (ctx *TaskContext) ExecSQLIgnoreRes(sql string) {
 	_, err := ctx.Conn.Exec(sql)
 	if err != nil {
 		log.Warnf("Fail to execute: %s, cause: %s", sql, err)
 	}
 }
 
-func (ctx *TestContext) ExecSQL(sql string) error {
+func (ctx *TaskContext) ExecSQL(sql string) error {
 	_, err := ctx.Conn.Exec(sql)
 	if err != nil {
 		log.Warnf("Fail to execute: %s, cause: %s", sql, err)
@@ -116,7 +133,7 @@ func (ctx *TestContext) ExecSQL(sql string) error {
 	return err
 }
 
-func (ctx *TestContext) ExecSQLAffectedRow(sql string) (int, error) {
+func (ctx *TaskContext) ExecSQLAffectedRow(sql string) (int, error) {
 	res, err := ctx.Conn.Exec(sql)
 	if err != nil {
 		log.Warnf("Fail to execute: %s, cause: %s", sql, err)
@@ -130,15 +147,15 @@ func (ctx *TestContext) ExecSQLAffectedRow(sql string) (int, error) {
 	return int(count), err
 }
 
-func (ctx *TestContext) ExecUpdate(stmt stmt.UpdateStmt) (int, error) {
+func (ctx *TaskContext) ExecUpdate(stmt stmt.UpdateStmt) (int, error) {
 	return ctx.ExecSQLAffectedRow(stmt.String())
 }
 
-func (ctx *TestContext) ExecDelete(stmt stmt.DeleteStmt) (int, error) {
+func (ctx *TaskContext) ExecDelete(stmt stmt.DeleteStmt) (int, error) {
 	return ctx.ExecSQLAffectedRow(stmt.String())
 }
 
-func (ctx *TestContext) ExecInsert(stmt stmt.InsertStmt) error {
+func (ctx *TaskContext) ExecInsert(stmt stmt.InsertStmt) error {
 	_, err := ctx.Conn.Exec(stmt.String())
 	if err != nil {
 		log.Warnf("Fail to execute: %s, cause: %s", stmt.String(), err)

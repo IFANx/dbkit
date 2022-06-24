@@ -1,7 +1,7 @@
 package gen
 
 import (
-	"dbkit/internal/common"
+	"dbkit/internal/common/dbms"
 	"dbkit/internal/randomly"
 	log "github.com/sirupsen/logrus"
 	"strconv"
@@ -42,8 +42,8 @@ const (
 	TypeJson
 )
 
-func (dataType MySQLDataType) DBMS() common.DBMS {
-	return common.MYSQL
+func (dataType MySQLDataType) DBMS() dbms.DBMS {
+	return dbms.MYSQL
 }
 
 func RandMySQLType() MySQLDataType {

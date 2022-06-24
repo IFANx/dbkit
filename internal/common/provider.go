@@ -1,11 +1,12 @@
 package common
 
 import (
+	"dbkit/internal/common/dbms"
 	"dbkit/internal/common/stmt"
 )
 
 type Provider interface {
-	GetDBMS() DBMS
+	GetDBMS() dbms.DBMS
 	ParseDataType(string) DataType
 	GenCreateTableStmt(table *Table) stmt.CreateTableStmt
 	GenCreateIndexStmt(table *Table) stmt.CreateIndexStmt

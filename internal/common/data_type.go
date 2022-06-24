@@ -1,7 +1,9 @@
 package common
 
+import "dbkit/internal/common/dbms"
+
 type DataType interface {
-	DBMS() DBMS
+	DBMS() dbms.DBMS
 	Name() string
 	HasSize() bool
 	IsString() bool

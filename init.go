@@ -19,7 +19,7 @@ func init() {
 	rand.Seed(time.Now().UnixNano())
 
 	// 指定配置文件路径
-	viper.SetConfigFile("./config/config.json")
+	viper.SetConfigFile("config.json")
 
 	var (
 		logFile *os.File

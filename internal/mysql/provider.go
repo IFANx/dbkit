@@ -2,14 +2,15 @@ package mysql
 
 import (
 	"dbkit/internal/common"
+	"dbkit/internal/common/dbms"
 	"dbkit/internal/common/stmt"
 	"dbkit/internal/mysql/gen"
 )
 
 type MySQLProvider struct{}
 
-func (provider *MySQLProvider) GetDBMS() common.DBMS {
-	return common.MYSQL
+func (provider *MySQLProvider) GetDBMS() dbms.DBMS {
+	return dbms.MYSQL
 }
 
 func (provider *MySQLProvider) ParseDataType(name string) common.DataType {

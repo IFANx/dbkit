@@ -3,6 +3,7 @@ package mysql
 import (
 	"dbkit/internal"
 	"dbkit/internal/common"
+	"dbkit/internal/common/dbms"
 	"dbkit/internal/common/stmt"
 	"dbkit/internal/mysql/gen"
 	"dbkit/internal/randomly"
@@ -11,21 +12,20 @@ import (
 )
 
 type MySQLQueryTester struct {
-	TestCtx *internal.TestContext
+	TestCtx *internal.TaskContext
 }
 
-func NewMySQLQueryTester(testCtx *internal.TestContext) *MySQLQueryTester {
+func NewMySQLQueryTester(testCtx *internal.TaskContext) *MySQLQueryTester {
 	return &MySQLQueryTester{TestCtx: testCtx}
 }
 
 func (tester *MySQLQueryTester) RunTest() {
-	state := internal.GetState()
 	ctx := tester.TestCtx
 	table := &common.Table{
 		TestCtx:    tester.TestCtx,
-		DBMS:       common.MYSQL,
+		DBMS:       dbms.MYSQL,
 		Name:       "t",
-		DBName:     state.Config.MySQL.DBName,
+		DBName:     ctx.Submit.DBName[0],
 		DBProvider: &MySQLProvider{},
 	}
 	for {
@@ -41,7 +41,7 @@ func (tester *MySQLQueryTester) RunTest() {
 	}
 }
 
-func NoRECWithCtx(ctx *internal.TestContext, table *common.Table, predicate string) {
+func NoRECWithCtx(ctx *internal.TaskContext, table *common.Table, predicate string) {
 	norec := stmt.SelectStmt{
 		TableName: table.Name,
 		Targets:   []string{"count(1)"},
@@ -79,7 +79,7 @@ func NoRECWithCtx(ctx *internal.TestContext, table *common.Table, predicate stri
 	}
 }
 
-func TLPWithCtx(ctx *internal.TestContext, table *common.Table, predicate string) {
+func TLPWithCtx(ctx *internal.TaskContext, table *common.Table, predicate string) {
 	target := randomly.RandPickOneStr(table.ColumnNames)
 	targets := []string{target}
 	tlpOrigin := stmt.SelectStmt{

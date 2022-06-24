@@ -1,11 +1,11 @@
 package common
 
 import (
+	"dbkit/internal/common/isolation"
 	"dbkit/internal/common/stmt"
-	"dbkit/internal/common/txn"
 )
 
 type Transaction struct {
-	Isolation txn.IsolationLevel
+	Isolation isolation.IsolationLevel
 	Stmts     []stmt.Statement
 }
