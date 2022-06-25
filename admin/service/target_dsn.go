@@ -1,7 +1,7 @@
 package service
 
 import (
-	"dbkit/admin/model"
+	"dbkit/internal/model"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"

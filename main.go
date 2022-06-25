@@ -12,11 +12,3 @@ func main() {
 	}()
 	admin.StartServer(9999)
 }
-
-func RunMySQLQueryTest() {
-	//testCtx := internal.NewTestContext()
-	//tester := mysql.NewMySQLQueryTester(testCtx)
-	//testCtx.SetTester(tester)
-	//state.Tasks = append(state.Tasks)
-	//testCtx.Start()
-}

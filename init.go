@@ -13,7 +13,6 @@ import (
 )
 
 var logFile *os.File
-var state internal.GlobalState
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
@@ -26,9 +25,9 @@ func init() {
 		err     error
 	)
 
-	logFileName := "./log/" + time.Now().Format("2006010215") + ".log"
+	logFileName := "log/" + time.Now().Format("2006010215") + ".log"
 	if util.CheckFileIsExist(logFileName) { //如果文件存在
-		logFile, err = os.OpenFile(logFileName, os.O_APPEND, 0666) //打开文件
+		logFile, err = os.OpenFile(logFileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend) //打开文件
 		if err != nil {
 			log.Fatalf("Failed to open log file.")
 		}

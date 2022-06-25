@@ -20,7 +20,7 @@ const (
 	tableNameTargetDSN     = "target_dsn"
 )
 
-func init() {
+func oldInit() {
 	// 指定配置文件路径
 	viper.SetConfigFile("config.json")
 	err := viper.ReadInConfig()
@@ -50,8 +50,18 @@ func init() {
 	}
 }
 
+func Setup(conn *sqlx.DB) {
+	db = conn
+	err := ClearAllDSNStateAndVersion()
+	if err != nil {
+		log.Info("初始化DSN连接状态和版本出错")
+	} else {
+		log.Info("初始化DSN连接状态和版本成功")
+	}
+}
+
 func CloseDB() {
-	db.Close()
+	_ = db.Close()
 }
 
 func CleanUpAbortedJobs() {

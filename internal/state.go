@@ -2,6 +2,7 @@ package internal
 
 import (
 	"dbkit/config"
+	"dbkit/internal/model"
 	"fmt"
 	"sync"
 
@@ -49,12 +50,15 @@ func makeGlobalState() *GlobalState {
 
 	// 根据配置文件建立连接
 	dataSource := state.Config.DataSource
-	connStr := fmt.Sprintf("%s:%s@tcp(%s:%d)/dbkit",
+	connStr := fmt.Sprintf("%s:%s@tcp(%s:%d)/dbkit?parseTime=true",
 		dataSource.Username, dataSource.Password, dataSource.Host, dataSource.Port)
 	state.DataSource, err = sqlx.Open("mysql", connStr)
 	if err != nil {
 		log.Fatalf("Fail to connect database")
+	} else {
+		log.Println("连接数据库成功")
 	}
+	model.Setup(state.DataSource)
 
 	return &state
 }

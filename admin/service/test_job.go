@@ -1,14 +1,14 @@
 package service
 
 import (
-	"dbkit/admin/model"
+	model2 "dbkit/internal/model"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
 )
 
 func GetTestJobCount(ctx *gin.Context) {
-	count, err := model.GetTestJobCount()
+	count, err := model2.GetTestJobCount()
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{
 			"ok":  false,
@@ -33,7 +33,7 @@ func GetTestJobPage(ctx *gin.Context) {
 		})
 		return
 	}
-	jobs, err := model.GetTestJobPage(pageSize*(pageNum-1), pageSize)
+	jobs, err := model2.GetTestJobPage(pageSize*(pageNum-1), pageSize)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{
 			"ok":  false,
@@ -57,7 +57,7 @@ func GetTestJobDetail(ctx *gin.Context) {
 		})
 		return
 	}
-	job, err := model.GetTestJobByJid(jid)
+	job, err := model2.GetTestJobByJid(jid)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{
 			"ok":  false,
@@ -65,8 +65,8 @@ func GetTestJobDetail(ctx *gin.Context) {
 		})
 		return
 	}
-	reports, _ := model.GetTestReportByJid(jid)
-	statistic, _ := model.GetStatisticByJid(jid)
+	reports, _ := model2.GetTestReportByJid(jid)
+	statistic, _ := model2.GetStatisticByJid(jid)
 	ctx.JSON(http.StatusOK, gin.H{
 		"ok": true,
 		"data": map[string]interface{}{
@@ -95,7 +95,7 @@ func DeleteTestJob(ctx *gin.Context) {
 		return
 	}
 
-	err = model.DeleteTestJob(jid)
+	err = model2.DeleteTestJob(jid)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{
 			"ok":  false,
