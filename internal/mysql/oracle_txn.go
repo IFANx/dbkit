@@ -17,13 +17,12 @@ func NewMySQLTrocTester(testCtx *internal.TaskContext) *MySQLTrocTester {
 }
 
 func (tester *MySQLTrocTester) RunTest() {
-	state := internal.GetState()
 	ctx := tester.TestCtx
 	table := &common.Table{
 		TestCtx:    tester.TestCtx,
 		DBMS:       dbms.MYSQL,
 		Name:       "t",
-		DBName:     state.Config.MySQL.DBName,
+		DBName:     ctx.Submit.DBName[0],
 		DBProvider: &MySQLProvider{},
 	}
 	for {

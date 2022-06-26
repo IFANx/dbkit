@@ -3,7 +3,6 @@ package internal
 import (
 	"dbkit/internal/common"
 	"dbkit/internal/common/dbms"
-	"dbkit/internal/common/oracle"
 	"dbkit/internal/common/stmt"
 	"dbkit/internal/randomly"
 	"time"
@@ -12,20 +11,9 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type TaskSubmit struct {
-	Oracle    string
-	Target    []string
-	DSN       []string
-	DBName    []string
-	TimeLimit float32
-	Comments  string
-}
-
 type TaskContext struct {
 	TestID       string
 	Submit       *TaskSubmit
-	Oracle       oracle.Oracle
-	Target       dbms.DBMS
 	DBTester     Tester
 	Conn         *sqlx.DB
 	StartTime    time.Time
@@ -37,20 +25,12 @@ type TaskContext struct {
 }
 
 func NewTestContext(submit *TaskSubmit) *TaskContext {
-	conn, err := sqlx.Open("mysql", submit.DSN[0])
-	if err != nil {
-		log.Fatalf("Fail to connect database")
-	}
-	testID := submit.Oracle + time.Now().Format("060102150405") + randomly.RandAlphabetStrLen(5)
-	targetDbms := dbms.GetDBMSFromStr(submit.Target[0])
-	testOracle := oracle.GetOracleFromStr(submit.Oracle)
+	testID := submit.OracleList[0].Name + time.Now().Format("060102150405") + randomly.RandAlphabetStrLen(5)
 	return &TaskContext{
 		TestID:       testID,
 		Submit:       submit,
-		Oracle:       testOracle,
-		Target:       targetDbms,
 		DBTester:     nil,
-		Conn:         conn,
+		Conn:         submit.ConnList[0],
 		StartTime:    time.Time{},
 		EndTime:      time.Time{},
 		SqlCount:     0,
@@ -110,7 +90,7 @@ func (ctx *TaskContext) QuerySQL(query string) ([][]interface{}, error) {
 
 func (ctx *TaskContext) Query(stmt stmt.SelectStmt) ([][]interface{}, error) {
 	var query string
-	if ctx.Target == dbms.TIDB {
+	if ctx.Submit.TargetTypes[0] == dbms.TIDB {
 		query = stmt.StringInMode()
 	} else {
 		query = stmt.String()

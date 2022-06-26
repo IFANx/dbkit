@@ -21,6 +21,23 @@ type TargetDSN struct {
 	Deleted string `json:"Deleted" db:"deleted"`
 }
 
+func (targetDSN *TargetDSN) GetDSN() string {
+	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?%s", targetDSN.DBUser, targetDSN.DBPwd,
+		targetDSN.DBHost, targetDSN.DBPort, targetDSN.DBName, targetDSN.Params)
+}
+
+func (targetDSN *TargetDSN) GetConn() (*sqlx.DB, error) {
+	dbType := targetDSN.DBType
+	if dbType == "tidb" || dbType == "mariadb" {
+		dbType = "mysql"
+	}
+	conn, err := sqlx.Open(dbType, targetDSN.GetDSN())
+	if err != nil {
+		return nil, err
+	}
+	return conn, nil
+}
+
 func GetAllTargetDSN() ([]TargetDSN, error) {
 	var dsnList []TargetDSN
 	sql := fmt.Sprintf("SELECT * FROM %s WHERE deleted = 0", tableNameTargetDSN)
@@ -187,4 +204,15 @@ func ClearAllDSNStateAndVersion() error {
 		return errors.New(errMsg)
 	}
 	return nil
+}
+
+func GetDSNFromTypeAndVersion(dbType, version string) (*TargetDSN, error) {
+	var dsn = TargetDSN{}
+	sql := fmt.Sprintf("SELECT * FROM %s WHERE db_type = '%s' AND version = '%s'",
+		tableNameTargetDSN, dbType, version)
+	err := db.Get(&dsn, sql)
+	if err != nil {
+		return nil, err
+	}
+	return &dsn, nil
 }

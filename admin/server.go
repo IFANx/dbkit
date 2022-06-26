@@ -28,6 +28,8 @@ func StartServer(port int) {
 		})
 	})
 
+	router.POST("/Job/sub", service.SubJob)
+
 	router.GET("/TestJob/count", service.GetTestJobCount)
 	router.GET("/TestJob/page", service.GetTestJobPage)
 	router.GET("/TestJob/detail", service.GetTestJobDetail)
