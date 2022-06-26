@@ -5,6 +5,7 @@ import (
 	"dbkit/internal/common"
 	"dbkit/internal/common/dbms"
 	"dbkit/internal/mysql/gen"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -22,7 +23,7 @@ func (tester *MySQLTrocTester) RunTest() {
 		TestCtx:    tester.TestCtx,
 		DBMS:       dbms.MYSQL,
 		Name:       "t",
-		DBName:     ctx.Submit.DBName[0],
+		DBName:     "test",
 		DBProvider: &MySQLProvider{},
 	}
 	for {

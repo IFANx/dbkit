@@ -100,11 +100,11 @@ func GenerateDeleteStmt(tables []*common.Table, partitions []string) *statement.
 
 func RandPickOptions(optList []int, optSize int) []int {
 	optList = rand.Perm(optSize + 1) // len(optList) = optSize + 1
-	delOption := randomly.RandIntGap(1, optSize+1)
+	randSize := randomly.RandIntGap(1, optSize+1)
 	rand.Shuffle(optSize+1, func(i, j int) {
 		optList[i], optList[j] = optList[j], optList[i]
 	})
-	optList = optList[:delOption]
+	optList = optList[:randSize]
 	return optList
 }
 
