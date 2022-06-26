@@ -10,6 +10,7 @@ type CreateIndexStmt struct { //lack index_option
 	IndexName       string
 	TypeIndex       IndexType
 	TableName       string
+	KeyPart         ast.AstNode
 	Columns         []*common.Column
 	OptionAlgorithm AlgorithmOption
 	OptionLock      LockOption
@@ -68,7 +69,15 @@ func (stmt *CreateIndexStmt) String() string {
 	for idx, val := range stmt.Columns {
 		sql += val.Name
 		if val.Type.IsString() {
-			sql += "(10)" //TODO support random length
+			if stmt.KeyPart == nil {
+				sql += "(10)" //TODO support random length
+			} else {
+				sql += stmt.KeyPart.String()
+			}
+		} else {
+			if stmt.KeyPart != nil {
+				sql += stmt.KeyPart.String()
+			}
 		}
 		if idx != colCount {
 			sql += ", "
