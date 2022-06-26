@@ -11,7 +11,7 @@ import (
 
 func GenerateUpdateStmt(tables []*common.Table, partitions []string) *statement.UpdateStmt {
 	rand.Seed(time.Now().UnixNano())
-	updOptList := make([]statement.DeleteOption, 0)
+	updOptList := make([]statement.UpdateOption, 0)
 	// 需要添加控制选项的开关
 	if true { // 可以生成参数
 		// 需要引擎参数
