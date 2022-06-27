@@ -3,7 +3,6 @@ package mysql
 import (
 	"dbkit/internal"
 	"dbkit/internal/common"
-	"dbkit/internal/common/dbms"
 	"dbkit/internal/mysql/gen"
 
 	log "github.com/sirupsen/logrus"
@@ -17,11 +16,9 @@ func NewMySQLTrocTester(testCtx *internal.TaskContext) *MySQLTrocTester {
 	return &MySQLTrocTester{TestCtx: testCtx}
 }
 
-func (tester *MySQLTrocTester) RunTask(internal.TaskContext) {
-	ctx := tester.TestCtx
+func (tester *MySQLTrocTester) RunTask(ctx *internal.TaskContext) {
 	table := &common.Table{
-		TestCtx:    tester.TestCtx,
-		DBMS:       dbms.MYSQL,
+		DB:         ctx.DBList[0],
 		Name:       "t",
 		DBName:     "test",
 		DBProvider: &MySQLProvider{},
@@ -30,7 +27,7 @@ func (tester *MySQLTrocTester) RunTask(internal.TaskContext) {
 		table.Build()
 
 		for run := 0; run < 20; run++ {
-			ctx.CountTestRun()
+			ctx.TestRunCount++
 			predicate := gen.GenPredicate(table)
 			log.Infof("生成新的谓词：%s", predicate)
 			NoRECWithCtx(ctx, table, predicate)

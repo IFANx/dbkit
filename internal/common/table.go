@@ -9,8 +9,7 @@ import (
 )
 
 type Table struct {
-	TestCtx       SqlExecutor
-	DBMS          dbms.DBMS
+	DB            *Database
 	DBProvider    Provider
 	Name          string
 	DBName        string
@@ -26,7 +25,7 @@ func (table *Table) Build() {
 	table.DropTable()
 	stmt := table.DBProvider.GenCreateTableStmt(table)
 	log.Infof("Create table statement: %s", stmt.String())
-	err := table.TestCtx.ExecSQL(stmt.String())
+	err := table.DB.ExecSQL(stmt.String())
 	if err != nil {
 		log.Infof("Fail to create table: %s", err)
 	}
@@ -34,7 +33,7 @@ func (table *Table) Build() {
 	for i := 0; i < randomly.RandIntGap(1, 3); i++ {
 		stmt := table.DBProvider.GenCreateIndexStmt(table)
 		log.Infof("Create index statement: %s", stmt.String())
-		err := table.TestCtx.ExecSQL(stmt.String())
+		err := table.DB.ExecSQL(stmt.String())
 		if err != nil {
 			log.Infof("Fail to create index: %s", err)
 		}
@@ -42,7 +41,7 @@ func (table *Table) Build() {
 	for i := 0; i < randomly.RandIntGap(5, 10); i++ {
 		stmt := table.DBProvider.GenInsertStmt(table)
 		log.Infof("Insert statement: %s", stmt.String())
-		err := table.TestCtx.ExecSQL(stmt.String())
+		err := table.DB.ExecSQL(stmt.String())
 		if err != nil {
 			log.Infof("Fail to insert data: %s", err)
 		}
@@ -51,13 +50,13 @@ func (table *Table) Build() {
 }
 
 func (table *Table) DropTable() {
-	table.TestCtx.ExecSQLIgnoreRes("DROP TABLE IF EXISTS " + table.Name)
+	table.DB.ExecSQLIgnoreRes("DROP TABLE IF EXISTS " + table.Name)
 }
 
 func (table *Table) UpdateSchema() {
-	switch table.DBMS {
+	switch table.DB.DBMS {
 	case dbms.MYSQL, dbms.MARIADB, dbms.TIDB:
-		rows, err := table.TestCtx.Queryx("desc " + table.Name)
+		rows, err := table.DB.Queryx("desc " + table.Name)
 		if err != nil {
 			log.Warnf("Fail to get table structure: %s", err)
 		}
@@ -89,7 +88,7 @@ func (table *Table) UpdateSchema() {
 		table.showSchema()
 		sql := fmt.Sprintf("select * from information_schema.statistics "+
 			"where table_schema = '%s' and table_name = '%s'", table.DBName, table.Name)
-		rows, err = table.TestCtx.Queryx(sql)
+		rows, err = table.DB.Queryx(sql)
 		if err != nil {
 			log.Warnf("Fail to get index: %s", err)
 		}

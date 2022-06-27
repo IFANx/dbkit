@@ -3,7 +3,6 @@ package mysql
 import (
 	"dbkit/internal"
 	"dbkit/internal/common"
-	"dbkit/internal/common/dbms"
 	"dbkit/internal/common/stmt"
 	"dbkit/internal/mysql/gen"
 	"dbkit/internal/randomly"
@@ -16,8 +15,7 @@ type MySQLQueryTester struct {
 
 func (tester *MySQLQueryTester) RunTask(ctx *internal.TaskContext) {
 	table := &common.Table{
-		TestCtx:    ctx,
-		DBMS:       dbms.MYSQL,
+		DB:         ctx.DBList[0],
 		Name:       "t",
 		DBName:     ctx.DBList[0].DBName,
 		DBProvider: &MySQLProvider{},
@@ -26,7 +24,7 @@ func (tester *MySQLQueryTester) RunTask(ctx *internal.TaskContext) {
 		table.Build()
 
 		for run := 0; run < 20; run++ {
-			ctx.CountTestRun()
+			ctx.TestRunCount++
 			predicate := gen.GenPredicate(table)
 			log.Infof("生成新的谓词：%s", predicate)
 			NoRECWithCtx(ctx, table, predicate)
@@ -43,7 +41,7 @@ func NoRECWithCtx(ctx *internal.TaskContext, table *common.Table, predicate stri
 		ForShare:  false,
 		ForUpdate: false,
 	}
-	res, err := ctx.Query(norec)
+	res, err := ctx.DBList[0].Query(norec)
 	if err != nil || len(res) < 1 {
 		return
 	}
@@ -54,7 +52,7 @@ func NoRECWithCtx(ctx *internal.TaskContext, table *common.Table, predicate stri
 	}
 	norec.Predicate = "True"
 	norec.Targets[0] = "((" + predicate + ") IS TRUE)"
-	res, err = ctx.Query(norec)
+	res, err = ctx.DBList[0].Query(norec)
 	if err != nil {
 		return
 	}
@@ -107,7 +105,7 @@ func TLPWithCtx(ctx *internal.TaskContext, table *common.Table, predicate string
 	tlpQuery := "(" + firstQuery.String() + ") UNION ALL (" + secondQuery.String() +
 		") UNION ALL (" + thirdQuery.String() + ")"
 
-	res, err := ctx.Query(tlpOrigin)
+	res, err := ctx.DBList[0].Query(tlpOrigin)
 	if err != nil || len(res) < 1 {
 		return
 	}
@@ -124,7 +122,7 @@ func TLPWithCtx(ctx *internal.TaskContext, table *common.Table, predicate string
 	}
 	log.Infof("res: %+v", resMap1)
 
-	res, err = ctx.QuerySQL(tlpQuery)
+	res, err = ctx.DBList[0].QuerySQL(tlpQuery)
 	if err != nil {
 		return
 	}

@@ -32,6 +32,15 @@ type TaskSubmit struct {
 
 func BuildTaskFromSubmit(submit *TaskSubmit) (int, error) {
 	// log.Printf("%+v\n", submit)
+	var (
+		jid    int
+		runner TaskRunner
+		err    error
+	)
+	runner, err = getTaskRunnerFromSubmit(submit)
+	if err != nil {
+		return 0, err
+	}
 	dsnStr := strings.Join(submit.DSNList, ",")
 	targetTypeStrList := make([]string, len(submit.TargetTypes))
 	for _, tp := range submit.TargetTypes {
@@ -43,10 +52,6 @@ func BuildTaskFromSubmit(submit *TaskSubmit) (int, error) {
 		oracleStrList = append(oracleStrList, oc.Alias)
 	}
 	oracleStr := strings.Join(oracleStrList, ",")
-	var (
-		jid int
-		err error
-	)
 	if submit.Type == TaskTypeVerify {
 		jid, err = model.AddVerifyJob(dsnStr, "", targetTypeStr, submit.Model, submit.Comments, int(submit.Limit))
 		if err != nil {
@@ -61,7 +66,7 @@ func BuildTaskFromSubmit(submit *TaskSubmit) (int, error) {
 	task := &TaskContext{
 		JobID:        jid,
 		Submit:       submit,
-		Conn:         submit.ConnList[0],
+		Runner:       runner,
 		StartTime:    time.Time{},
 		Deadline:     time.Time{},
 		EndTime:      time.Time{},
@@ -69,7 +74,13 @@ func BuildTaskFromSubmit(submit *TaskSubmit) (int, error) {
 		TestRunCount: 0,
 		ReportCount:  0,
 		DBList:       make([]*common.Database, 0),
+		Aborted:      0,
 	}
 	GetState().submitTask(task)
 	return jid, nil
+}
+
+// TODO: 根据用户提交的配置选择Oracle实现
+func getTaskRunnerFromSubmit(submit *TaskSubmit) (TaskRunner, error) {
+	return nil, nil
 }

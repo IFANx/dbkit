@@ -74,5 +74,5 @@ func (state *GlobalState) submitTask(task *TaskContext) {
 	} else {
 		state.VerifyTasks[task.JobID] = task
 	}
-	task.Start()
+	go task.Start()
 }
