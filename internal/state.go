@@ -12,10 +12,10 @@ import (
 )
 
 type GlobalState struct {
-	Config     *config.DBKitConfig
-	Tasks      []*TaskContext
-	DataSource *sqlx.DB
-	TableCount int
+	Config      *config.DBKitConfig
+	DataSource  *sqlx.DB
+	TestTasks   map[int]*TaskContext
+	VerifyTasks map[int]*TaskContext
 }
 
 var globalState *GlobalState
@@ -43,9 +43,10 @@ func makeGlobalState() *GlobalState {
 	}
 
 	state := GlobalState{
-		Config:     &dbKitConfig,
-		Tasks:      make([]*TaskContext, 0),
-		DataSource: nil,
+		Config:      &dbKitConfig,
+		TestTasks:   make(map[int]*TaskContext),
+		VerifyTasks: make(map[int]*TaskContext),
+		DataSource:  nil,
 	}
 
 	// 根据配置文件建立连接
@@ -67,8 +68,11 @@ func (state *GlobalState) GetDataSourceConn() *sqlx.DB {
 	return state.DataSource
 }
 
-func (state *GlobalState) buildTestContext(submit *TaskSubmit) *TaskContext {
-	ctx := NewTestContext(submit)
-	state.Tasks = append(state.Tasks, ctx)
-	return ctx
+func (state *GlobalState) submitTask(task *TaskContext) {
+	if task.Submit.Type == TaskTypeVerify {
+		state.TestTasks[task.JobID] = task
+	} else {
+		state.VerifyTasks[task.JobID] = task
+	}
+	task.Start()
 }

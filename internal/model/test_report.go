@@ -86,6 +86,27 @@ func GetTestReportPage(offset, limit int) ([]TestReportPageItem, error) {
 	return reports, nil
 }
 
+func AddTestReport(jid int, inputStmt, inputRes, OracleStmt, OracleRes, category, url, comments string) (int, error) {
+	timeStr := time.Now().Format("2006-01-02 15:04:05")
+	sql := fmt.Sprintf("INSERT INTO %s(jid, input_stmt, input_res, oracle_stmt, oracle_res"+
+		"category, report_time, state, url, commments, deleted) "+
+		"VALUES('%d', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d')",
+		tableNameTestReport, jid, inputStmt, inputRes, OracleStmt, OracleRes, category, timeStr, "待确认", url, comments, 0)
+	res, err := db.Exec(sql)
+	if err != nil {
+		errMsg := fmt.Sprintf("数据库写入TestReport记录失败：%s\n", err)
+		log.Warnf(errMsg)
+		return 0, errors.New(errMsg)
+	}
+	rid, err := res.LastInsertId()
+	if err != nil {
+		errMsg := fmt.Sprintf("数据库获取新插入记录rid失败：%s\n", err)
+		log.Warnf(errMsg)
+		return 0, errors.New(errMsg)
+	}
+	return int(rid), nil
+}
+
 func DeleteTestReport(rid int) error {
 	sql := fmt.Sprintf("UPDATE %s SET deleted = 1 WHERE rid = %d", tableNameTestReport, rid)
 	_, err := db.Exec(sql)

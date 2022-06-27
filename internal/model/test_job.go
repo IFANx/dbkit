@@ -59,6 +59,27 @@ func GetTestJobByJid(jid int) (*TestJob, error) {
 	return &job, nil
 }
 
+func AddTestJob(dsn, dbName, target, oracle, comments string, timeLimit float32) (int, error) {
+	timeStr := time.Now().Format("2006-01-02 15:04:05")
+	sql := fmt.Sprintf("INSERT INTO %s(dsn, db_name, target, "+
+		"oracle, state, time_limit, comments, created_at, deleted) "+
+		"VALUES('%s', '%s', '%s', '%s', '%d', '%f', '%s', '%s' '%d')",
+		tableNameTestJob, dsn, dbName, target, oracle, 1, timeLimit, comments, timeStr, 0)
+	res, err := db.Exec(sql)
+	if err != nil {
+		errMsg := fmt.Sprintf("数据库写入TestJob记录失败：%s\n", err)
+		log.Warnf(errMsg)
+		return 0, errors.New(errMsg)
+	}
+	jid, err := res.LastInsertId()
+	if err != nil {
+		errMsg := fmt.Sprintf("数据库获取新插入记录jid失败：%s\n", err)
+		log.Warnf(errMsg)
+		return 0, errors.New(errMsg)
+	}
+	return int(jid), nil
+}
+
 func DeleteTestJob(jid int) error {
 	sql := fmt.Sprintf("UPDATE %s SET deleted = 1 WHERE jid = %d", tableNameTestJob, jid)
 	_, err := db.Exec(sql)

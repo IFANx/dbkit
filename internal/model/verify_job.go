@@ -74,6 +74,27 @@ func GetVerifyJobByJid(jid int) (*VerifyJob, error) {
 	return &job, nil
 }
 
+func AddVerifyJob(dsn, dbName, target, model, comments string, op int) (int, error) {
+	timeStr := time.Now().Format("2006-01-02 15:04:05")
+	sql := fmt.Sprintf("INSERT INTO %s(dsn, db_name, target, "+
+		"model, op, state, comments, created_at, deleted) "+
+		"VALUES('%s', '%s', '%s', '%s', '%d', '%d', '%s', '%s', '%d')",
+		tableNameVerifyJob, dsn, dbName, target, model, op, 1, comments, timeStr, 0)
+	res, err := db.Exec(sql)
+	if err != nil {
+		errMsg := fmt.Sprintf("数据库写入VerifyJob记录失败：%s\n", err)
+		log.Warnf(errMsg)
+		return 0, errors.New(errMsg)
+	}
+	jid, err := res.LastInsertId()
+	if err != nil {
+		errMsg := fmt.Sprintf("数据库获取新插入记录jid失败：%s\n", err)
+		log.Warnf(errMsg)
+		return 0, errors.New(errMsg)
+	}
+	return int(jid), nil
+}
+
 func DeleteVerifyJob(jid int) error {
 	sql := fmt.Sprintf("UPDATE %s SET deleted = 1 WHERE jid = %d", tableNameVerifyJob, jid)
 	_, err := db.Exec(sql)

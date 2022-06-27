@@ -28,3 +28,24 @@ func GetStatisticByJid(jid int) (*TestStatistic, error) {
 	}
 	return &stat, nil
 }
+
+func AddStatistic(jid, sqlCount, caseCount, reportCount int, failCause string) (int, error) {
+	timeStr := time.Now().Format("2006-01-02 15:04:05")
+	sql := fmt.Sprintf("INSERT INTO %s(jid, sql_count, "+
+		"case_count, report_count, fail_cause, end_time) "+
+		"VALUES('%d', '%d', '%d', '%d', '%s', '%s')",
+		tableNameTestStatistic, jid, sqlCount, caseCount, reportCount, failCause, timeStr)
+	res, err := db.Exec(sql)
+	if err != nil {
+		errMsg := fmt.Sprintf("数据库写入TestStatistic记录失败：%s\n", err)
+		log.Warnf(errMsg)
+		return 0, errors.New(errMsg)
+	}
+	sid, err := res.LastInsertId()
+	if err != nil {
+		errMsg := fmt.Sprintf("数据库获取新插入记录sid失败：%s\n", err)
+		log.Warnf(errMsg)
+		return 0, errors.New(errMsg)
+	}
+	return int(sid), nil
+}

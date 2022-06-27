@@ -66,6 +66,26 @@ func GetVerifyReportByJid(jid int) (*VerifyReport, error) {
 	return &report, nil
 }
 
+func AddVerifyReport(jid, pass int, filePath, comments string) (int, error) {
+	timeStr := time.Now().Format("2006-01-02 15:04:05")
+	sql := fmt.Sprintf("INSERT INTO %s(jid, pass, file_path, comments, created_at, deleted) "+
+		"VALUES('%d', '%d', '%s', '%s', '%s', '%d')",
+		tableNameVerifyReport, jid, pass, filePath, comments, timeStr, 0)
+	res, err := db.Exec(sql)
+	if err != nil {
+		errMsg := fmt.Sprintf("数据库写入VerifyReport记录失败：%s\n", err)
+		log.Warnf(errMsg)
+		return 0, errors.New(errMsg)
+	}
+	rid, err := res.LastInsertId()
+	if err != nil {
+		errMsg := fmt.Sprintf("数据库获取新插入记录rid失败：%s\n", err)
+		log.Warnf(errMsg)
+		return 0, errors.New(errMsg)
+	}
+	return int(rid), nil
+}
+
 func DeleteVerifyReport(rid int) error {
 	sql := fmt.Sprintf("UPDATE %s SET deleted = 1 WHERE rid = %d", tableNameVerifyReport, rid)
 	_, err := db.Exec(sql)

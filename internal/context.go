@@ -4,7 +4,6 @@ import (
 	"dbkit/internal/common"
 	"dbkit/internal/common/dbms"
 	"dbkit/internal/common/stmt"
-	"dbkit/internal/randomly"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -12,41 +11,21 @@ import (
 )
 
 type TaskContext struct {
-	TestID       string
+	JobID        int
 	Submit       *TaskSubmit
-	DBTester     Tester
 	Conn         *sqlx.DB
 	StartTime    time.Time
+	Deadline     time.Time
 	EndTime      time.Time
 	SqlCount     int64
 	TestRunCount int64
 	ReportCount  int64
-	Tables       []*common.Table
-}
-
-func NewTestContext(submit *TaskSubmit) *TaskContext {
-	testID := submit.OracleList[0].Name + time.Now().Format("060102150405") + randomly.RandAlphabetStrLen(5)
-	return &TaskContext{
-		TestID:       testID,
-		Submit:       submit,
-		DBTester:     nil,
-		Conn:         submit.ConnList[0],
-		StartTime:    time.Time{},
-		EndTime:      time.Time{},
-		SqlCount:     0,
-		TestRunCount: 0,
-		ReportCount:  0,
-		Tables:       make([]*common.Table, 0),
-	}
-}
-
-func (ctx *TaskContext) SetTester(tester Tester) {
-	ctx.DBTester = tester
+	DBList       []*common.Database
 }
 
 func (ctx *TaskContext) Start() {
 	ctx.StartTime = time.Now()
-	ctx.DBTester.RunTest()
+
 }
 
 func (ctx *TaskContext) End() {

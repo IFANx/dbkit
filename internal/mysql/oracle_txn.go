@@ -17,7 +17,7 @@ func NewMySQLTrocTester(testCtx *internal.TaskContext) *MySQLTrocTester {
 	return &MySQLTrocTester{TestCtx: testCtx}
 }
 
-func (tester *MySQLTrocTester) RunTest() {
+func (tester *MySQLTrocTester) RunTask(internal.TaskContext) {
 	ctx := tester.TestCtx
 	table := &common.Table{
 		TestCtx:    tester.TestCtx,

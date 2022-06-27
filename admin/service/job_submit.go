@@ -85,6 +85,7 @@ func validateTestForm(oracleNames, target []string, testType, deadline, time, de
 	var (
 		dbmsList []dbms.DBMS
 		connList []*sqlx.DB
+		dsnList  []string
 	)
 	targetDSN, err := model.GetDSNFromTypeAndVersion(target[0], target[1])
 	if err != nil {
@@ -96,6 +97,7 @@ func validateTestForm(oracleNames, target []string, testType, deadline, time, de
 	}
 	dbmsList = append(dbmsList, dbms.GetDBMSFromStr(targetDSN.DBType))
 	connList = append(connList, conn)
+	dsnList = append(dsnList, targetDSN.GetDSN())
 	var limit float32 = 0
 	if deadline == "true" {
 		timeLimit, err := strconv.ParseFloat(time, 32)
@@ -109,6 +111,7 @@ func validateTestForm(oracleNames, target []string, testType, deadline, time, de
 		OracleList:  oracleList,
 		TargetTypes: dbmsList,
 		ConnList:    connList,
+		DSNList:     dsnList,
 		Limit:       limit,
 		Comments:    desc,
 	}, nil
@@ -129,6 +132,7 @@ func validateDiffForm(oracleName, target []string, targetKind, deadline, time, d
 	var (
 		dbmsList []dbms.DBMS
 		connList []*sqlx.DB
+		dsnList  []string
 	)
 	for i := 0; i < len(target); i += 2 {
 		targetDSN, err := model.GetDSNFromTypeAndVersion(target[i], target[i+1])
@@ -141,6 +145,7 @@ func validateDiffForm(oracleName, target []string, targetKind, deadline, time, d
 		}
 		dbmsList = append(dbmsList, dbms.GetDBMSFromStr(targetDSN.DBType))
 		connList = append(connList, conn)
+		dsnList = append(dsnList, targetDSN.GetDSN())
 	}
 	var limit float32 = 0
 	if deadline == "true" {
@@ -155,6 +160,7 @@ func validateDiffForm(oracleName, target []string, targetKind, deadline, time, d
 		OracleList:  oracleList,
 		TargetTypes: dbmsList,
 		ConnList:    connList,
+		DSNList:     dsnList,
 		Limit:       limit,
 		Comments:    desc,
 	}, nil
@@ -173,6 +179,7 @@ func validateVerifyForm(oracleName, target []string, checkModel, op, desc string
 	var (
 		dbmsList []dbms.DBMS
 		connList []*sqlx.DB
+		dsnList  []string
 	)
 	targetDSN, err := model.GetDSNFromTypeAndVersion(target[0], target[1])
 	if err != nil {
@@ -184,6 +191,7 @@ func validateVerifyForm(oracleName, target []string, checkModel, op, desc string
 	}
 	dbmsList = append(dbmsList, dbms.GetDBMSFromStr(targetDSN.DBType))
 	connList = append(connList, conn)
+	dsnList = append(dsnList, targetDSN.GetDSN())
 	var limit float32 = 0
 	timeLimit, err := strconv.ParseInt(op, 10, 32)
 	if err != nil {
@@ -195,6 +203,7 @@ func validateVerifyForm(oracleName, target []string, checkModel, op, desc string
 		OracleList:  oracleList,
 		TargetTypes: dbmsList,
 		ConnList:    connList,
+		DSNList:     dsnList,
 		Limit:       limit,
 		Model:       checkModel,
 		Comments:    desc,

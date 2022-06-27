@@ -12,20 +12,14 @@ import (
 )
 
 type MySQLQueryTester struct {
-	TestCtx *internal.TaskContext
 }
 
-func NewMySQLQueryTester(testCtx *internal.TaskContext) *MySQLQueryTester {
-	return &MySQLQueryTester{TestCtx: testCtx}
-}
-
-func (tester *MySQLQueryTester) RunTest() {
-	ctx := tester.TestCtx
+func (tester *MySQLQueryTester) RunTask(ctx *internal.TaskContext) {
 	table := &common.Table{
-		TestCtx:    tester.TestCtx,
+		TestCtx:    ctx,
 		DBMS:       dbms.MYSQL,
 		Name:       "t",
-		DBName:     ctx.Submit.DBName[0],
+		DBName:     ctx.DBList[0].DBName,
 		DBProvider: &MySQLProvider{},
 	}
 	for {
