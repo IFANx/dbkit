@@ -14,6 +14,23 @@ type Database struct {
 	Tables []*Table
 }
 
+func (db *Database) Refresh() error {
+	var err error
+	err = db.ExecSQL("DROP DATABASE IF EXISTS " + db.DBName)
+	if err != nil {
+		return err
+	}
+	err = db.ExecSQL("CREATE DATABASE " + db.DBName)
+	if err != nil {
+		return err
+	}
+	err = db.ExecSQL("USE " + db.DBName)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (db *Database) Queryx(query string) (*sqlx.Rows, error) {
 	return db.Conn.Queryx(query)
 }
@@ -47,7 +64,7 @@ func (db *Database) Query(stmt stmt.SelectStmt) ([][]interface{}, error) {
 	return db.QuerySQL(query)
 }
 
-func (db *Database) ExecSQLIgnoreRes(sql string) {
+func (db *Database) ExecSQLIgnoreError(sql string) {
 	_, err := db.Conn.Exec(sql)
 	if err != nil {
 		log.Warnf("Fail to execute: %s, cause: %s", sql, err)

@@ -50,7 +50,7 @@ func (table *Table) Build() {
 }
 
 func (table *Table) DropTable() {
-	table.DB.ExecSQLIgnoreRes("DROP TABLE IF EXISTS " + table.Name)
+	table.DB.ExecSQLIgnoreError("DROP TABLE IF EXISTS " + table.Name)
 }
 
 func (table *Table) UpdateSchema() {

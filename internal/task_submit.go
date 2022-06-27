@@ -82,5 +82,5 @@ func BuildTaskFromSubmit(submit *TaskSubmit) (int, error) {
 
 // TODO: 根据用户提交的配置选择Oracle实现
 func getTaskRunnerFromSubmit(submit *TaskSubmit) (TaskRunner, error) {
-	return nil, nil
+	return nil, errors.New("该测试功能未实现")
 }

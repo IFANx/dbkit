@@ -9,7 +9,7 @@ type SqlExecutor interface {
 	Queryx(query string) (*sqlx.Rows, error)
 	QuerySQL(query string) ([][]interface{}, error)
 	Query(stmt stmt.SelectStmt) ([][]interface{}, error)
-	ExecSQLIgnoreRes(sql string)
+	ExecSQLIgnoreError(sql string)
 	ExecSQL(sql string) error
 	ExecSQLAffectedRow(sql string) (int, error)
 	ExecUpdate(stmt stmt.UpdateStmt) (int, error)
