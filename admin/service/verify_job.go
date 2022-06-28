@@ -1,14 +1,15 @@
 package service
 
 import (
-	model2 "dbkit/internal/model"
+	"dbkit/internal"
+	"dbkit/internal/model"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
 )
 
 func GetVerifyJobCount(ctx *gin.Context) {
-	count, err := model2.GetVerifyJobCount()
+	count, err := model.GetVerifyJobCount()
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{
 			"ok":  false,
@@ -33,7 +34,7 @@ func GetVerifyJobPage(ctx *gin.Context) {
 		})
 		return
 	}
-	jobs, err := model2.GetVerifyJobPage(pageSize*(pageNum-1), pageSize)
+	jobs, err := model.GetVerifyJobPage(pageSize*(pageNum-1), pageSize)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{
 			"ok":  false,
@@ -57,7 +58,7 @@ func GetVerifyJobDetail(ctx *gin.Context) {
 		})
 		return
 	}
-	job, err := model2.GetVerifyJobByJid(jid)
+	job, err := model.GetVerifyJobByJid(jid)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{
 			"ok":  false,
@@ -65,7 +66,7 @@ func GetVerifyJobDetail(ctx *gin.Context) {
 		})
 		return
 	}
-	report, _ := model2.GetVerifyReportByJid(jid)
+	report, _ := model.GetVerifyReportByJid(jid)
 	ctx.JSON(http.StatusOK, gin.H{
 		"ok": true,
 		"data": map[string]interface{}{
@@ -93,7 +94,7 @@ func DeleteVerifyJob(ctx *gin.Context) {
 		return
 	}
 
-	err = model2.DeleteVerifyJob(jid)
+	err = model.DeleteVerifyJob(jid)
 	if err != nil {
 		ctx.JSON(http.StatusOK, gin.H{
 			"ok":  false,
@@ -108,8 +109,25 @@ func DeleteVerifyJob(ctx *gin.Context) {
 }
 
 func AbortVerifyJob(ctx *gin.Context) {
+	jidStr := ctx.Query("jid")
+	jid, err := strconv.Atoi(jidStr)
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"ok":  false,
+			"err": err.Error(),
+		})
+		return
+	}
+	err = internal.GetState().AbortTask(internal.TaskTypeVerify, jid)
+	if err != nil {
+		ctx.JSON(http.StatusOK, gin.H{
+			"ok":  false,
+			"err": err.Error(),
+		})
+		return
+	}
 	ctx.JSON(http.StatusOK, gin.H{
-		"ok":  false,
-		"err": "暂不允许手动终止任务",
+		"ok":   true,
+		"data": "手动终止任务成功",
 	})
 }

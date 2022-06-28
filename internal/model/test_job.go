@@ -20,8 +20,6 @@ type TestJob struct {
 	Deleted   int       `json:"Deleted" db:"deleted"`
 }
 
-var RunningTestJobs map[int]*TestJob
-
 func GetTestJobCount() (int, error) {
 	count := new(int)
 	sql := fmt.Sprintf("SELECT count(*) FROM %s WHERE deleted = 0", tableNameTestJob)

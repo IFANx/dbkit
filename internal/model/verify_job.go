@@ -33,8 +33,6 @@ type VerifyJobPageItem struct {
 	Deleted   int       `json:"Deleted" db:"deleted"`
 }
 
-var RunningVerifyJobs map[int]*VerifyJob
-
 func GetVerifyJobCount() (int, error) {
 	count := new(int)
 	sql := fmt.Sprintf("SELECT count(*) FROM %s WHERE deleted = 0", tableNameVerifyJob)

@@ -3,6 +3,7 @@ package internal
 import (
 	"dbkit/config"
 	"dbkit/internal/model"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -68,11 +69,46 @@ func (state *GlobalState) GetDataSourceConn() *sqlx.DB {
 	return state.DataSource
 }
 
-func (state *GlobalState) submitTask(task *TaskContext) {
+func (state *GlobalState) SubmitTask(task *TaskContext) {
 	if task.Submit.Type == TaskTypeVerify {
-		state.TestTasks[task.JobID] = task
-	} else {
 		state.VerifyTasks[task.JobID] = task
+	} else {
+		state.TestTasks[task.JobID] = task
 	}
 	go task.Start()
+}
+
+func (state *GlobalState) AbortTask(taskType TaskType, jid int) error {
+	var task *TaskContext
+	if taskType == TaskTypeVerify {
+		task = state.VerifyTasks[jid]
+		err := model.AbortVerifyJob(jid)
+		if err != nil {
+			return errors.New("手动终止任务失败：" + err.Error())
+		}
+	} else {
+		task = state.TestTasks[jid]
+		err := model.AbortTestJob(jid)
+		if err != nil {
+			return errors.New("手动终止任务失败：" + err.Error())
+		}
+		_, err = model.AddStatistic(jid, task.SqlCount, task.TestRunCount, task.ReportCount, "手动终止")
+		if err != nil {
+			return errors.New("手动终止任务失败：" + err.Error())
+		}
+	}
+	if task == nil {
+		return errors.New("未找到该运行中的任务，请刷新页面")
+	}
+	task.Abort()
+	return nil
+}
+
+func (state *GlobalState) AbortAllRunningTasks() {
+	for _, task := range state.TestTasks {
+		_ = state.AbortTask(TaskTypeTest, task.JobID)
+	}
+	for _, task := range state.VerifyTasks {
+		_ = state.AbortTask(TaskTypeVerify, task.JobID)
+	}
 }

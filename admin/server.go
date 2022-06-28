@@ -3,6 +3,7 @@ package admin
 import (
 	"context"
 	"dbkit/admin/service"
+	"dbkit/internal"
 	"dbkit/internal/model"
 	"github.com/gin-gonic/gin"
 	log "github.com/sirupsen/logrus"
@@ -92,7 +93,7 @@ func StartServer(port int) {
 	}
 
 	log.Infof("服务器退出，将未执行完毕Job改为执行错误...")
-	model.CleanUpAbortedJobs()
+	internal.GetState().AbortAllRunningTasks()
 
 	log.Info("关闭数据库链接...")
 	model.CloseDB()

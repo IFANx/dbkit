@@ -3,6 +3,7 @@ package internal
 import (
 	"dbkit/internal/common"
 	"fmt"
+	"sync/atomic"
 	"time"
 )
 
@@ -13,19 +14,26 @@ type TaskContext struct {
 	StartTime    time.Time
 	Deadline     time.Time
 	EndTime      time.Time
-	SqlCount     int64
-	TestRunCount int64
-	ReportCount  int64
+	SqlCount     int
+	TestRunCount int
+	ReportCount  int
 	DBList       []*common.Database
 	Aborted      int32
+	Finished     int32
 }
 
 func (ctx *TaskContext) Start() {
 	defer func() {
 		if err := recover(); err != nil {
 			ctx.EndTime = time.Now()
+			if !ctx.IsAborted() {
+
+			}
 		} else {
 			ctx.EndTime = time.Now()
+			if !ctx.IsAborted() {
+
+			}
 		}
 		ctx.Clean()
 	}()
@@ -57,6 +65,22 @@ func (ctx *TaskContext) initDBList() {
 		}
 		dbList[i] = db
 	}
+}
+
+func (ctx *TaskContext) Abort() {
+	atomic.StoreInt32(&ctx.Aborted, 1)
+}
+
+func (ctx *TaskContext) IsAborted() bool {
+	return atomic.LoadInt32(&ctx.Aborted) == 1
+}
+
+func (ctx *TaskContext) Finish() {
+	atomic.StoreInt32(&ctx.Finished, 1)
+}
+
+func (ctx *TaskContext) IsFinished() bool {
+	return atomic.LoadInt32(&ctx.Finished) == 1
 }
 
 func (ctx *TaskContext) Clean() {
