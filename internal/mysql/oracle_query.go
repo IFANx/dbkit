@@ -10,15 +10,13 @@ import (
 	"strconv"
 )
 
-type MySQLQueryTester struct {
-}
+type MySQLQueryTester struct{}
 
 func (tester *MySQLQueryTester) RunTask(ctx *internal.TaskContext) {
 	table := &common.Table{
-		DB:         ctx.DBList[0],
-		Name:       "t",
-		DBName:     ctx.DBList[0].DBName,
-		DBProvider: &MySQLProvider{},
+		DB:     ctx.DBList[0],
+		Name:   "t",
+		DBName: ctx.DBList[0].DBName,
 	}
 	for {
 		table.Build()

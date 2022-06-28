@@ -8,20 +8,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type MySQLTrocTester struct {
-	TestCtx *internal.TaskContext
-}
-
-func NewMySQLTrocTester(testCtx *internal.TaskContext) *MySQLTrocTester {
-	return &MySQLTrocTester{TestCtx: testCtx}
-}
+type MySQLTrocTester struct{}
 
 func (tester *MySQLTrocTester) RunTask(ctx *internal.TaskContext) {
 	table := &common.Table{
-		DB:         ctx.DBList[0],
-		Name:       "t",
-		DBName:     "test",
-		DBProvider: &MySQLProvider{},
+		DB:     ctx.DBList[0],
+		Name:   "t",
+		DBName: "test",
 	}
 	for {
 		table.Build()
