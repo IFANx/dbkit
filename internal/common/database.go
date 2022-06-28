@@ -8,10 +8,11 @@ import (
 )
 
 type Database struct {
-	DBMS   dbms.DBMS
-	DBName string
-	Conn   *sqlx.DB
-	Tables []*Table
+	DBMS       dbms.DBMS
+	DBProvider Provider
+	DBName     string
+	Conn       *sqlx.DB
+	Tables     []*Table
 }
 
 func (db *Database) Refresh() error {

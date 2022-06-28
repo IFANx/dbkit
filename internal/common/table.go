@@ -10,7 +10,6 @@ import (
 
 type Table struct {
 	DB            *Database
-	DBProvider    Provider
 	Name          string
 	DBName        string
 	ColumnNames   []string
@@ -23,7 +22,7 @@ type Table struct {
 
 func (table *Table) Build() {
 	table.DropTable()
-	stmt := table.DBProvider.GenCreateTableStmt(table)
+	stmt := table.DB.DBProvider.GenCreateTableStmt(table)
 	log.Infof("Create table statement: %s", stmt.String())
 	err := table.DB.ExecSQL(stmt.String())
 	if err != nil {
@@ -31,7 +30,7 @@ func (table *Table) Build() {
 	}
 	table.UpdateSchema()
 	for i := 0; i < randomly.RandIntGap(1, 3); i++ {
-		stmt := table.DBProvider.GenCreateIndexStmt(table)
+		stmt := table.DB.DBProvider.GenCreateIndexStmt(table)
 		log.Infof("Create index statement: %s", stmt.String())
 		err := table.DB.ExecSQL(stmt.String())
 		if err != nil {
@@ -39,7 +38,7 @@ func (table *Table) Build() {
 		}
 	}
 	for i := 0; i < randomly.RandIntGap(5, 10); i++ {
-		stmt := table.DBProvider.GenInsertStmt(table)
+		stmt := table.DB.DBProvider.GenInsertStmt(table)
 		log.Infof("Insert statement: %s", stmt.String())
 		err := table.DB.ExecSQL(stmt.String())
 		if err != nil {
@@ -74,7 +73,7 @@ func (table *Table) UpdateSchema() {
 			columns[colName] = &Column{
 				Table:      nil,
 				Name:       colName,
-				Type:       table.DBProvider.ParseDataType(colType),
+				Type:       table.DB.DBProvider.ParseDataType(colType),
 				NotNull:    notNull,
 				Unique:     unique,
 				Primary:    primary,

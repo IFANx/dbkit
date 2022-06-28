@@ -76,7 +76,7 @@ func BuildTaskFromSubmit(submit *TaskSubmit) (int, error) {
 		DBList:       make([]*common.Database, 0),
 		Aborted:      0,
 	}
-	GetState().submitTask(task)
+	GetState().SubmitTask(task)
 	return jid, nil
 }
 
