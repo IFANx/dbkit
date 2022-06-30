@@ -1,8 +1,9 @@
 package oracle
 
 import (
-	log "github.com/sirupsen/logrus"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Oracle struct {
@@ -21,7 +22,8 @@ func (oracle Oracle) String() string {
 
 var (
 	TLP     = Oracle{TLPName, TLPAlias, false}
-	NOREC   = Oracle{NoRecName, NoRecAlias, false}
+	NoREC   = Oracle{NoRECName, NoRECAlias, false}
+	NoREC2  = Oracle{NoREC2Name, NoREC2Alias, false}
 	DQE     = Oracle{DQEName, DQEAlias, false}
 	DIFF    = Oracle{DiffName, DiffAlias, true}
 	Troc    = Oracle{TrocName, TrocAlias, false}
@@ -31,7 +33,8 @@ var (
 
 var OracleMap = map[string]Oracle{
 	TLPAlias:     TLP,
-	NoRecAlias:   NOREC,
+	NoRECAlias:   NoREC,
+	NoREC2Alias:  NoREC2,
 	DQEAlias:     DQE,
 	DiffAlias:    DIFF,
 	TrocAlias:    Troc,

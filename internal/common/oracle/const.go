@@ -2,7 +2,8 @@ package oracle
 
 var (
 	TLPName     = "TLP"
-	NoRecName   = "NoRec"
+	NoRECName   = "NoREC"
+	NoREC2Name  = "NoREC2"
 	DQEName     = "DQE"
 	DiffName    = "Diff"
 	TrocName    = "Troc"
@@ -10,7 +11,8 @@ var (
 	LinearName  = "Linear"
 
 	TLPAlias     = "tlp"
-	NoRecAlias   = "norec"
+	NoRECAlias   = "norec"
+	NoREC2Alias  = "norec2"
 	DQEAlias     = "dqe"
 	DiffAlias    = "diff"
 	TrocAlias    = "troc"

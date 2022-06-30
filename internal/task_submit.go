@@ -83,9 +83,9 @@ func BuildTaskFromSubmit(submit *TaskSubmit) (int, error) {
 
 // TODO: 根据用户提交的配置选择Oracle实现
 func getTaskRunnerFromSubmit(submit *TaskSubmit) (TaskRunner, error) {
-	if submit.OracleList[0] == oracle.NOREC {
+	if submit.OracleList[0] == oracle.NoREC2 {
 		if submit.TargetTypes[0] == dbms.MYSQL {
-			return &mysql.MySQLQueryTester{}, nil
+			return &mysql.MySQLNoREC2{}, nil
 		}
 	}
 	return nil, errors.New("该测试功能未实现")
