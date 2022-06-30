@@ -7,10 +7,11 @@ import (
 	"dbkit/internal/model"
 	"errors"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github.com/jmoiron/sqlx"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx"
 )
 
 func SubJob(ctx *gin.Context) {
@@ -63,8 +64,8 @@ func validateTestForm(oracleNames, target []string, testType, deadline, time, de
 	if testType == "query" {
 		for _, oracleName := range oracleNames {
 			oracleObj := oracle.GetOracleFromStr(oracleName)
-			if oracleObj != oracle.TLP && oracleObj != oracle.NOREC && oracleObj != oracle.DQE {
-				return nil, errors.New("不支持的oracle类型：" + oracleName)
+			if oracleObj != oracle.TLP && oracleObj != oracle.NoREC && oracleObj != oracle.DQE && oracleObj != oracle.NoREC2 {
+				return nil, errors.New("不支持的oracle类型: " + oracleName)
 			}
 			oracleList = append(oracleList, oracleObj)
 		}
@@ -72,15 +73,15 @@ func validateTestForm(oracleNames, target []string, testType, deadline, time, de
 		for _, oracleName := range oracleNames {
 			oracleObj := oracle.GetOracleFromStr(oracleName)
 			if oracleObj != oracle.Troc {
-				return nil, errors.New("不支持的oracle类型：" + oracleName)
+				return nil, errors.New("不支持的oracle类型: " + oracleName)
 			}
 			oracleList = append(oracleList, oracleObj)
 		}
 	} else {
-		return nil, errors.New("不支持的测试类型：" + testType)
+		return nil, errors.New("不支持的测试类型: " + testType)
 	}
 	if len(target) < 2 {
-		return nil, errors.New(fmt.Sprintf("测试对象参数非法：%v", target))
+		return nil, errors.New(fmt.Sprintf("测试对象参数非法: %v", target))
 	}
 	var (
 		dbmsList []dbms.DBMS
@@ -89,11 +90,11 @@ func validateTestForm(oracleNames, target []string, testType, deadline, time, de
 	)
 	targetDSN, err := model.GetDSNFromTypeAndVersion(target[0], target[1])
 	if err != nil {
-		return nil, errors.New("查询测试对象连接参数错误：" + err.Error())
+		return nil, errors.New("查询测试对象连接参数错误: " + err.Error())
 	}
 	conn, err := targetDSN.GetConn()
 	if err != nil {
-		return nil, errors.New("测试对象连接错误：" + err.Error())
+		return nil, errors.New("测试对象连接错误: " + err.Error())
 	}
 	dbmsList = append(dbmsList, dbms.GetDBMSFromStr(targetDSN.DBType))
 	connList = append(connList, conn)
@@ -102,7 +103,7 @@ func validateTestForm(oracleNames, target []string, testType, deadline, time, de
 	if deadline == "true" {
 		timeLimit, err := strconv.ParseFloat(time, 32)
 		if err != nil {
-			return nil, errors.New("限时参数解析错误：" + time)
+			return nil, errors.New("限时参数解析错误: " + time)
 		}
 		limit = float32(timeLimit)
 	}
@@ -124,10 +125,10 @@ func validateDiffForm(oracleName, target []string, targetKind, deadline, time, d
 	} else if oracleName[0] == "txn" {
 		oracleList = append(oracleList, oracle.DIFFTXN)
 	} else {
-		return nil, errors.New("不支持的oracle类型：" + oracleName[0])
+		return nil, errors.New("不支持的oracle类型: " + oracleName[0])
 	}
 	if len(target) < 4 {
-		return nil, errors.New(fmt.Sprintf("测试对象参数非法：%v", target))
+		return nil, errors.New(fmt.Sprintf("测试对象参数非法: %v", target))
 	}
 	var (
 		dbmsList []dbms.DBMS
@@ -137,11 +138,11 @@ func validateDiffForm(oracleName, target []string, targetKind, deadline, time, d
 	for i := 0; i < len(target); i += 2 {
 		targetDSN, err := model.GetDSNFromTypeAndVersion(target[i], target[i+1])
 		if err != nil {
-			return nil, errors.New("查询测试对象连接参数错误：" + err.Error())
+			return nil, errors.New("查询测试对象连接参数错误: " + err.Error())
 		}
 		conn, err := targetDSN.GetConn()
 		if err != nil {
-			return nil, errors.New("测试对象连接错误：" + err.Error())
+			return nil, errors.New("测试对象连接错误: " + err.Error())
 		}
 		dbmsList = append(dbmsList, dbms.GetDBMSFromStr(targetDSN.DBType))
 		connList = append(connList, conn)
@@ -151,7 +152,7 @@ func validateDiffForm(oracleName, target []string, targetKind, deadline, time, d
 	if deadline == "true" {
 		timeLimit, err := strconv.ParseFloat(time, 32)
 		if err != nil {
-			return nil, errors.New("限时参数解析错误：" + time)
+			return nil, errors.New("限时参数解析错误: " + time)
 		}
 		limit = float32(timeLimit)
 	}
@@ -171,10 +172,10 @@ func validateVerifyForm(oracleName, target []string, checkModel, op, desc string
 	if oracleName[0] == "linear" {
 		oracleList = append(oracleList, oracle.LINEAR)
 	} else {
-		return nil, errors.New("不支持的oracle类型：" + oracleName[0])
+		return nil, errors.New("不支持的oracle类型: " + oracleName[0])
 	}
 	if len(target) < 2 {
-		return nil, errors.New(fmt.Sprintf("测试对象参数非法：%v", target))
+		return nil, errors.New(fmt.Sprintf("测试对象参数非法: %v", target))
 	}
 	var (
 		dbmsList []dbms.DBMS
@@ -183,11 +184,11 @@ func validateVerifyForm(oracleName, target []string, checkModel, op, desc string
 	)
 	targetDSN, err := model.GetDSNFromTypeAndVersion(target[0], target[1])
 	if err != nil {
-		return nil, errors.New("查询测试对象连接参数错误：" + err.Error())
+		return nil, errors.New("查询测试对象连接参数错误: " + err.Error())
 	}
 	conn, err := targetDSN.GetConn()
 	if err != nil {
-		return nil, errors.New("测试对象连接错误：" + err.Error())
+		return nil, errors.New("测试对象连接错误: " + err.Error())
 	}
 	dbmsList = append(dbmsList, dbms.GetDBMSFromStr(targetDSN.DBType))
 	connList = append(connList, conn)
@@ -195,7 +196,7 @@ func validateVerifyForm(oracleName, target []string, checkModel, op, desc string
 	var limit float32 = 0
 	timeLimit, err := strconv.ParseInt(op, 10, 32)
 	if err != nil {
-		return nil, errors.New("限时参数解析错误：" + op)
+		return nil, errors.New("限时参数解析错误: " + op)
 	}
 	limit = float32(timeLimit)
 	return &internal.TaskSubmit{
