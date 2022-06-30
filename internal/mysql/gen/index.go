@@ -18,9 +18,9 @@ func GenCreateIndexStmt(table *common.Table) stmt.CreateIndexStmt {
 		if column.Type.IsNumeric() {
 			indexedColumns = append(indexedColumns, colName)
 		} else if column.Type.IsString() {
-			switch table.DBMS {
-			case dbms.MYSQL:
-			case dbms.MARIADB:
+			switch table.DB.DBName {
+			case dbms.MYSQL.Name:
+			case dbms.MARIADB.Name:
 				indexedColumns = append(indexedColumns, colName+"(5)")
 			default:
 				indexedColumns = append(indexedColumns, colName)
