@@ -6,9 +6,10 @@ import (
 	"dbkit/internal/common/oracle"
 	"dbkit/internal/model"
 	"errors"
-	"github.com/jmoiron/sqlx"
 	"strings"
 	"time"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type TaskType int
@@ -55,12 +56,12 @@ func BuildTaskFromSubmit(submit *TaskSubmit) (int, error) {
 	if submit.Type == TaskTypeVerify {
 		jid, err = model.AddVerifyJob(dsnStr, "", targetTypeStr, submit.Model, submit.Comments, int(submit.Limit))
 		if err != nil {
-			return 0, errors.New("创建VerifyJob失败：" + err.Error())
+			return 0, errors.New("创建VerifyJob失败: " + err.Error())
 		}
 	} else {
 		jid, err = model.AddTestJob(dsnStr, "", targetTypeStr, oracleStr, submit.Comments, submit.Limit)
 		if err != nil {
-			return 0, errors.New("创建TestJob失败：" + err.Error())
+			return 0, errors.New("创建TestJob失败: " + err.Error())
 		}
 	}
 	task := &TaskContext{
@@ -82,5 +83,11 @@ func BuildTaskFromSubmit(submit *TaskSubmit) (int, error) {
 
 // TODO: 根据用户提交的配置选择Oracle实现
 func getTaskRunnerFromSubmit(submit *TaskSubmit) (TaskRunner, error) {
+	if submit.OracleList[0].Name == oracle.NoREC2Name {
+		if submit.TargetTypes[0].Name == dbms.MySQLName {
+			return nil, nil
+		}
+	}
+
 	return nil, errors.New("该测试功能未实现")
 }

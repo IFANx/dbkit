@@ -34,6 +34,7 @@ var (
 var OracleMap = map[string]Oracle{
 	TLPAlias:     TLP,
 	NoRECAlias:   NoREC,
+	NoREC2Alias:  NoREC2,
 	DQEAlias:     DQE,
 	DiffAlias:    DIFF,
 	TrocAlias:    Troc,
