@@ -1,5 +1,7 @@
 package internal
 
+import "dbkit/internal/common"
+
 type TaskRunner interface {
-	RunTask(ctx *TaskContext)
+	RunTask(ctx common.OracleRuntime)
 }

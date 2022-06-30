@@ -1,7 +1,6 @@
 package mysql
 
 import (
-	"dbkit/internal"
 	"dbkit/internal/common"
 	"dbkit/internal/common/stmt"
 	"dbkit/internal/mysql/gen"
@@ -12,17 +11,17 @@ import (
 
 type MySQLQueryTester struct{}
 
-func (tester *MySQLQueryTester) RunTask(ctx *internal.TaskContext) {
+func (tester *MySQLQueryTester) RunTask(ctx common.OracleRuntime) {
 	table := &common.Table{
-		DB:     ctx.DBList[0],
+		DB:     ctx.GetDBList()[0],
 		Name:   "t",
-		DBName: ctx.DBList[0].DBName,
+		DBName: ctx.GetDBList()[0].DBName,
 	}
 	for {
 		table.Build()
 
 		for run := 0; run < 20; run++ {
-			ctx.TestRunCount++
+			ctx.IncrTestRunCount(1)
 			predicate := gen.GenPredicate(table)
 			log.Infof("生成新的谓词：%s", predicate)
 			NoRECWithCtx(ctx, table, predicate)
@@ -31,7 +30,7 @@ func (tester *MySQLQueryTester) RunTask(ctx *internal.TaskContext) {
 	}
 }
 
-func NoRECWithCtx(ctx *internal.TaskContext, table *common.Table, predicate string) {
+func NoRECWithCtx(ctx common.OracleRuntime, table *common.Table, predicate string) {
 	norec := stmt.SelectStmt{
 		TableName: table.Name,
 		Targets:   []string{"count(1)"},
@@ -39,7 +38,7 @@ func NoRECWithCtx(ctx *internal.TaskContext, table *common.Table, predicate stri
 		ForShare:  false,
 		ForUpdate: false,
 	}
-	res, err := ctx.DBList[0].Query(norec)
+	res, err := ctx.GetDBList()[0].Query(norec)
 	if err != nil || len(res) < 1 {
 		return
 	}
@@ -50,7 +49,7 @@ func NoRECWithCtx(ctx *internal.TaskContext, table *common.Table, predicate stri
 	}
 	norec.Predicate = "True"
 	norec.Targets[0] = "((" + predicate + ") IS TRUE)"
-	res, err = ctx.DBList[0].Query(norec)
+	res, err = ctx.GetDBList()[0].Query(norec)
 	if err != nil {
 		return
 	}
@@ -69,7 +68,7 @@ func NoRECWithCtx(ctx *internal.TaskContext, table *common.Table, predicate stri
 	}
 }
 
-func TLPWithCtx(ctx *internal.TaskContext, table *common.Table, predicate string) {
+func TLPWithCtx(ctx common.OracleRuntime, table *common.Table, predicate string) {
 	target := randomly.RandPickOneStr(table.ColumnNames)
 	targets := []string{target}
 	tlpOrigin := stmt.SelectStmt{
@@ -103,7 +102,7 @@ func TLPWithCtx(ctx *internal.TaskContext, table *common.Table, predicate string
 	tlpQuery := "(" + firstQuery.String() + ") UNION ALL (" + secondQuery.String() +
 		") UNION ALL (" + thirdQuery.String() + ")"
 
-	res, err := ctx.DBList[0].Query(tlpOrigin)
+	res, err := ctx.GetDBList()[0].Query(tlpOrigin)
 	if err != nil || len(res) < 1 {
 		return
 	}
@@ -120,7 +119,7 @@ func TLPWithCtx(ctx *internal.TaskContext, table *common.Table, predicate string
 	}
 	log.Infof("res: %+v", resMap1)
 
-	res, err = ctx.DBList[0].QuerySQL(tlpQuery)
+	res, err = ctx.GetDBList()[0].QuerySQL(tlpQuery)
 	if err != nil {
 		return
 	}

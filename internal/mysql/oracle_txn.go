@@ -1,7 +1,6 @@
 package mysql
 
 import (
-	"dbkit/internal"
 	"dbkit/internal/common"
 	"dbkit/internal/mysql/gen"
 
@@ -10,9 +9,9 @@ import (
 
 type MySQLTrocTester struct{}
 
-func (tester *MySQLTrocTester) RunTask(ctx *internal.TaskContext) {
+func (tester *MySQLTrocTester) RunTask(ctx common.OracleRuntime) {
 	table := &common.Table{
-		DB:     ctx.DBList[0],
+		DB:     ctx.GetDBList()[0],
 		Name:   "t",
 		DBName: "test",
 	}
@@ -20,7 +19,7 @@ func (tester *MySQLTrocTester) RunTask(ctx *internal.TaskContext) {
 		table.Build()
 
 		for run := 0; run < 20; run++ {
-			ctx.TestRunCount++
+			ctx.IncrTestRunCount(1)
 			predicate := gen.GenPredicate(table)
 			log.Infof("生成新的谓词：%s", predicate)
 			NoRECWithCtx(ctx, table, predicate)

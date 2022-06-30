@@ -2,6 +2,8 @@ package internal
 
 import (
 	"dbkit/internal/common"
+	"dbkit/internal/common/dbms"
+	"dbkit/internal/common/oracle"
 	"fmt"
 	"sync/atomic"
 	"time"
@@ -85,4 +87,72 @@ func (ctx *TaskContext) IsFinished() bool {
 
 func (ctx *TaskContext) Clean() {
 
+}
+
+func (ctx *TaskContext) GetJobID() int {
+	return ctx.JobID
+}
+
+func (ctx *TaskContext) GetOracleList() []oracle.Oracle {
+	return ctx.Submit.OracleList
+}
+
+func (ctx *TaskContext) GetTargetTypes() []dbms.DBMS {
+	return ctx.GetTargetTypes()
+}
+
+func (ctx *TaskContext) GetLimit() float32 {
+	return ctx.Submit.Limit
+}
+
+func (ctx *TaskContext) GetModel() string {
+	return ctx.Submit.Model
+}
+
+func (ctx *TaskContext) GetComments() string {
+	return ctx.Submit.Comments
+}
+
+func (ctx *TaskContext) GetStartTime() time.Time {
+	return ctx.StartTime
+}
+
+func (ctx *TaskContext) GetDeadline() time.Time {
+	return ctx.Deadline
+}
+
+func (ctx *TaskContext) GetEndTime() time.Time {
+	return ctx.EndTime
+}
+
+func (ctx *TaskContext) GetSqlCount() int {
+	return ctx.SqlCount
+}
+
+func (ctx *TaskContext) GetTestRunCount() int {
+	return ctx.TestRunCount
+}
+
+func (ctx *TaskContext) GetReportCount() int {
+	return ctx.ReportCount
+}
+
+func (ctx *TaskContext) GetDBList() []*common.Database {
+	return ctx.DBList
+}
+
+func (ctx *TaskContext) SetEndTime(t time.Time) {
+	ctx.EndTime = t
+}
+
+func (ctx *TaskContext) IncrSqlCount(x int) {
+	ctx.SqlCount += x
+}
+
+func (ctx *TaskContext) IncrTestRunCount(x int) {
+	ctx.TestRunCount += x
+}
+
+func (ctx *TaskContext) IncrReportCount(x int) {
+	ctx.ReportCount += x
 }
