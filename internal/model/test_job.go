@@ -99,3 +99,18 @@ func AbortTestJob(jid int) error {
 	}
 	return nil
 }
+
+func EndTestJob(jid int, success bool) error {
+	state := 2
+	if !success {
+		state = -1
+	}
+	sql := fmt.Sprintf("UPDATE %s SET state = %d WHERE jid = %d", tableNameTestJob, state, jid)
+	_, err := db.Exec(sql)
+	if err != nil {
+		errMsg := fmt.Sprintf("更新TestJob状态失败：%s\n", err)
+		log.Warnf(errMsg)
+		return errors.New(errMsg)
+	}
+	return nil
+}
