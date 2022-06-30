@@ -5,8 +5,9 @@ import (
 	"dbkit/internal/common/stmt"
 	"dbkit/internal/mysql/gen"
 	"dbkit/internal/randomly"
-	log "github.com/sirupsen/logrus"
 	"strconv"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type MySQLQueryTester struct{}
