@@ -17,7 +17,7 @@ import (
 func SubJob(ctx *gin.Context) {
 	tp := ctx.DefaultPostForm("type", "")
 	testType := ctx.DefaultPostForm("testType", "")
-	oracleName := getArrayFromPostFormMap(ctx.PostFormMap("oracle"))
+	oracleName := ctx.DefaultPostForm("oracle", "")
 	target := getArrayFromPostFormMap(ctx.PostFormMap("target"))
 	targetKind := ctx.DefaultPostForm("targetKind", "")
 	deadline := ctx.DefaultPostForm("deadline", "false")
@@ -59,23 +59,15 @@ func SubJob(ctx *gin.Context) {
 	}
 }
 
-func validateTestForm(oracleNames, target []string, testType, deadline, time, desc string) (*internal.TaskSubmit, error) {
-	oracleList := make([]oracle.Oracle, 0)
+func validateTestForm(oracleName string, target []string, testType, deadline, time, desc string) (*internal.TaskSubmit, error) {
+	oracleObj := oracle.GetOracleFromStr(oracleName)
 	if testType == "query" {
-		for _, oracleName := range oracleNames {
-			oracleObj := oracle.GetOracleFromStr(oracleName)
-			if oracleObj != oracle.TLP && oracleObj != oracle.NoREC && oracleObj != oracle.DQE && oracleObj != oracle.NoREC2 {
-				return nil, errors.New("不支持的oracle类型: " + oracleName)
-			}
-			oracleList = append(oracleList, oracleObj)
+		if oracleObj != oracle.TLP && oracleObj != oracle.NoREC && oracleObj != oracle.DQE && oracleObj != oracle.NoREC2 {
+			return nil, errors.New("不支持的oracle类型: " + oracleName)
 		}
 	} else if testType == "txn" {
-		for _, oracleName := range oracleNames {
-			oracleObj := oracle.GetOracleFromStr(oracleName)
-			if oracleObj != oracle.Troc {
-				return nil, errors.New("不支持的oracle类型: " + oracleName)
-			}
-			oracleList = append(oracleList, oracleObj)
+		if oracleObj != oracle.Troc {
+			return nil, errors.New("不支持的oracle类型: " + oracleName)
 		}
 	} else {
 		return nil, errors.New("不支持的测试类型: " + testType)
@@ -109,7 +101,7 @@ func validateTestForm(oracleNames, target []string, testType, deadline, time, de
 	}
 	return &internal.TaskSubmit{
 		Type:        internal.TaskTypeTest,
-		OracleList:  oracleList,
+		Oracle:      oracleObj,
 		TargetTypes: dbmsList,
 		ConnList:    connList,
 		DSNList:     dsnList,
@@ -118,14 +110,14 @@ func validateTestForm(oracleNames, target []string, testType, deadline, time, de
 	}, nil
 }
 
-func validateDiffForm(oracleName, target []string, targetKind, deadline, time, desc string) (*internal.TaskSubmit, error) {
-	oracleList := make([]oracle.Oracle, 0)
-	if oracleName[0] == "query" {
-		oracleList = append(oracleList, oracle.DIFF)
-	} else if oracleName[0] == "txn" {
-		oracleList = append(oracleList, oracle.DIFFTXN)
+func validateDiffForm(oracleName string, target []string, targetKind, deadline, time, desc string) (*internal.TaskSubmit, error) {
+	var oracleObj oracle.Oracle
+	if oracleName == "query" {
+		oracleObj = oracle.DIFF
+	} else if oracleName == "txn" {
+		oracleObj = oracle.DIFFTXN
 	} else {
-		return nil, errors.New("不支持的oracle类型: " + oracleName[0])
+		return nil, errors.New("不支持的oracle类型: " + oracleName)
 	}
 	if len(target) < 4 {
 		return nil, errors.New(fmt.Sprintf("测试对象参数非法: %v", target))
@@ -158,7 +150,7 @@ func validateDiffForm(oracleName, target []string, targetKind, deadline, time, d
 	}
 	return &internal.TaskSubmit{
 		Type:        internal.TaskTypeDiff,
-		OracleList:  oracleList,
+		Oracle:      oracleObj,
 		TargetTypes: dbmsList,
 		ConnList:    connList,
 		DSNList:     dsnList,
@@ -167,12 +159,12 @@ func validateDiffForm(oracleName, target []string, targetKind, deadline, time, d
 	}, nil
 }
 
-func validateVerifyForm(oracleName, target []string, checkModel, op, desc string) (*internal.TaskSubmit, error) {
-	oracleList := make([]oracle.Oracle, 0)
-	if oracleName[0] == "linear" {
-		oracleList = append(oracleList, oracle.LINEAR)
+func validateVerifyForm(oracleName string, target []string, checkModel, op, desc string) (*internal.TaskSubmit, error) {
+	var oracleObj oracle.Oracle
+	if oracleName == "linear" {
+		oracleObj = oracle.LINEAR
 	} else {
-		return nil, errors.New("不支持的oracle类型: " + oracleName[0])
+		return nil, errors.New("不支持的oracle类型: " + oracleName)
 	}
 	if len(target) < 2 {
 		return nil, errors.New(fmt.Sprintf("测试对象参数非法: %v", target))
@@ -201,7 +193,7 @@ func validateVerifyForm(oracleName, target []string, checkModel, op, desc string
 	limit = float32(timeLimit)
 	return &internal.TaskSubmit{
 		Type:        internal.TaskTypeVerify,
-		OracleList:  oracleList,
+		Oracle:      oracleObj,
 		TargetTypes: dbmsList,
 		ConnList:    connList,
 		DSNList:     dsnList,

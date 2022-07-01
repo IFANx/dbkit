@@ -8,7 +8,7 @@ import (
 
 type OracleRuntime interface {
 	GetJobID() int
-	GetOracleList() []oracle.Oracle
+	GetOracle() oracle.Oracle
 	GetTargetTypes() []dbms.DBMS
 	GetLimit() float32
 	GetModel() string
