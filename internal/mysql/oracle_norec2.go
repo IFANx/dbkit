@@ -25,6 +25,13 @@ func (tester *MySQLNoREC2) RunTask(ctx common.OracleRuntime) {
 			predicate := gen.GenPredicate(table)
 			log.Infof("生成新的谓词：%s", predicate)
 			NoREC2WithCtx(ctx, table, predicate)
+			if ctx.IsAborted() {
+				break
+			}
+		}
+
+		if ctx.IsAborted() {
+			break
 		}
 	}
 }

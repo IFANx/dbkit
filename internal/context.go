@@ -4,7 +4,9 @@ import (
 	"dbkit/internal/common"
 	"dbkit/internal/common/dbms"
 	"dbkit/internal/common/oracle"
+	"dbkit/internal/model"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"sync/atomic"
 	"time"
 )
@@ -26,15 +28,45 @@ type TaskContext struct {
 
 func (ctx *TaskContext) Start() {
 	defer func() {
-		if err := recover(); err != nil {
+		if cause := recover(); cause != nil {
 			ctx.EndTime = time.Now()
 			if !ctx.IsAborted() {
-
+				if ctx.Submit.Type == TaskTypeVerify {
+					err := model.EndVerifyJob(ctx.JobID, false)
+					if err != nil {
+						log.Println("修改任务状态失败: ", err)
+					}
+				} else {
+					_, err := model.AddStatistic(ctx.JobID, ctx.SqlCount, ctx.TestRunCount,
+						ctx.ReportCount, fmt.Sprintf("%s", cause))
+					if err != nil {
+						log.Println("创建统计记录失败: ", err)
+					}
+					err = model.EndTestJob(ctx.JobID, false)
+					if err != nil {
+						log.Println("修改任务状态失败: ", err)
+					}
+				}
 			}
 		} else {
 			ctx.EndTime = time.Now()
 			if !ctx.IsAborted() {
-
+				if ctx.Submit.Type == TaskTypeVerify {
+					err := model.EndVerifyJob(ctx.JobID, true)
+					if err != nil {
+						log.Println("修改任务状态失败: ", err)
+					}
+				} else {
+					_, err := model.AddStatistic(ctx.JobID, ctx.SqlCount, ctx.TestRunCount,
+						ctx.ReportCount, "")
+					if err != nil {
+						log.Println("创建统计记录失败: ", err)
+					}
+					err = model.EndTestJob(ctx.JobID, true)
+					if err != nil {
+						log.Println("修改任务状态失败: ", err)
+					}
+				}
 			}
 		}
 		ctx.Clean()
@@ -86,7 +118,9 @@ func (ctx *TaskContext) IsFinished() bool {
 }
 
 func (ctx *TaskContext) Clean() {
-
+	for _, db := range ctx.DBList {
+		_ = db.Conn.Close()
+	}
 }
 
 func (ctx *TaskContext) GetJobID() int {
