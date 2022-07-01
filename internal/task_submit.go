@@ -44,7 +44,7 @@ func BuildTaskFromSubmit(submit *TaskSubmit) (int, error) {
 		return 0, err
 	}
 	dsnStr := strings.Join(submit.DSNList, ",")
-	targetTypeStrList := make([]string, len(submit.TargetTypes))
+	targetTypeStrList := make([]string, 0)
 	for _, tp := range submit.TargetTypes {
 		targetTypeStrList = append(targetTypeStrList, tp.Alias)
 	}
