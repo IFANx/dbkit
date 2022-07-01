@@ -99,6 +99,7 @@ func (ctx *TaskContext) initDBList() {
 		}
 		dbList[i] = db
 	}
+	ctx.DBList = dbList
 }
 
 func (ctx *TaskContext) Abort() {

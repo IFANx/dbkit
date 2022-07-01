@@ -62,7 +62,7 @@ func AddTestJob(dsn, dbName, target, oracle, comments string, timeLimit float32)
 	timeStr := time.Now().Format("2006-01-02 15:04:05")
 	sql := fmt.Sprintf("INSERT INTO %s(dsn, db_name, target, "+
 		"oracle, state, time_limit, comments, created_at, deleted) "+
-		"VALUES('%s', '%s', '%s', '%s', '%d', '%f', '%s', '%s' '%d')",
+		"VALUES('%s', '%s', '%s', '%s', '%d', '%f', '%s', '%s', '%d')",
 		tableNameTestJob, dsn, dbName, target, oracle, 1, timeLimit, comments, timeStr, 0)
 	res, err := db.Exec(sql)
 	if err != nil {

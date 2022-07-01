@@ -45,13 +45,13 @@ func BuildTaskFromSubmit(submit *TaskSubmit) (int, error) {
 	}
 	dsnStr := strings.Join(submit.DSNList, ",")
 	targetTypeStrList := make([]string, len(submit.TargetTypes))
-	for _, tp := range submit.TargetTypes {
-		targetTypeStrList = append(targetTypeStrList, tp.Alias)
+	for i, tp := range submit.TargetTypes {
+		targetTypeStrList[i] = tp.Alias
 	}
 	targetTypeStr := strings.Join(targetTypeStrList, ",")
 	oracleStrList := make([]string, len(submit.OracleList))
-	for _, oc := range submit.OracleList {
-		oracleStrList = append(oracleStrList, oc.Alias)
+	for i, oc := range submit.OracleList {
+		oracleStrList[i] = oc.Alias
 	}
 	oracleStr := strings.Join(oracleStrList, ",")
 	if submit.Type == TaskTypeVerify {
