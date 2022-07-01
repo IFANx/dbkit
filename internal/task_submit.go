@@ -23,7 +23,7 @@ const (
 
 type TaskSubmit struct {
 	Type        TaskType
-	OracleList  []oracle.Oracle
+	Oracle      oracle.Oracle
 	TargetTypes []dbms.DBMS
 	ConnList    []*sqlx.DB
 	DSNList     []string
@@ -49,18 +49,13 @@ func BuildTaskFromSubmit(submit *TaskSubmit) (int, error) {
 		targetTypeStrList = append(targetTypeStrList, tp.Alias)
 	}
 	targetTypeStr := strings.Join(targetTypeStrList, ",")
-	oracleStrList := make([]string, len(submit.OracleList))
-	for _, oc := range submit.OracleList {
-		oracleStrList = append(oracleStrList, oc.Alias)
-	}
-	oracleStr := strings.Join(oracleStrList, ",")
 	if submit.Type == TaskTypeVerify {
 		jid, err = model.AddVerifyJob(dsnStr, "", targetTypeStr, submit.Model, submit.Comments, int(submit.Limit))
 		if err != nil {
 			return 0, errors.New("创建VerifyJob失败: " + err.Error())
 		}
 	} else {
-		jid, err = model.AddTestJob(dsnStr, "", targetTypeStr, oracleStr, submit.Comments, submit.Limit)
+		jid, err = model.AddTestJob(dsnStr, "", targetTypeStr, submit.Oracle.Name, submit.Comments, submit.Limit)
 		if err != nil {
 			return 0, errors.New("创建TestJob失败: " + err.Error())
 		}
@@ -84,7 +79,7 @@ func BuildTaskFromSubmit(submit *TaskSubmit) (int, error) {
 
 // TODO: 根据用户提交的配置选择Oracle实现
 func getTaskRunnerFromSubmit(submit *TaskSubmit) (TaskRunner, error) {
-	if submit.OracleList[0] == oracle.NoREC2 {
+	if submit.Oracle == oracle.NoREC2 {
 		if submit.TargetTypes[0] == dbms.MYSQL {
 			return &mysql.MySQLNoREC2{}, nil
 		}

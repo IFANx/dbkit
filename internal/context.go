@@ -6,9 +6,10 @@ import (
 	"dbkit/internal/common/oracle"
 	"dbkit/internal/model"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"sync/atomic"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type TaskContext struct {
@@ -127,8 +128,8 @@ func (ctx *TaskContext) GetJobID() int {
 	return ctx.JobID
 }
 
-func (ctx *TaskContext) GetOracleList() []oracle.Oracle {
-	return ctx.Submit.OracleList
+func (ctx *TaskContext) GetOracle() oracle.Oracle {
+	return ctx.Submit.Oracle
 }
 
 func (ctx *TaskContext) GetTargetTypes() []dbms.DBMS {

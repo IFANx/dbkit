@@ -33,6 +33,13 @@ func (stmt *SelectStmt) String() string {
 		optionStrList = append(optionStrList, selOptDict[opt])
 	}
 	res += strings.Join(optionStrList, " ")
+	selectExprLen := len(stmt.SelectExpr)
+	for i := 0; i < selectExprLen; i++ {
+		if i != 0 {
+			res += ", "
+		}
+		res += stmt.SelectExpr[i].String()
+	}
 	res += " FROM "
 	if stmt.Join == nil {
 		tableNameList := make([]string, 0)
