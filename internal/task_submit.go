@@ -7,9 +7,10 @@ import (
 	"dbkit/internal/model"
 	"dbkit/internal/mysql"
 	"errors"
-	"github.com/jmoiron/sqlx"
 	"strings"
 	"time"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type TaskType int
@@ -56,12 +57,12 @@ func BuildTaskFromSubmit(submit *TaskSubmit) (int, error) {
 	if submit.Type == TaskTypeVerify {
 		jid, err = model.AddVerifyJob(dsnStr, "", targetTypeStr, submit.Model, submit.Comments, int(submit.Limit))
 		if err != nil {
-			return 0, errors.New("创建VerifyJob失败：" + err.Error())
+			return 0, errors.New("创建VerifyJob失败: " + err.Error())
 		}
 	} else {
 		jid, err = model.AddTestJob(dsnStr, "", targetTypeStr, oracleStr, submit.Comments, submit.Limit)
 		if err != nil {
-			return 0, errors.New("创建TestJob失败：" + err.Error())
+			return 0, errors.New("创建TestJob失败: " + err.Error())
 		}
 	}
 	task := &TaskContext{

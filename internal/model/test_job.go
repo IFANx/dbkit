@@ -3,8 +3,9 @@ package model
 import (
 	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type TestJob struct {
@@ -65,13 +66,13 @@ func AddTestJob(dsn, dbName, target, oracle, comments string, timeLimit float32)
 		tableNameTestJob, dsn, dbName, target, oracle, 1, timeLimit, comments, timeStr, 0)
 	res, err := db.Exec(sql)
 	if err != nil {
-		errMsg := fmt.Sprintf("数据库写入TestJob记录失败：%s\n", err)
+		errMsg := fmt.Sprintf("数据库写入TestJob记录失败: %s\n", err)
 		log.Warnf(errMsg)
 		return 0, errors.New(errMsg)
 	}
 	jid, err := res.LastInsertId()
 	if err != nil {
-		errMsg := fmt.Sprintf("数据库获取新插入记录jid失败：%s\n", err)
+		errMsg := fmt.Sprintf("数据库获取新插入记录jid失败: %s\n", err)
 		log.Warnf(errMsg)
 		return 0, errors.New(errMsg)
 	}
