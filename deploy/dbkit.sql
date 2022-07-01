@@ -1,3 +1,5 @@
+-- mysql -h127.0.0.1 -P10007 -uroot -p dbkit < dbkit.sql
+
 -- MySQL dump 10.13  Distrib 8.0.28, for Linux (x86_64)
 --
 -- Host: localhost    Database: dbkit
