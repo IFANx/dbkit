@@ -5,6 +5,7 @@ import (
 	"dbkit/internal/common/dbms"
 	"dbkit/internal/common/oracle"
 	"dbkit/internal/model"
+	"dbkit/internal/mysql"
 	"fmt"
 	"sync/atomic"
 	"time"
@@ -90,11 +91,18 @@ func (ctx *TaskContext) initDBList() {
 	n := len(ctx.Submit.ConnList)
 	dbList := make([]*common.Database, n)
 	for i := 0; i < n; i++ {
+		var provider common.Provider
+		if ctx.Submit.TargetTypes[i] == dbms.MYSQL {
+			provider = &mysql.MySQLProvider{}
+		} else {
+			panic("未找到对应的Provider：" + ctx.Submit.TargetTypes[i].Name)
+		}
 		db := &common.Database{
-			DBMS:   ctx.Submit.TargetTypes[i],
-			DBName: dbName,
-			Conn:   ctx.Submit.ConnList[i],
-			Tables: make([]*common.Table, 0),
+			DBMS:       ctx.Submit.TargetTypes[i],
+			DBProvider: provider,
+			DBName:     dbName,
+			Conn:       ctx.Submit.ConnList[i],
+			Tables:     make([]*common.Table, 0),
 		}
 		err := db.Refresh()
 		if err != nil {
