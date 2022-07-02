@@ -91,7 +91,7 @@ func DeleteTestJob(jid int) error {
 }
 
 func AlterTestJobDBName(jid int, dbName string) error {
-	sql := fmt.Sprintf("UPDATE %s SET db_name = %s WHERE jid = %d", tableNameTestJob, dbName, jid)
+	sql := fmt.Sprintf("UPDATE %s SET db_name = '%s' WHERE jid = %d", tableNameTestJob, dbName, jid)
 	_, err := db.Exec(sql)
 	if err != nil {
 		errMsg := fmt.Sprintf("更新TestJob的数据库实例名称失败：%s\n", err)

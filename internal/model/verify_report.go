@@ -3,8 +3,9 @@ package model
 import (
 	"errors"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"time"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type VerifyReport struct {
@@ -69,7 +70,7 @@ func GetVerifyReportByJid(jid int) (*VerifyReport, error) {
 func AddVerifyReport(jid, pass int, filePath, comments string) (int, error) {
 	timeStr := time.Now().Format("2006-01-02 15:04:05")
 	sql := fmt.Sprintf("INSERT INTO %s(jid, pass, file_path, comments, created_at, deleted) "+
-		"VALUES('%d', '%d', '%s', '%s', '%s', '%d')",
+		"VALUES(%d, %d, '%s', '%s', '%s', %d)",
 		tableNameVerifyReport, jid, pass, filePath, comments, timeStr, 0)
 	res, err := db.Exec(sql)
 	if err != nil {

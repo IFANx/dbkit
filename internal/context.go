@@ -136,7 +136,7 @@ func (ctx *TaskContext) GetOracle() oracle.Oracle {
 }
 
 func (ctx *TaskContext) GetTargetTypes() []dbms.DBMS {
-	return ctx.GetTargetTypes()
+	return ctx.Submit.TargetTypes
 }
 
 func (ctx *TaskContext) GetLimit() float32 {
