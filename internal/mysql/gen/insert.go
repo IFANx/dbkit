@@ -7,7 +7,7 @@ import (
 	"dbkit/internal/util"
 )
 
-func GenInsertStmt(table *common.Table) stmt.InsertStmt {
+func GenInsertStmt(table *common.Table) *stmt.InsertStmt {
 	insertedColumns := randomly.RandPickNotEmptyStr(table.ColumnNames)
 	for colName, column := range table.Columns {
 		if (column.NotNull || column.Primary) &&
@@ -20,7 +20,7 @@ func GenInsertStmt(table *common.Table) stmt.InsertStmt {
 		colType := table.Columns[colName].Type
 		insertedValues = append(insertedValues, colType.GenRandomVal())
 	}
-	return stmt.InsertStmt{
+	return &stmt.InsertStmt{
 		TableName: table.Name,
 		Columns:   insertedColumns,
 		Values:    insertedValues,

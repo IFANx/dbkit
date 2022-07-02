@@ -1,6 +1,7 @@
 package isolation
 
 import (
+	"dbkit/internal/randomly"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -30,4 +31,10 @@ func GetIsolationFromAlias(alias string) IsolationLevel {
 		log.Infof("Unsupported isolation alias: %s", alias)
 		panic("Unreachable")
 	}
+}
+
+func GetRandomIsolationLevel() IsolationLevel {
+	levels := []IsolationLevel{ReadUncommitted, ReadCommitted, RepeatableRead, Serializable}
+	idx := randomly.RandIntGap(0, 3)
+	return levels[idx]
 }

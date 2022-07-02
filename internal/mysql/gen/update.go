@@ -6,7 +6,7 @@ import (
 	"dbkit/internal/randomly"
 )
 
-func GenUpdateStmt(table *common.Table) stmt.UpdateStmt {
+func GenUpdateStmt(table *common.Table) *stmt.UpdateStmt {
 	predicate := GenPredicate(table)
 	updatedColumns := randomly.RandPickNotEmptyStr(table.ColumnNames)
 	colValMap := make(map[string]string)
@@ -14,7 +14,7 @@ func GenUpdateStmt(table *common.Table) stmt.UpdateStmt {
 		colType := table.Columns[colName].Type
 		colValMap[colName] = colType.GenRandomVal()
 	}
-	return stmt.UpdateStmt{
+	return &stmt.UpdateStmt{
 		TableName:   table.Name,
 		ColValPairs: colValMap,
 		Predicate:   predicate,

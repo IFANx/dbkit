@@ -7,7 +7,7 @@ import (
 	"strconv"
 )
 
-func GenCreateTableStmt(table *common.Table) stmt.CreateTableStmt {
+func GenCreateTableStmt(table *common.Table) *stmt.CreateTableStmt {
 	var (
 		colNames   = make([]string, 0)
 		colTypes   = make(map[string]string)
@@ -25,7 +25,7 @@ func GenCreateTableStmt(table *common.Table) stmt.CreateTableStmt {
 		colOptions[colName] = getColOptions(colType)
 	}
 
-	return stmt.CreateTableStmt{
+	return &stmt.CreateTableStmt{
 		TableName:       table.Name,
 		Columns:         colNames,
 		ColumnTypes:     colTypes,

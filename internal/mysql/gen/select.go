@@ -6,11 +6,11 @@ import (
 	"dbkit/internal/randomly"
 )
 
-func GenSelectStmt(table *common.Table) stmt.SelectStmt {
+func GenSelectStmt(table *common.Table) *stmt.SelectStmt {
 	predicate := GenPredicate(table)
 	selectedColumns := randomly.RandPickNotEmptyStr(table.ColumnNames)
 	postFix := randomly.RandIntGap(0, 5)
-	return stmt.SelectStmt{
+	return &stmt.SelectStmt{
 		TableName: table.Name,
 		Targets:   selectedColumns,
 		Predicate: predicate,

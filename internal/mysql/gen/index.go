@@ -8,7 +8,7 @@ import (
 	"fmt"
 )
 
-func GenCreateIndexStmt(table *common.Table) stmt.CreateIndexStmt {
+func GenCreateIndexStmt(table *common.Table) *stmt.CreateIndexStmt {
 	idxName := fmt.Sprintf("i%d", table.IndexCount)
 	candidateColumns := randomly.RandPickNotEmptyStr(table.ColumnNames)
 	indexedColumns := make([]string, 0)
@@ -28,7 +28,7 @@ func GenCreateIndexStmt(table *common.Table) stmt.CreateIndexStmt {
 	}
 
 	if len(indexedColumns) == 0 {
-		return stmt.CreateIndexStmt{}
+		return &stmt.CreateIndexStmt{}
 	}
 
 	if randomly.RandIntGap(1, 10) == 1 { //partial index
@@ -37,7 +37,7 @@ func GenCreateIndexStmt(table *common.Table) stmt.CreateIndexStmt {
 		indexedColumns = append(indexedColumns, predicate)
 	}
 
-	return stmt.CreateIndexStmt{
+	return &stmt.CreateIndexStmt{
 		IndexName: idxName,
 		TableName: table.Name,
 		Columns:   indexedColumns,

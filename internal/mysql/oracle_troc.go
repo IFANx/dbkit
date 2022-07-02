@@ -2,19 +2,11 @@ package mysql
 
 import (
 	"dbkit/internal/common"
-	"time"
+	"dbkit/internal/mysql/troc"
 )
 
 type MySQLTrocTester struct{}
 
 func (tester *MySQLTrocTester) RunTask(ctx common.OracleRuntime) {
-	dbInstance := ctx.GetDBList()[0]
-	table := &common.Table{
-		DB:   dbInstance,
-		Name: "t",
-	}
-	for {
-		table.Build()
-		time.Sleep(time.Second * 5)
-	}
+	troc.RunTrocWithCtx(ctx)
 }
