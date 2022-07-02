@@ -47,15 +47,15 @@ func RandBytesLen(l int) []byte {
 
 func RandDateStr() string {
 	year := RandIntGap(1970, 2038)
-	month := RandIntGap(1, 13)
+	month := RandIntGap(1, 12)
 	date := RandIntGap(1, 28)
 	return fmt.Sprintf("%d-%02d-%02d", year, month, date)
 }
 
 func RandTimeStr() string {
-	hour := RandIntGap(0, 24)
-	minute := RandIntGap(0, 60)
-	second := RandIntGap(0, 60)
+	hour := RandIntGap(0, 23)
+	minute := RandIntGap(0, 59)
+	second := RandIntGap(0, 59)
 	return fmt.Sprintf("%02d:%02d:%02d", hour, minute, second)
 }
 

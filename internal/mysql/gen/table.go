@@ -16,7 +16,7 @@ func GenCreateTableStmt(table *common.Table) stmt.CreateTableStmt {
 		partition  = ""
 	)
 
-	columnCnt := randomly.RandIntGap(2, 6)
+	columnCnt := randomly.RandIntGap(2, 5)
 	for i := 0; i < columnCnt; i++ {
 		colName := "c" + strconv.Itoa(i)
 		colNames = append(colNames, colName)
