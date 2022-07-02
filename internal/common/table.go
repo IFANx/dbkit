@@ -70,7 +70,7 @@ func (table *Table) UpdateSchema() {
 			primary := string(res["Key"].([]byte)) == "PRI"
 			unique := string(res["Key"].([]byte)) == "UNI"
 			columns[colName] = &Column{
-				Table:      nil,
+				Table:      table,
 				Name:       colName,
 				Type:       table.DB.DBProvider.ParseDataType(colType),
 				NotNull:    notNull,
@@ -90,6 +90,7 @@ func (table *Table) UpdateSchema() {
 		if err != nil {
 			log.Warnf("Fail to get index: %s", err)
 		}
+
 	}
 }
 

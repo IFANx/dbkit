@@ -9,7 +9,7 @@ import (
 
 func GenCreateTableStmt(table *common.Table) stmt.CreateTableStmt {
 	var (
-		colNames   []string
+		colNames   = make([]string, 0)
 		colTypes   = make(map[string]string)
 		colOptions = make(map[string]string)
 		tabOptions = make(map[string]string)
