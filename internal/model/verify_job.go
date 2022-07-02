@@ -115,6 +115,17 @@ func AbortVerifyJob(jid int) error {
 	return nil
 }
 
+func AlterVerifyJobDBName(jid int, dbName string) error {
+	sql := fmt.Sprintf("UPDATE %s SET db_name = %s WHERE jid = %d", tableNameVerifyJob, dbName, jid)
+	_, err := db.Exec(sql)
+	if err != nil {
+		errMsg := fmt.Sprintf("更新VerifyJob的数据库实例名称失败：%s\n", err)
+		log.Warnf(errMsg)
+		return errors.New(errMsg)
+	}
+	return nil
+}
+
 func EndVerifyJob(jid int, success bool) error {
 	state := 2
 	if !success {

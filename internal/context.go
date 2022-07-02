@@ -82,8 +82,10 @@ func (ctx *TaskContext) initDBList() {
 	switch ctx.Submit.Type {
 	case TaskTypeTest, TaskTypeDiff:
 		dbName = fmt.Sprintf("test%d", ctx.JobID)
+		_ = model.AlterTestJobDBName(ctx.JobID, dbName)
 	case TaskTypeVerify:
 		dbName = fmt.Sprintf("verify%d", ctx.JobID)
+		_ = model.AlterVerifyJobDBName(ctx.JobID, dbName)
 	}
 	n := len(ctx.Submit.ConnList)
 	dbList := make([]*common.Database, n)
