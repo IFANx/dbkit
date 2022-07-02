@@ -9,7 +9,6 @@ import (
 )
 
 func GenCreateIndexStmt(table *common.Table) stmt.CreateIndexStmt {
-	table.IndexCount++
 	idxName := fmt.Sprintf("i%d", table.IndexCount)
 	candidateColumns := randomly.RandPickNotEmptyStr(table.ColumnNames)
 	indexedColumns := make([]string, 0)
@@ -26,6 +25,10 @@ func GenCreateIndexStmt(table *common.Table) stmt.CreateIndexStmt {
 				indexedColumns = append(indexedColumns, colName)
 			}
 		}
+	}
+
+	if len(indexedColumns) == 0 {
+		return stmt.CreateIndexStmt{}
 	}
 
 	if randomly.RandIntGap(1, 10) == 1 { //partial index

@@ -14,7 +14,7 @@ func RandNormStrLen(l int) string {
 	bytes := make([]byte, l)
 	candiChars := "!#$%&()*+,-.:;<=>@0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 	for i := 0; i < l; i++ {
-		bytes[i] = candiChars[RandIntGap(0, len(candiChars))]
+		bytes[i] = candiChars[RandIntGap(0, len(candiChars)-1)]
 	}
 	return string(bytes)
 }
@@ -24,7 +24,7 @@ func RandAlphabetStrLen(l int) string {
 	bytes := make([]byte, l)
 	candiChars := "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 	for i := 0; i < l; i++ {
-		bytes[i] = candiChars[RandIntGap(0, len(candiChars))]
+		bytes[i] = candiChars[RandIntGap(0, len(candiChars)-1)]
 	}
 	return string(bytes)
 }
@@ -34,7 +34,7 @@ func RandHexStrLen(l int) string {
 	bytes := make([]byte, l)
 	candiChars := "0123456789ABCDE"
 	for i := 0; i < l; i++ {
-		bytes[i] = candiChars[RandIntGap(0, len(candiChars))]
+		bytes[i] = candiChars[RandIntGap(0, len(candiChars)-1)]
 	}
 	return string(bytes)
 }

@@ -15,6 +15,6 @@ func (tester *MySQLTrocTester) RunTask(ctx common.OracleRuntime) {
 	}
 	for {
 		table.Build()
-		time.Sleep(time.Minute)
+		time.Sleep(time.Second * 5)
 	}
 }
