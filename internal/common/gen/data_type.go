@@ -54,7 +54,7 @@ func (dataType MySQLDataType) DBMS() dbms.DBMS {
 
 func RandMySQLType() MySQLDataType {
 	types := []MySQLDataType{TypeInt, TypeVarchar, TypeFloat}
-	return types[randomly.RandIntGap(0, len(types))]
+	return types[randomly.RandIntGap(0, len(types)-1)]
 }
 
 func (dataType MySQLDataType) Name() string {

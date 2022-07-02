@@ -3,9 +3,10 @@ package gen
 import (
 	"dbkit/internal/common/dbms"
 	"dbkit/internal/randomly"
-	log "github.com/sirupsen/logrus"
 	"strconv"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type MySQLDataType int8
@@ -48,7 +49,7 @@ func (dataType MySQLDataType) DBMS() dbms.DBMS {
 
 func RandMySQLType() MySQLDataType {
 	types := []MySQLDataType{TypeInt, TypeVarchar, TypeFloat}
-	return types[randomly.RandIntGap(0, len(types))]
+	return types[randomly.RandIntGap(0, len(types)-1)]
 }
 
 func (dataType MySQLDataType) Name() string {

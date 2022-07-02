@@ -166,5 +166,5 @@ func RandPickOneCol(candidates []*common.Column) *common.Column {
 	if candidates == nil || len(candidates) == 0 {
 		panic("empty candidates slice")
 	}
-	return candidates[randomly.RandIntGap(0, len(candidates))]
+	return candidates[randomly.RandIntGap(0, len(candidates)-1)]
 }
