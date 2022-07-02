@@ -35,7 +35,7 @@ func GenerateCreateIndexStmt(indexName string, table *common.Table) *statement.C
 		Columns:         columns,
 		KeyPart:         keyPart,
 		OptionAlgorithm: randomly.RandIntGap(statement.AlgorCopy-1, statement.AlgorInplace),
-		OptionLock:      randomly.RandIntGap(statement.LockDefault, statement.LockShared),
+		OptionLock:      randomly.RandIntGap(statement.LockDefault-1, statement.LockShared),
 		Where:           where,
 	}
 }

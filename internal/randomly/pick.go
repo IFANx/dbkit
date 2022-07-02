@@ -8,7 +8,7 @@ func RandPickOne(candidates []interface{}) interface{} {
 	if candidates == nil || len(candidates) == 0 {
 		panic("empty candidates slice")
 	}
-	return candidates[RandIntGap(0, len(candidates))]
+	return candidates[RandIntGap(0, len(candidates)-1)]
 }
 
 func RandPickN(candidates []interface{}, x int) []interface{} {
@@ -48,7 +48,7 @@ func RandPickOneInt(candidates []int) int {
 	if candidates == nil || len(candidates) == 0 {
 		panic("empty candidates slice")
 	}
-	return candidates[RandIntGap(0, len(candidates))]
+	return candidates[RandIntGap(0, len(candidates)-1)]
 }
 
 func RandPickNInt(candidates []int, x int) []int {
@@ -88,7 +88,7 @@ func RandPickOneStr(candidates []string) string {
 	if candidates == nil || len(candidates) == 0 {
 		panic("empty candidates slice")
 	}
-	return candidates[RandIntGap(0, len(candidates))]
+	return candidates[RandIntGap(0, len(candidates)-1)]
 }
 
 func RandPickNStr(candidates []string, x int) []string {
@@ -115,8 +115,8 @@ func RandPickNotEmptyStr(candidates []string) []string {
 		panic("empty candidates slice")
 	}
 	n := len(candidates)
-	x := RandIntGap(1, n)
-	elements := make([]string, len(candidates))
+	x := RandIntGap(1, n-1)
+	elements := make([]string, n-1)
 	copy(elements, candidates)
 	rand.Shuffle(n, func(i, j int) {
 		elements[i], elements[j] = elements[j], elements[i]

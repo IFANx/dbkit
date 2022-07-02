@@ -8,8 +8,7 @@ type MySQLAggregate struct {
 }
 
 func GetRandomMySQLAggregate() MySQLAggregate {
-	n := len(aggregates)
-	return aggregates[randomly.RandIntGap(0, n)]
+	return aggregates[randomly.RandIntGap(0, len(aggregates)-1)]
 }
 
 var aggregates = []MySQLAggregate{

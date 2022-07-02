@@ -121,7 +121,7 @@ func RandPickStrings(stringList []string) []string {
 
 func RandPickColumns(columns []*common.Column) []*common.Column {
 	colNum := len(columns)
-	randomSize := randomly.RandIntGap(1, colNum)
+	randomSize := randomly.RandIntGap(1, colNum-1)
 	elements := make([]*common.Column, len(columns))
 	copy(elements, columns)
 	rand.Shuffle(colNum, func(i, j int) {

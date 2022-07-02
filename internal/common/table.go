@@ -100,6 +100,7 @@ func (table *Table) UpdateSchema() {
 			isPrimary := indexName == "PRIMARY"
 			isUnique := string(res["NON_UNIQUE"].([]byte)) == "0"
 			if indexes[indexName] == nil {
+				indexNames = append(indexNames, indexName)
 				indexCols := make([]string, 0)
 				indexCols = append(indexCols, indexCol)
 				indexes[indexName] = &Index{
