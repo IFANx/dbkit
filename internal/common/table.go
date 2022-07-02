@@ -11,7 +11,6 @@ import (
 type Table struct {
 	DB            *Database
 	Name          string
-	DBName        string
 	ColumnNames   []string
 	Columns       map[string]*Column
 	Indexes       map[string]*Index
@@ -86,7 +85,7 @@ func (table *Table) UpdateSchema() {
 		table.ColumnNames = colNames
 		table.showSchema()
 		sql := fmt.Sprintf("select * from information_schema.statistics "+
-			"where table_schema = '%s' and table_name = '%s'", table.DBName, table.Name)
+			"where table_schema = '%s' and table_name = '%s'", table.DB.DBName, table.Name)
 		rows, err = table.DB.Queryx(sql)
 		if err != nil {
 			log.Warnf("Fail to get index: %s", err)

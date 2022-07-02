@@ -10,10 +10,10 @@ import (
 type MySQLTrocTester struct{}
 
 func (tester *MySQLTrocTester) RunTask(ctx common.OracleRuntime) {
+	dbInstance := ctx.GetDBList()[0]
 	table := &common.Table{
-		DB:     ctx.GetDBList()[0],
-		Name:   "t",
-		DBName: "test",
+		DB:   dbInstance,
+		Name: "t",
 	}
 	for {
 		table.Build()

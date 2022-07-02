@@ -14,9 +14,8 @@ type MySQLQueryTester struct{}
 
 func (tester *MySQLQueryTester) RunTask(ctx common.OracleRuntime) {
 	table := &common.Table{
-		DB:     ctx.GetDBList()[0],
-		Name:   "t",
-		DBName: ctx.GetDBList()[0].DBName,
+		DB:   ctx.GetDBList()[0],
+		Name: "t",
 	}
 	for {
 		table.Build()

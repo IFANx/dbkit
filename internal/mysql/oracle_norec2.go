@@ -13,9 +13,8 @@ type MySQLNoREC2 struct{}
 
 func (tester *MySQLNoREC2) RunTask(ctx common.OracleRuntime) {
 	table := &common.Table{
-		DB:     ctx.GetDBList()[0],
-		Name:   "t",
-		DBName: ctx.GetDBList()[0].DBName,
+		DB:   ctx.GetDBList()[0],
+		Name: "t",
 	}
 	for {
 		table.Build()
