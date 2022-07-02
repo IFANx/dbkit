@@ -284,7 +284,7 @@ func (dataType MySQLDataType) GenRandomVal() string {
 	case TypeTimestamp:
 		return "'" + randomly.RandDateTimeStr() + "'"
 	case TypeYear:
-		return strconv.Itoa(randomly.RandIntGap(1901, 2155))
+		return strconv.Itoa(randomly.RandIntGap(1901, 2150))
 	case TypeJson:
 		return "{type: json}"
 	default:

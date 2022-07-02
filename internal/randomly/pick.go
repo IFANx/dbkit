@@ -35,7 +35,7 @@ func RandPickNotEmpty(candidates []interface{}) []interface{} {
 		panic("empty candidates slice")
 	}
 	n := len(candidates)
-	x := RandIntGap(1, n)
+	x := RandIntGap(1, n-1)
 	elements := make([]interface{}, len(candidates))
 	copy(elements, candidates)
 	rand.Shuffle(n, func(i, j int) {
@@ -75,7 +75,7 @@ func RandPickNotEmptyInt(candidates []int) []int {
 		panic("empty candidates slice")
 	}
 	n := len(candidates)
-	x := RandIntGap(1, n)
+	x := RandIntGap(1, n-1)
 	elements := make([]int, len(candidates))
 	copy(elements, candidates)
 	rand.Shuffle(n, func(i, j int) {
@@ -116,7 +116,7 @@ func RandPickNotEmptyStr(candidates []string) []string {
 	}
 	n := len(candidates)
 	x := RandIntGap(1, n-1)
-	elements := make([]string, n-1)
+	elements := make([]string, len(candidates))
 	copy(elements, candidates)
 	rand.Shuffle(n, func(i, j int) {
 		elements[i], elements[j] = elements[j], elements[i]

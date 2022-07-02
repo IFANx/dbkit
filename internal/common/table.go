@@ -21,7 +21,7 @@ type Table struct {
 }
 
 func (table *Table) Build() {
-	table.DropTable()
+	table.clean()
 	stmt := table.DB.DBProvider.GenCreateTableStmt(table)
 	log.Infof("Create table statement: %s", stmt.String())
 	err := table.DB.ExecSQL(stmt.String())
@@ -31,10 +31,14 @@ func (table *Table) Build() {
 	table.UpdateSchema()
 	for i := 0; i < randomly.RandIntGap(1, 3); i++ {
 		stmt := table.DB.DBProvider.GenCreateIndexStmt(table)
-		log.Infof("Create index statement: %s", stmt.String())
-		err := table.DB.ExecSQL(stmt.String())
-		if err != nil {
-			log.Infof("Fail to create index: %s", err)
+		if stmt.IndexName != "" {
+			log.Infof("Create index statement: %s", stmt.String())
+			err := table.DB.ExecSQL(stmt.String())
+			if err != nil {
+				log.Infof("Fail to create index: %s", err)
+			} else {
+				table.IndexCount++
+			}
 		}
 	}
 	for i := 0; i < randomly.RandIntGap(5, 10); i++ {
@@ -115,14 +119,29 @@ func (table *Table) UpdateSchema() {
 		}
 		table.IndexNames = indexNames
 		table.Indexes = indexes
+		table.showSchema()
 	}
 }
 
 func (table *Table) showSchema() {
 	fmt.Println("============================")
-	for idx, colName := range table.ColumnNames {
+	for i, colName := range table.ColumnNames {
 		col := table.Columns[colName]
-		fmt.Printf("%d: %s %s\n", idx, col.Name, col.Type.Name())
+		fmt.Printf("%d: %s %s\n", i, col.Name, col.Type.Name())
+	}
+	for i, idxName := range table.IndexNames {
+		idx := table.Indexes[idxName]
+		fmt.Printf("%d: %s %v\n", i, idx.Name, idx.IndexedCols)
 	}
 	fmt.Println("============================")
+}
+
+func (table *Table) clean() {
+	table.DropTable()
+	table.Columns = make(map[string]*Column)
+	table.ColumnNames = make([]string, 0)
+	table.Indexes = make(map[string]*Index)
+	table.IndexNames = make([]string, 0)
+	table.IndexCount = 0
+	table.HasPrimaryKey = false
 }
