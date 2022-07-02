@@ -3,9 +3,10 @@ package gen
 import (
 	"dbkit/internal/common/dbms"
 	"dbkit/internal/randomly"
-	log "github.com/sirupsen/logrus"
 	"strconv"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type MySQLDataType int8

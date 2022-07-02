@@ -13,6 +13,7 @@ type Table struct {
 	Name          string
 	ColumnNames   []string
 	Columns       map[string]*Column
+	IndexNames    []string
 	Indexes       map[string]*Index
 	IndexCount    int
 	HasPrimaryKey bool
@@ -70,7 +71,7 @@ func (table *Table) UpdateSchema() {
 			primary := string(res["Key"].([]byte)) == "PRI"
 			unique := string(res["Key"].([]byte)) == "UNI"
 			columns[colName] = &Column{
-				Table:      nil,
+				Table:      table,
 				Name:       colName,
 				Type:       table.DB.DBProvider.ParseDataType(colType),
 				NotNull:    notNull,
@@ -90,6 +91,29 @@ func (table *Table) UpdateSchema() {
 		if err != nil {
 			log.Warnf("Fail to get index: %s", err)
 		}
+		indexNames := make([]string, 0)
+		indexes := make(map[string]*Index)
+		for rows.Next() {
+			_ = rows.MapScan(res)
+			indexName := string(res["INDEX_NAME"].([]byte))
+			indexCol := string(res["COLUMN_NAME"].([]byte))
+			isPrimary := indexName == "PRIMARY"
+			isUnique := string(res["NON_UNIQUE"].([]byte)) == "0"
+			if indexes[indexName] == nil {
+				indexCols := make([]string, 0)
+				indexCols = append(indexCols, indexCol)
+				indexes[indexName] = &Index{
+					Name:        indexName,
+					IndexedCols: indexCols,
+					IsPrimary:   isPrimary,
+					IsUnique:    isUnique,
+				}
+			} else {
+				indexes[indexName].IndexedCols = append(indexes[indexName].IndexedCols, indexCol)
+			}
+		}
+		table.IndexNames = indexNames
+		table.Indexes = indexes
 	}
 }
 
