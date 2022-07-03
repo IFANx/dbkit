@@ -19,7 +19,7 @@ func NewExprGen(table *common.Table, depthLimit int) *ExprGen {
 }
 
 func GenPredicate(table *common.Table) string {
-	exprGen := NewExprGen(table, 6)
+	exprGen := NewExprGen(table, 3)
 	expr := exprGen.GenExpr(0)
 	if expr == "" {
 		return "True"

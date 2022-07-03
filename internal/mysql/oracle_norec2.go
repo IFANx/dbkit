@@ -53,7 +53,9 @@ func NoREC2WithCtx(ctx common.OracleRuntime, table *common.Table, predicate stri
 		return
 	}
 
-	alter1 := "ALTER TABLE " + table.Name + " ADD COLUMN cg INT AS " + predicate // TODO: change into statement generation
+	dropCg := "ALTER TABLE " + table.Name + " DROP COLUMN cg" //not good
+	ctx.GetDBList()[0].ExecSQL(dropCg)
+	alter1 := "ALTER TABLE " + table.Name + " ADD COLUMN cg INT AS (" + predicate + ")" // TODO: change into statement generation
 	ctx.GetDBList()[0].ExecSQL(alter1)
 
 	query1.Predicate = "cg"
