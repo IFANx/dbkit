@@ -40,7 +40,7 @@ func GenerateSelectStmt(tables []*common.Table) *statement.SelectStmt {
 	var orderByOpt statement.OrderOption
 	if randomly.RandBool() {
 		orderByExpr = GenerateExpr(neededColumns, 3)
-		orderByOpt = randomly.RandIntGap(0, 2)
+		orderByOpt = randomly.RandIntGap(0, 1)
 	}
 	var forOpt statement.ForOption
 	forOpt = randomly.RandIntGap(statement.ForOptShare-1, statement.ForOptUpdate)

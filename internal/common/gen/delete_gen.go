@@ -69,7 +69,7 @@ func GenerateDeleteStmt(tables []*common.Table, partitions []string) *statement.
 		// 需要添加控制选项的开关
 		if true { // 可以生成ORDER BY
 			if randomly.RandBool() {
-				orderByColumns = RandPickColumns(neededColumns)
+				orderByColumns = RandPickOrderColumns(neededColumns)
 			}
 		}
 	}
@@ -119,9 +119,9 @@ func RandPickStrings(stringList []string) []string {
 	return elements[:randomSize]
 }
 
-func RandPickColumns(columns []*common.Column) []*common.Column {
+func RandPickOrderColumns(columns []*common.Column) []*common.Column {
 	colNum := len(columns)
-	randomSize := randomly.RandIntGap(1, colNum-1)
+	randomSize := randomly.RandIntGap(1, colNum)
 	elements := make([]*common.Column, len(columns))
 	copy(elements, columns)
 	rand.Shuffle(colNum, func(i, j int) {
