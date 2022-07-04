@@ -53,9 +53,7 @@ func NoREC2WithCtx(ctx common.OracleRuntime, table *common.Table, predicate stri
 		return
 	}
 
-	dropCg := "ALTER TABLE " + table.Name + " DROP COLUMN cg" //not good
-	ctx.GetDBList()[0].ExecSQL(dropCg)
-	alter1 := "ALTER TABLE " + table.Name + " ADD COLUMN cg INT AS (" + predicate + ")" // TODO: change into statement generation
+	alter1 := "ALTER TABLE " + table.Name + " ADD COLUMN cg DECIMAL(10,6) AS (" + predicate + ")" // TODO: change into statement generation
 	ctx.GetDBList()[0].ExecSQL(alter1)
 
 	query1.Predicate = "cg"
@@ -63,6 +61,10 @@ func NoREC2WithCtx(ctx common.OracleRuntime, table *common.Table, predicate stri
 	if err != nil {
 		return
 	}
+
+	dropCg := "ALTER TABLE " + table.Name + " DROP COLUMN cg" //not good
+	ctx.GetDBList()[0].ExecSQL(dropCg)
+
 	count2 := 0
 	for _, row := range res {
 		tmpStr := string(row[0].([]byte))
