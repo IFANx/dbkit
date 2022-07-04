@@ -65,7 +65,7 @@ func GenerateUpdateStmt(tables []*common.Table, partitions []string) *statement.
 
 	var updColumns []*common.Column
 	updColNum := randomly.RandIntGap(1, len(neededColumns))
-	updColumns = RandPickColumns(neededColumns)
+	updColumns = RandPickColumns(neededColumns, updColNum)
 
 	updExprList := make([]string, 0)
 	for i := 0; i < updColNum; i++ {
@@ -82,7 +82,7 @@ func GenerateUpdateStmt(tables []*common.Table, partitions []string) *statement.
 		// 需要添加控制选项的开关
 		if true { // 可以生成ORDER BY
 			if randomly.RandBool() {
-				orderByColumns = RandPickColumns(neededColumns)
+				orderByColumns = RandPickOrderColumns(neededColumns)
 			}
 		}
 	}
@@ -111,4 +111,14 @@ func GenerateUpdateStmt(tables []*common.Table, partitions []string) *statement.
 		OrderOpt:   orderByOpt,
 		Limit:      -1,
 	}
+}
+
+func RandPickColumns(columns []*common.Column, randomSize int) []*common.Column {
+	colNum := len(columns)
+	elements := make([]*common.Column, len(columns))
+	copy(elements, columns)
+	rand.Shuffle(colNum, func(i, j int) {
+		elements[i], elements[j] = elements[j], elements[i]
+	})
+	return elements[:randomSize]
 }

@@ -61,7 +61,7 @@ func GenerateInsertStmt(table *common.Table, partitions []string) *statement.Ins
 	// 需要添加控制选项的开关
 	if true { // 可以生成Duplicate
 		dupColNum := randomly.RandIntGap(1, len(neededColumns))
-		dupColumns = RandPickColumns(neededColumns)
+		dupColumns = RandPickColumns(neededColumns, dupColNum)
 		dupExprList = make([]string, 0)
 		for i := 0; i < dupColNum; i++ {
 			if true { // 待修改
