@@ -18,7 +18,7 @@ func (provider *MySQLProvider) ParseDataType(name string) common.DataType {
 }
 
 func (provider *MySQLProvider) GenCreateTableStmt(table *common.Table) *stmt.CreateTableStmt {
-	return gen.GenCreateTableStmt(table)
+	return gen.GenCreateTableStmt(table.Name)
 }
 
 func (provider *MySQLProvider) GenCreateIndexStmt(table *common.Table) *stmt.CreateIndexStmt {
