@@ -9,7 +9,7 @@ type MySQLFunc struct {
 
 func GetRandomMySQLFunc() MySQLFunc {
 	n := len(functions)
-	return functions[randomly.RandIntGap(0, n)]
+	return functions[randomly.RandIntGap(0, n-1)]
 }
 
 var functions = []MySQLFunc{
