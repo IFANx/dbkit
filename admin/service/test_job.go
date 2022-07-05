@@ -3,9 +3,10 @@ package service
 import (
 	"dbkit/internal"
 	"dbkit/internal/model"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 func GetTestJobCount(ctx *gin.Context) {
@@ -67,7 +68,11 @@ func GetTestJobDetail(ctx *gin.Context) {
 		return
 	}
 	reports, _ := model.GetTestReportByJid(jid)
-	statistic, _ := model.GetStatisticByJid(jid)
+	abortStr := ctx.DefaultQuery("aborted", "false")
+	var statistic *model.TestStatistic
+	if abortStr == "true" {
+		statistic, _ = model.GetStatisticByJid(jid)
+	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"ok": true,
 		"data": map[string]interface{}{
