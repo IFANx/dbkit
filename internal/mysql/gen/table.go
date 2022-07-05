@@ -1,13 +1,12 @@
 package gen
 
 import (
-	"dbkit/internal/common"
 	"dbkit/internal/common/stmt"
 	"dbkit/internal/randomly"
 	"strconv"
 )
 
-func GenCreateTableStmt(table *common.Table) *stmt.CreateTableStmt {
+func GenCreateTableStmt(tableName string) *stmt.CreateTableStmt {
 	var (
 		colNames   = make([]string, 0)
 		colTypes   = make(map[string]string)
@@ -26,7 +25,7 @@ func GenCreateTableStmt(table *common.Table) *stmt.CreateTableStmt {
 	}
 
 	return &stmt.CreateTableStmt{
-		TableName:       table.Name,
+		TableName:       tableName,
 		Columns:         colNames,
 		ColumnTypes:     colTypes,
 		ColumnOptions:   colOptions,
