@@ -21,25 +21,27 @@ func (oracle Oracle) String() string {
 }
 
 var (
-	TLP     = Oracle{TLPName, TLPAlias, false}
-	NoREC   = Oracle{NoRECName, NoRECAlias, false}
-	NoREC2  = Oracle{NoREC2Name, NoREC2Alias, false}
-	DQE     = Oracle{DQEName, DQEAlias, false}
-	DIFF    = Oracle{DiffName, DiffAlias, true}
-	Troc    = Oracle{TrocName, TrocAlias, false}
-	DIFFTXN = Oracle{DiffTxnName, DiffTxnAlias, true}
-	LINEAR  = Oracle{LinearName, LinearAlias, false}
+	TLP      = Oracle{TLPName, TLPAlias, false}
+	NoREC    = Oracle{NoRECName, NoRECAlias, false}
+	NoREC2   = Oracle{NoREC2Name, NoREC2Alias, false}
+	DQE      = Oracle{DQEName, DQEAlias, false}
+	DIFF     = Oracle{DiffName, DiffAlias, true}
+	Troc     = Oracle{TrocName, TrocAlias, false}
+	TrocPlus = Oracle{TrocPlusName, TrocPlusAlias, false}
+	DIFFTXN  = Oracle{DiffTxnName, DiffTxnAlias, true}
+	LINEAR   = Oracle{LinearName, LinearAlias, false}
 )
 
 var OracleMap = map[string]Oracle{
-	TLPAlias:     TLP,
-	NoRECAlias:   NoREC,
-	NoREC2Alias:  NoREC2,
-	DQEAlias:     DQE,
-	DiffAlias:    DIFF,
-	TrocAlias:    Troc,
-	DiffTxnAlias: DIFFTXN,
-	LinearAlias:  LINEAR,
+	TLPAlias:      TLP,
+	NoRECAlias:    NoREC,
+	NoREC2Alias:   NoREC2,
+	DQEAlias:      DQE,
+	DiffAlias:     DIFF,
+	TrocAlias:     Troc,
+	TrocPlusAlias: TrocPlus,
+	DiffTxnAlias:  DIFFTXN,
+	LinearAlias:   LINEAR,
 }
 
 func GetOracleFromStr(oracle string) Oracle {

@@ -66,7 +66,7 @@ func validateTestForm(oracleName string, target []string, testType, deadline, ti
 			return nil, errors.New("不支持的oracle类型: " + oracleName)
 		}
 	} else if testType == "txn" {
-		if oracleObj != oracle.Troc {
+		if oracleObj != oracle.Troc && oracleObj != oracle.TrocPlus {
 			return nil, errors.New("不支持的oracle类型: " + oracleName)
 		}
 	} else {
