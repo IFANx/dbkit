@@ -38,13 +38,22 @@ func (stmt *InsertStmt) String() string {
 		res += col.Name
 	}
 	res += ") VALUES "
+	c := 0
 	for j, val := range stmt.InsertValue {
+		c++
+		if c == 1 {
+			res += "("
+		}
 		if j != 0 {
 			res += ", "
 		}
 		res += val
+		if c == len(stmt.InsertCol) {
+			res += ")"
+		}
 	}
 	res += " "
+	res += "ON DUPLICATE KEY UPDATE "
 	if stmt.DupCol != nil && len(stmt.DupCol) > 0 {
 		for k, dup := range stmt.DupValue {
 			if k != 0 {

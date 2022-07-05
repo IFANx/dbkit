@@ -56,7 +56,7 @@ func (stmt *DeleteStmt) String() string {
 		for _, col := range stmt.OrderBy {
 			orderByList = append(orderByList, col.Name)
 		}
-		res += "ORDER BY " + strings.Join(orderByList, " ")
+		res += "ORDER BY " + strings.Join(orderByList, ", ")
 		res += " "
 	}
 	if stmt.OrderOpt > -1 {
