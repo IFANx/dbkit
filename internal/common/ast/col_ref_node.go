@@ -9,7 +9,7 @@ type ColRefNode struct {
 }
 
 func (node *ColRefNode) Name() string {
-	return "ColumnRef"
+	return node.Column.Name
 }
 
 func (node *ColRefNode) Type() NodeType {

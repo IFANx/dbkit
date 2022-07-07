@@ -14,5 +14,5 @@ func (node *AggregateNode) Type() NodeType {
 }
 
 func (node *AggregateNode) String() string {
-	return node.FuncName + "(" + node.Column.Name() + ")"
+	return node.FuncName + "(" + node.Column.String() + ")"
 }

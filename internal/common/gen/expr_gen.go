@@ -90,7 +90,7 @@ func (generator *exprGenerator) genUnaryPreExpr(depth int) ast.AstNode {
 
 func (generator *exprGenerator) genUnaryPostExpr(depth int) ast.AstNode {
 	subExpr := generator.genExpression(depth + 1)
-	op := randomly.RandPickOneStr([]string{"IS NULL", "IS TRUE", "IS FALSE", "!"})
+	op := randomly.RandPickOneStr([]string{"IS NULL", "IS TRUE", "IS FALSE"})
 	return &ast.UnaryPostOpNode{
 		OpName:  op,
 		Operand: subExpr,

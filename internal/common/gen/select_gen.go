@@ -27,9 +27,19 @@ func GenerateSelectStmt(tables []*common.Table) *statement.SelectStmt {
 		}
 	}
 	selExprList := make([]ast.AstNode, 0)
-	for i := 0; i < randomly.RandIntGap(1, 5); i++ {
-		selExprList = append(selExprList, GenerateExprWithAggregate(neededColumns, 3))
+	if randomly.RandBool() { // 只生成列名
+		randNum := randomly.RandIntGap(1, len(neededColumns))
+		randCol := RandPickColumns(neededColumns, randNum)
+		for _, col := range randCol {
+			selExprList = append(selExprList, &ast.ColRefNode{Column: col})
+		}
+	} else {
+		for i := 0; i < randomly.RandIntGap(1, 3); i++ {
+			selExprList = append(selExprList, GenerateExpr(neededColumns, 1))
+			//selExprList = append(selExprList, GenerateExprWithAggregate(neededColumns, 3))
+		}
 	}
+
 	var joinAst, joinOnAst ast.AstNode
 	if len(neededTables) > 1 && randomly.RandBool() {
 		joinAst = GenerateJoinAst(neededTables)
@@ -40,6 +50,8 @@ func GenerateSelectStmt(tables []*common.Table) *statement.SelectStmt {
 	var orderByOpt statement.OrderOption
 	if randomly.RandBool() {
 		orderByExpr = GenerateExpr(neededColumns, 3)
+	}
+	if randomly.RandBool() && orderByExpr != nil {
 		orderByOpt = randomly.RandIntGap(0, 1)
 	}
 	var forOpt statement.ForOption
@@ -53,7 +65,7 @@ func GenerateSelectStmt(tables []*common.Table) *statement.SelectStmt {
 		Partitions: nil, // 需要表结构信息
 		Where:      GenerateExpr(neededColumns, 5),
 		GroupBy:    GenerateExpr(neededColumns, 5),
-		Having:     GenerateExpr(neededColumns, 5),
+		Having:     GenerateExprWithAggregate(neededColumns, 5),
 		OrderBy:    orderByExpr,
 		OrderOpt:   orderByOpt,
 		Limit:      -1, // 未确定好的生成策略

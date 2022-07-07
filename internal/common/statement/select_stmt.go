@@ -33,6 +33,7 @@ func (stmt *SelectStmt) String() string {
 		optionStrList = append(optionStrList, selOptDict[opt])
 	}
 	res += strings.Join(optionStrList, " ")
+	res += " "
 	selectExprLen := len(stmt.SelectExpr)
 	for i := 0; i < selectExprLen; i++ {
 		if i != 0 {

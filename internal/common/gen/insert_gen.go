@@ -47,6 +47,7 @@ func GenerateInsertStmt(table *common.Table, partitions []string) *statement.Ins
 		neededColumns = append(neededColumns, col)
 	}
 	insValueList := make([]string, 0)
+	// 生成一行数据
 	for i := 0; i < len(neededColumns); i++ {
 		if true { // 待修改
 			insValueList = append(insValueList, neededColumns[i].Type.GenRandomVal())
@@ -60,15 +61,19 @@ func GenerateInsertStmt(table *common.Table, partitions []string) *statement.Ins
 	var dupExprList []string
 	// 需要添加控制选项的开关
 	if true { // 可以生成Duplicate
-		dupColNum := randomly.RandIntGap(1, len(neededColumns))
-		dupColumns = RandPickColumns(neededColumns, dupColNum)
-		dupExprList = make([]string, 0)
-		for i := 0; i < dupColNum; i++ {
-			if true { // 待修改
-				dupExprList = append(dupExprList, dupColumns[i].Type.GenRandomVal())
-			} else {
-				// 待修改
-				//dupExprList = append(dupExprList, GenerateExpr(dupColumns, 3))
+		if randomly.RandBool() {
+
+		} else {
+			dupColNum := randomly.RandIntGap(1, len(neededColumns))
+			dupColumns = RandPickColumns(neededColumns, dupColNum)
+			dupExprList = make([]string, 0)
+			for i := 0; i < dupColNum; i++ {
+				if true { // 待修改
+					dupExprList = append(dupExprList, dupColumns[i].Type.GenRandomVal())
+				} else {
+					// 待修改
+					//dupExprList = append(dupExprList, GenerateExpr(dupColumns, 3))
+				}
 			}
 		}
 	}

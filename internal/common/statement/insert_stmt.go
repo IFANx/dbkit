@@ -18,7 +18,7 @@ type InsertStmt struct {
 func (stmt *InsertStmt) String() string {
 	res := "INSERT "
 	if stmt.Options != nil && len(stmt.Options) > 0 {
-		delOptDict := []string{"DELAYED", "HIGH_PRIORITY", "IGNORE", "LOW_PRIORITY"}
+		delOptDict := []string{"IGNORE", "HIGH_PRIORITY", "LOW_PRIORITY", "DELAYED"}
 		optionStrList := make([]string, 0)
 		for _, opt := range stmt.Options {
 			optionStrList = append(optionStrList, delOptDict[opt])
