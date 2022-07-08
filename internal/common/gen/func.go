@@ -21,7 +21,7 @@ var functions = []MySQLFunc{
 	{"COMPRESS", 1}, {"CONCAT", 1},
 	{"COS", 1},
 	{"COT", 1}, {"CRC32", 1},
-	{"CURTIME", 0}, {"DATEBASE", 0},
+	{"CURTIME", 0}, {"DATABASE", 0},
 	{"DEGREES", 1}, {"EXP", 1},
 	{"FLOOR", 1}, {"FROM_BASE64", 1},
 	{"HEX", 1}, {"IF", 3},

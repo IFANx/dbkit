@@ -1,8 +1,11 @@
 package ast
 
+import "strings"
+
 type AggregateNode struct {
 	FuncName string
-	Column   *ColRefNode
+	Columns  []*ColRefNode
+	Distinct bool
 }
 
 func (node *AggregateNode) Name() string {
@@ -14,5 +17,13 @@ func (node *AggregateNode) Type() NodeType {
 }
 
 func (node *AggregateNode) String() string {
-	return node.FuncName + "(" + node.Column.String() + ")"
+	columns := make([]string, 0)
+	for _, col := range node.Columns {
+		columns = append(columns, col.String())
+	}
+	distinct := ""
+	if node.Distinct {
+		distinct = "DISTINCT "
+	}
+	return node.FuncName + "(" + distinct + strings.Join(columns, ", ") + ")"
 }
