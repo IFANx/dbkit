@@ -14,6 +14,7 @@ func GetRandomMySQLDataType() common.DataType {
 	return MySQLDataType(randomly.RandIntGap(TypeBigInt, TypeYear))
 }
 
+// 暂时不支持enum，set和json
 type MySQLDataType int
 
 const (
@@ -27,15 +28,15 @@ const (
 	TypeDateTime
 	TypeDecimal
 	TypeDouble
-	TypeEnum
+	//TypeEnum
 	TypeFloat
 	TypeInt
-	TypeJson
+	//TypeJson
 	TypeLongBlob
 	TypeLongText
 	TypeMediumInt
 	TypeMediumText
-	TypeSet
+	//TypeSet
 	TypeSmallInt
 	TypeText
 	TypeTime
@@ -101,10 +102,10 @@ func (dataType MySQLDataType) Name() string {
 		return "tinyblob"
 	case TypeLongBlob:
 		return "longblob"
-	case TypeEnum:
-		return "enum"
-	case TypeSet:
-		return "set"
+	//case TypeEnum:
+	//	return "enum"
+	//case TypeSet:
+	//	return "set"
 	case TypeDate:
 		return "date"
 	case TypeTime:
@@ -115,8 +116,8 @@ func (dataType MySQLDataType) Name() string {
 		return "timestamp"
 	case TypeYear:
 		return "year"
-	case TypeJson:
-		return "json"
+	//case TypeJson:
+	//	return "json"
 	default:
 		log.Infof("Unsupported data type: %v", dataType)
 		panic("Unreachable")
@@ -171,10 +172,10 @@ func ParseDataType(name string) MySQLDataType {
 		return TypeTinyBlob
 	case "longblob":
 		return TypeLongBlob
-	case "enum":
-		return TypeEnum
-	case "set":
-		return TypeSet
+	//case "enum":
+	//	return TypeEnum
+	//case "set":
+	//	return TypeSet
 	case "date":
 		return TypeDate
 	case "time":
@@ -185,8 +186,8 @@ func ParseDataType(name string) MySQLDataType {
 		return TypeTimestamp
 	case "year":
 		return TypeYear
-	case "json":
-		return TypeJson
+	//case "json":
+	//	return TypeJson
 	default:
 		log.Infof("Unsupported data type: %v", name)
 		panic("Unreachable")
@@ -276,10 +277,10 @@ func (dataType MySQLDataType) GenRandomVal() string {
 		return "'" + randomly.RandNormStrLen(randomly.RandIntGap(5, 10)) + "'"
 	case TypeBlob, TypeTinyBlob, TypeLongBlob:
 		return "'" + randomly.RandHexStrLen(randomly.RandIntGap(5, 10)) + "'"
-	case TypeEnum:
-		return "enum"
-	case TypeSet:
-		return "set"
+	//case TypeEnum:
+	//	return "enum"
+	//case TypeSet:
+	//	return "set"
 	case TypeDate:
 		return "'" + randomly.RandDateStr() + "'"
 	case TypeTime:
@@ -290,8 +291,8 @@ func (dataType MySQLDataType) GenRandomVal() string {
 		return "'" + randomly.RandDateTimeStr() + "'"
 	case TypeYear:
 		return strconv.Itoa(randomly.RandIntGap(1901, 2155))
-	case TypeJson:
-		return "{type: json}"
+	//case TypeJson:
+	//	return "{type: json}"
 	default:
 		log.Infof("Unsupported data type: %v", dataType)
 		panic("Unreachable")
