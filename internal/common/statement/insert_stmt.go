@@ -2,6 +2,7 @@ package statement
 
 import (
 	"dbkit/internal/common"
+	"dbkit/internal/common/ast"
 	"strings"
 )
 
@@ -9,9 +10,9 @@ type InsertStmt struct {
 	Options     []InsertOption
 	Table       *common.Table
 	Partitions  []string
-	InsertCol   []*common.Column
+	InsertCol   []ast.ColRefNode
 	InsertValue []string // 结构待调整
-	DupCol      []*common.Column
+	DupCol      []ast.ColRefNode
 	DupValue    []string
 }
 
@@ -35,7 +36,7 @@ func (stmt *InsertStmt) String() string {
 		if i != 0 {
 			res += ", "
 		}
-		res += col.Name
+		res += col.String()
 	}
 	res += ") VALUES "
 	c := 0
@@ -59,7 +60,7 @@ func (stmt *InsertStmt) String() string {
 			if k != 0 {
 				res += ", "
 			}
-			res += stmt.DupCol[k].Name + " = " + dup
+			res += stmt.DupCol[k].String() + " = " + dup
 		}
 		res += " "
 	}

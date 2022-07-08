@@ -13,10 +13,10 @@ type UpdateStmt struct {
 	Join       ast.AstNode
 	JoinOn     ast.AstNode
 	Partitions []string
-	UpdateCol  []*common.Column
+	UpdateCol  []ast.ColRefNode
 	UpdateExpr []string // 结构待调整
 	Where      ast.AstNode
-	OrderBy    []*common.Column
+	OrderBy    []ast.ColRefNode
 	OrderOpt   OrderOption
 	Limit      int
 }
@@ -53,7 +53,7 @@ func (stmt *UpdateStmt) String() string {
 		if i != 0 {
 			res += ", "
 		}
-		res += stmt.UpdateCol[i].Name + " = "
+		res += stmt.UpdateCol[i].String() + " = "
 		res += expr
 	}
 	res += " "
@@ -63,7 +63,7 @@ func (stmt *UpdateStmt) String() string {
 	if stmt.OrderBy != nil && len(stmt.OrderBy) > 0 {
 		orderByList := make([]string, 0)
 		for _, col := range stmt.OrderBy {
-			orderByList = append(orderByList, col.Name)
+			orderByList = append(orderByList, col.String())
 		}
 		res += "ORDER BY " + strings.Join(orderByList, ", ")
 		res += " "

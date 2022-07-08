@@ -2,6 +2,7 @@ package gen
 
 import (
 	"dbkit/internal/common"
+	"dbkit/internal/common/ast"
 	"dbkit/internal/common/statement"
 	"dbkit/internal/randomly"
 )
@@ -57,7 +58,12 @@ func GenerateInsertStmt(table *common.Table, partitions []string) *statement.Ins
 		}
 	}
 
-	var dupColumns []*common.Column
+	insertColumns := make([]ast.ColRefNode, 0)
+	for _, col := range neededColumns {
+		insertColumns = append(insertColumns, ast.ColRefNode{Column: col})
+	}
+
+	dupColumns := make([]ast.ColRefNode, 0)
 	var dupExprList []string
 	// 需要添加控制选项的开关
 	if true { // 可以生成Duplicate
@@ -65,11 +71,15 @@ func GenerateInsertStmt(table *common.Table, partitions []string) *statement.Ins
 
 		} else {
 			dupColNum := randomly.RandIntGap(1, len(neededColumns))
-			dupColumns = RandPickColumns(neededColumns, dupColNum)
+			randColumns := RandPickColumns(neededColumns, dupColNum)
+			for _, col := range randColumns {
+				dupColumns = append(dupColumns, ast.ColRefNode{Column: col})
+			}
+
 			dupExprList = make([]string, 0)
 			for i := 0; i < dupColNum; i++ {
 				if true { // 待修改
-					dupExprList = append(dupExprList, dupColumns[i].Type.GenRandomVal())
+					dupExprList = append(dupExprList, randColumns[i].Type.GenRandomVal())
 				} else {
 					// 待修改
 					//dupExprList = append(dupExprList, GenerateExpr(dupColumns, 3))
@@ -82,7 +92,7 @@ func GenerateInsertStmt(table *common.Table, partitions []string) *statement.Ins
 		Options:     insOptList,
 		Table:       table,
 		Partitions:  parList,
-		InsertCol:   neededColumns,
+		InsertCol:   insertColumns,
 		InsertValue: insValueList,
 		DupCol:      dupColumns,
 		DupValue:    dupExprList,

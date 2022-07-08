@@ -63,26 +63,33 @@ func GenerateUpdateStmt(tables []*common.Table, partitions []string) *statement.
 		joinOnAst = GenerateExpr(neededColumns, 3)
 	}
 
-	var updColumns []*common.Column
+	updColumns := make([]ast.ColRefNode, 0)
 	updColNum := randomly.RandIntGap(1, len(neededColumns))
-	updColumns = RandPickColumns(neededColumns, updColNum)
+	randColumns := RandPickColumns(neededColumns, updColNum)
+	for _, col := range randColumns {
+		updColumns = append(updColumns, ast.ColRefNode{Column: col})
+	}
 
 	updExprList := make([]string, 0)
 	for i := 0; i < updColNum; i++ {
 		if true { // 待修改
-			updExprList = append(updExprList, updColumns[i].Type.GenRandomVal())
+			updExprList = append(updExprList, randColumns[i].Type.GenRandomVal())
 		} else {
 			// 待修改
 			//updExprList = append(updExprList, GenerateExpr(updColumns, 3))
 		}
 	}
 
-	orderByColumns := make([]*common.Column, 0)
+	randOrderByColumns := make([]*common.Column, 0)
+	orderByColumns := make([]ast.ColRefNode, 0)
 	if len(tables) > 0 {
 		// 需要添加控制选项的开关
 		if true { // 可以生成ORDER BY
 			if randomly.RandBool() {
-				orderByColumns = RandPickOrderColumns(neededColumns)
+				randOrderByColumns = RandPickOrderColumns(neededColumns)
+				for _, col := range randOrderByColumns {
+					orderByColumns = append(orderByColumns, ast.ColRefNode{Column: col})
+				}
 			}
 		}
 	}
