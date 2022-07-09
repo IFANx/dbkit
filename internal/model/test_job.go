@@ -105,7 +105,7 @@ func AbortTestJob(jid int) error {
 	sql := fmt.Sprintf("UPDATE %s SET state = -1 WHERE jid = %d AND state = 1", tableNameTestJob, jid)
 	_, err := db.Exec(sql)
 	if err != nil {
-		errMsg := fmt.Sprintf("更新TestJob状态失败：%s\n", err)
+		errMsg := fmt.Sprintf("更新TestJob状态失败:%s\n", err)
 		log.Warnf(errMsg)
 		return errors.New(errMsg)
 	}
@@ -120,7 +120,7 @@ func EndTestJob(jid int, success bool) error {
 	sql := fmt.Sprintf("UPDATE %s SET state = %d WHERE jid = %d", tableNameTestJob, state, jid)
 	_, err := db.Exec(sql)
 	if err != nil {
-		errMsg := fmt.Sprintf("更新TestJob状态失败：%s\n", err)
+		errMsg := fmt.Sprintf("更新TestJob状态失败: %s\n", err)
 		log.Warnf(errMsg)
 		return errors.New(errMsg)
 	}

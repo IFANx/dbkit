@@ -5,6 +5,7 @@ import (
 	"dbkit/internal/common/stmt"
 	"dbkit/internal/mysql/gen"
 	"strconv"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -21,6 +22,7 @@ func (tester *MySQLNoREC2) RunTask(ctx common.OracleRuntime) {
 
 		for run := 0; run < 20; run++ {
 			ctx.IncrTestRunCount(1)
+			time.Sleep(time.Second * 20)
 			predicate := gen.GenPredicate(table)
 			log.Infof("生成新的谓词：%s", predicate)
 			NoREC2WithCtx(ctx, table, predicate)
