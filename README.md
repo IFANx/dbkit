@@ -2,6 +2,9 @@
 - MySQL # store test statistic
 - go
 
+## Recommendation
+- Using docker to deploy database
+
 ## Dependency
 ```cmd
 # before the following command, create database dbkit in MySQL (*)
