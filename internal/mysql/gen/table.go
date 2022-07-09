@@ -65,7 +65,7 @@ func getPrecisionAndScale() string {
 	// For float(M,D), double(M,D) or decimal(M,D), M must be >= D
 	// The maximum number of digits (M) for DECIMAL is 65
 	// The maximum number of supported decimals (D) is 30
-	m := randomly.RandIntGap(1, 65)
+	m := randomly.RandIntGap(1, 64)
 	d := randomly.RandIntGap(1, 30)
 	if d > m {
 		d = m

@@ -64,12 +64,16 @@ func GenerateDeleteStmt(tables []*common.Table, partitions []string) *statement.
 		joinOnAst = GenerateExpr(neededColumns, 3)
 	}
 
-	orderByColumns := make([]*common.Column, 0)
+	randOrderByColumns := make([]*common.Column, 0)
+	orderByColumns := make([]ast.ColRefNode, 0)
 	if len(tables) > 0 {
 		// 需要添加控制选项的开关
 		if true { // 可以生成ORDER BY
 			if randomly.RandBool() {
-				orderByColumns = RandPickOrderColumns(neededColumns)
+				randOrderByColumns = RandPickOrderColumns(neededColumns)
+				for _, col := range randOrderByColumns {
+					orderByColumns = append(orderByColumns, ast.ColRefNode{Column: col})
+				}
 			}
 		}
 	}

@@ -14,7 +14,7 @@ type DeleteStmt struct {
 	JoinOn     ast.AstNode
 	Partitions []string
 	Where      ast.AstNode
-	OrderBy    []*common.Column
+	OrderBy    []ast.ColRefNode
 	OrderOpt   OrderOption
 	Limit      int
 }
@@ -54,7 +54,7 @@ func (stmt *DeleteStmt) String() string {
 	if stmt.OrderBy != nil && len(stmt.OrderBy) > 0 {
 		orderByList := make([]string, 0)
 		for _, col := range stmt.OrderBy {
-			orderByList = append(orderByList, col.Name)
+			orderByList = append(orderByList, col.String())
 		}
 		res += "ORDER BY " + strings.Join(orderByList, ", ")
 		res += " "

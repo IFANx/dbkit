@@ -14,5 +14,5 @@ func (node *UnaryPostOpNode) Type() NodeType {
 }
 
 func (node *UnaryPostOpNode) String() string {
-	return node.OpName + "(" + node.Operand.String() + ")"
+	return "(" + node.Operand.String() + ")" + node.OpName
 }

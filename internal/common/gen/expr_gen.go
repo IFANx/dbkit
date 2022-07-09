@@ -90,7 +90,7 @@ func (generator *exprGenerator) genUnaryPreExpr(depth int) ast.AstNode {
 
 func (generator *exprGenerator) genUnaryPostExpr(depth int) ast.AstNode {
 	subExpr := generator.genExpression(depth + 1)
-	op := randomly.RandPickOneStr([]string{"IS NULL", "IS TRUE", "IS FALSE", "!"})
+	op := randomly.RandPickOneStr([]string{"IS NULL", "IS TRUE", "IS FALSE"})
 	return &ast.UnaryPostOpNode{
 		OpName:  op,
 		Operand: subExpr,
@@ -155,10 +155,18 @@ func (generator *exprGenerator) genFuncExpr(depth int) ast.AstNode {
 
 func (generator *exprGenerator) genAggregateExpr(depth int) ast.AstNode {
 	myAggregate := GetRandomMySQLAggregate()
-	col := generator.genColumn().(*ast.ColRefNode)
+	col := make([]*ast.ColRefNode, myAggregate.argCnt)
+	for i := 0; i < myAggregate.argCnt; i++ {
+		col[i] = generator.genColumn().(*ast.ColRefNode)
+	}
+	distinct := false
+	if myAggregate.distinct && randomly.RandBool() {
+		distinct = true
+	}
 	return &ast.AggregateNode{
 		FuncName: myAggregate.name,
-		Column:   col,
+		Columns:  col,
+		Distinct: distinct,
 	}
 }
 

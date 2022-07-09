@@ -2,6 +2,7 @@ package statement
 
 import (
 	"dbkit/internal/common"
+	"dbkit/internal/common/ast"
 	"strings"
 )
 
@@ -9,16 +10,16 @@ type InsertStmt struct {
 	Options     []InsertOption
 	Table       *common.Table
 	Partitions  []string
-	InsertCol   []*common.Column
+	InsertCol   []ast.ColRefNode
 	InsertValue []string // 结构待调整
-	DupCol      []*common.Column
+	DupCol      []ast.ColRefNode
 	DupValue    []string
 }
 
 func (stmt *InsertStmt) String() string {
 	res := "INSERT "
 	if stmt.Options != nil && len(stmt.Options) > 0 {
-		delOptDict := []string{"DELAYED", "HIGH_PRIORITY", "IGNORE", "LOW_PRIORITY"}
+		delOptDict := []string{"IGNORE", "HIGH_PRIORITY", "LOW_PRIORITY", "DELAYED"}
 		optionStrList := make([]string, 0)
 		for _, opt := range stmt.Options {
 			optionStrList = append(optionStrList, delOptDict[opt])
@@ -35,7 +36,7 @@ func (stmt *InsertStmt) String() string {
 		if i != 0 {
 			res += ", "
 		}
-		res += col.Name
+		res += col.String()
 	}
 	res += ") VALUES "
 	c := 0
@@ -59,7 +60,7 @@ func (stmt *InsertStmt) String() string {
 			if k != 0 {
 				res += ", "
 			}
-			res += stmt.DupCol[k].Name + " = " + dup
+			res += stmt.DupCol[k].String() + " = " + dup
 		}
 		res += " "
 	}
