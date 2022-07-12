@@ -93,5 +93,15 @@ func getTaskRunnerFromSubmit(submit *TaskSubmit) (TaskRunner, error) {
 			return &mysql.MySQLTrocPlusTester{}, nil
 		}
 	}
+	if submit.Oracle == oracle.TLP {
+		if submit.TargetTypes[0] == dbms.MYSQL {
+			return &mysql.MySQLTLPTester{}, nil
+		}
+	}
+	if submit.Oracle == oracle.NoREC {
+		if submit.TargetTypes[0] == dbms.MYSQL {
+			return &mysql.MySQLNoRECTester{}, nil
+		}
+	}
 	return nil, errors.New("该测试功能未实现")
 }
