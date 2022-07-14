@@ -27,6 +27,37 @@ func GenPredicate(table *common.Table) string {
 		return expr
 	}
 }
+func GenPQS(table *common.Table, pivotrow map[string]interface{}) string {
+	exprGen := NewExprGen(table, 3)
+	expr := exprGen.GenPQSExpr(pivotrow, 0)
+	if expr == "" {
+		return "True"
+	} else {
+		return expr
+	}
+}
+
+func (exprGen *ExprGen) GenPQSExpr(pivotrow map[string]interface{}, depth int) string {
+	if randomly.ProbFiveOne() || depth > exprGen.depthLimit {
+		return exprGen.GenPQSLeaf(pivotrow)
+	}
+	opNames := []string{"GenColumn", "GenConstant",
+		"GenUaryPrefixOp", "GenUaryPostfixOp",
+		"GenBinaryLogicalOp", "GenBinaryBitOp", "GenBinaryMathOp", "GenBinaryCompOp",
+		"GenInOp", "GenBetweenOp", "GenCastOp", "GenFunction"}
+	opName := randomly.RandPickOneStr(opNames)
+	paramList := []reflect.Value{
+		reflect.ValueOf(depth),
+	}
+	return reflect.ValueOf(exprGen).MethodByName(opName).Call(paramList)[0].String()
+}
+func (exprGen *ExprGen) GenPQSLeaf(pivotrow map[string]interface{}) string {
+	if randomly.RandBool() {
+		return exprGen.GenPQSColumn(pivotrow, 0)
+	} else {
+		return exprGen.GenConstant(0)
+	}
+}
 
 func (exprGen *ExprGen) GenExpr(depth int) string {
 	if randomly.ProbFiveOne() || depth > exprGen.depthLimit {
@@ -50,6 +81,15 @@ func (exprGen *ExprGen) GenLeaf() string {
 	} else {
 		return exprGen.GenConstant(0)
 	}
+}
+
+func (exprGen *ExprGen) GenPQSColumn(pivotrow map[string]interface{}, depth int) string {
+	colName := randomly.RandPickOneStr(exprGen.table.ColumnNames)
+	colValue, ok := pivotrow[colName].([]byte)
+	if ok {
+		return string(colValue)
+	}
+	return exprGen.GenConstant(0)
 }
 
 func (exprGen *ExprGen) GenColumn(depth int) string {

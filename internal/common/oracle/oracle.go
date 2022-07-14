@@ -22,6 +22,7 @@ func (oracle Oracle) String() string {
 
 var (
 	TLP      = Oracle{TLPName, TLPAlias, false}
+	PQS      = Oracle{PQSName, PQSAlias, false}
 	NoREC    = Oracle{NoRECName, NoRECAlias, false}
 	NoREC2   = Oracle{NoREC2Name, NoREC2Alias, false}
 	DQE      = Oracle{DQEName, DQEAlias, false}
@@ -42,6 +43,7 @@ var OracleMap = map[string]Oracle{
 	TrocPlusAlias: TrocPlus,
 	DiffTxnAlias:  DIFFTXN,
 	LinearAlias:   LINEAR,
+	PQSAlias:      PQS,
 }
 
 func GetOracleFromStr(oracle string) Oracle {

@@ -62,7 +62,7 @@ func SubJob(ctx *gin.Context) {
 func validateTestForm(oracleName string, target []string, testType, deadline, time, desc string) (*internal.TaskSubmit, error) {
 	oracleObj := oracle.GetOracleFromStr(oracleName)
 	if testType == "query" {
-		if oracleObj != oracle.TLP && oracleObj != oracle.NoREC && oracleObj != oracle.DQE && oracleObj != oracle.NoREC2 {
+		if oracleObj != oracle.TLP && oracleObj != oracle.NoREC && oracleObj != oracle.DQE && oracleObj != oracle.NoREC2 && oracleObj != oracle.PQS {
 			return nil, errors.New("不支持的oracle类型: " + oracleName)
 		}
 	} else if testType == "txn" {

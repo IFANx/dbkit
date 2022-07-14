@@ -10,6 +10,7 @@ var (
 	TrocPlusName = "TrocPlus"
 	DiffTxnName  = "DiffTxn"
 	LinearName   = "Linear"
+	PQSName      = "PQS"
 
 	TLPAlias      = "tlp"
 	NoRECAlias    = "norec"
@@ -20,4 +21,5 @@ var (
 	TrocPlusAlias = "trocplus"
 	DiffTxnAlias  = "difftxn"
 	LinearAlias   = "linear"
+	PQSAlias      = "pqs"
 )
