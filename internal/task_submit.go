@@ -103,5 +103,10 @@ func getTaskRunnerFromSubmit(submit *TaskSubmit) (TaskRunner, error) {
 			return &mysql.MySQLNoRECTester{}, nil
 		}
 	}
+	if submit.Oracle == oracle.PQS {
+		if submit.TargetTypes[0] == dbms.MYSQL {
+			return &mysql.MySQLPQSTester{}, nil
+		}
+	}
 	return nil, errors.New("该测试功能未实现")
 }
