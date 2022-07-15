@@ -24,7 +24,7 @@ func (tester *MySQLTLPTester) RunTask(ctx common.OracleRuntime) {
 			ctx.IncrTestRunCount(1)
 			time.Sleep(time.Second * 5)
 			predicate := gen.GenPredicate(table)
-			log.Infof("生成新的谓词,s%", predicate)
+			log.Infof("生成新的谓词：%s", predicate)
 			TLPWithCtx1(ctx, table, predicate)
 			if ctx.IsAborted() {
 				break
