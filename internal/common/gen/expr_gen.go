@@ -136,7 +136,7 @@ func (generator *exprGenerator) genCastExpr(depth int) ast.AstNode {
 	expr := generator.genExpression(depth + 1)
 	return &ast.CastOpNode{
 		Expr:       expr,
-		TargetType: GetRandomMySQLDataType(),
+		TargetType: GetRandomMySQLCastType(),
 	}
 }
 

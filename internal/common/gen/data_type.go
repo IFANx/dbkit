@@ -14,7 +14,7 @@ func GetRandomMySQLDataType() common.DataType {
 	return MySQLDataType(randomly.RandIntGap(TypeBigInt, TypeYear))
 }
 
-// 暂时不支持enum，set和json
+// 暂时不支持enum，set和json，unsigned
 type MySQLDataType int
 
 const (
@@ -297,4 +297,9 @@ func (dataType MySQLDataType) GenRandomVal() string {
 		log.Infof("Unsupported data type: %v", dataType)
 		panic("Unreachable")
 	}
+}
+
+func GetRandomMySQLCastType() MySQLDataType {
+	types := []MySQLDataType{TypeBinary, TypeChar, TypeDate, TypeDateTime, TypeDecimal, TypeDouble, TypeFloat, TypeTime, TypeYear}
+	return types[randomly.RandIntGap(0, len(types)-1)]
 }
