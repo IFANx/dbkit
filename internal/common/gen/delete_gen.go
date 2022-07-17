@@ -95,7 +95,7 @@ func GenerateDeleteStmt(tables []*common.Table, partitions []string) *statement.
 		Join:       joinAst,
 		JoinOn:     joinOnAst,
 		Partitions: parList,
-		Where:      GenerateExpr(neededColumns, 5),
+		Where:      GenerateExpr(neededColumns, 3),
 		OrderBy:    orderByColumns,
 		OrderOpt:   orderByOpt,
 		Limit:      -1,

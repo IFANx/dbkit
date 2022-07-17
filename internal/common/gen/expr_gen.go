@@ -176,3 +176,8 @@ func RandPickOneCol(candidates []*common.Column) *common.Column {
 	}
 	return candidates[randomly.RandIntGap(0, len(candidates)-1)]
 }
+
+func RandGenAggregate(columns []*common.Column) ast.AstNode {
+	generator := exprGenerator{columns: columns, depLimit: 0, allowAggregate: true}
+	return generator.genAggregateExpr(0)
+}

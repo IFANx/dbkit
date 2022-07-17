@@ -44,5 +44,5 @@ var functions = []MySQLFunc{
 	{"SQRT", 1}, {"STRCMP", 2},
 	{"TAN", 1}, {"TO_BASE64", 1},
 	{"UPPER", 1}, {"USER", 0},
-	{"UUID", 1}, {"VERSION", 0},
+	{"UUID", 0}, {"VERSION", 0},
 }

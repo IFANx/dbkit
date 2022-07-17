@@ -54,8 +54,8 @@ func (stmt *InsertStmt) String() string {
 		}
 	}
 	res += " "
-	res += "ON DUPLICATE KEY UPDATE "
 	if stmt.DupCol != nil && len(stmt.DupCol) > 0 {
+		res += "ON DUPLICATE KEY UPDATE "
 		for k, dup := range stmt.DupValue {
 			if k != 0 {
 				res += ", "
