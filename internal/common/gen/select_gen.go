@@ -27,11 +27,20 @@ func GenerateSelectStmt(tables []*common.Table) *statement.SelectStmt {
 		}
 	}
 	selExprList := make([]ast.AstNode, 0)
-	if randomly.RandBool() { // 只生成列名
-		randNum := randomly.RandIntGap(1, len(neededColumns))
-		randCol := RandPickColumns(neededColumns, randNum)
-		for _, col := range randCol {
-			selExprList = append(selExprList, &ast.ColRefNode{Column: col})
+	selColumns := make([]*common.Column, 0)
+	genOnlyColumn := false
+	genAggregate := false
+	if randomly.RandBool() {
+		if randomly.RandBool() { // 只生成列名
+			randNum := randomly.RandIntGap(1, len(neededColumns))
+			selColumns = RandPickColumns(neededColumns, randNum)
+			for _, col := range selColumns {
+				selExprList = append(selExprList, &ast.ColRefNode{Column: col})
+			}
+			genOnlyColumn = true
+		} else { // 只生成聚合函数
+			selExprList = append(selExprList, RandGenAggregate(neededColumns))
+			genAggregate = true
 		}
 	} else {
 		for i := 0; i < randomly.RandIntGap(1, 3); i++ {
@@ -46,13 +55,48 @@ func GenerateSelectStmt(tables []*common.Table) *statement.SelectStmt {
 		joinOnAst = GenerateExpr(neededColumns, 3)
 	}
 
+	var groupAst ast.AstNode
+	if genAggregate {
+		if randomly.RandBool() {
+			groupAst = GenerateExpr(neededColumns, 1)
+		} else {
+			groupAst = nil
+		}
+	}
+
+	var havingAst ast.AstNode
+	havingAst = nil
+	if randomly.RandBool() {
+		if groupAst != nil {
+			havingAst = RandGenAggregate(neededColumns)
+		} else {
+			if genOnlyColumn {
+				havingAst = GenerateExpr(selColumns, 1)
+			}
+		}
+	}
+
 	var orderByExpr ast.AstNode
 	var orderByOpt statement.OrderOption
 	if randomly.RandBool() {
-		orderByExpr = GenerateExpr(neededColumns, 3)
+		if groupAst != nil {
+			orderByExpr = groupAst
+		} else {
+			if randomly.RandBool() {
+				randOrderByColumn := RandPickOneCol(neededColumns)
+				orderByExpr = &ast.ColRefNode{Column: randOrderByColumn}
+			} else {
+				orderByExpr = GenerateExpr(neededColumns, 3)
+			}
+		}
+	} else {
+		orderByExpr = nil
 	}
+
 	if randomly.RandBool() && orderByExpr != nil {
 		orderByOpt = randomly.RandIntGap(0, 1)
+	} else {
+		orderByOpt = -1
 	}
 	var forOpt statement.ForOption
 	forOpt = randomly.RandIntGap(statement.ForOptShare-1, statement.ForOptUpdate)
@@ -63,9 +107,9 @@ func GenerateSelectStmt(tables []*common.Table) *statement.SelectStmt {
 		Join:       joinAst,
 		JoinOn:     joinOnAst,
 		Partitions: nil, // 需要表结构信息
-		Where:      GenerateExpr(neededColumns, 5),
-		GroupBy:    GenerateExpr(neededColumns, 5),
-		Having:     GenerateExprWithAggregate(neededColumns, 5),
+		Where:      GenerateExpr(neededColumns, 3),
+		GroupBy:    groupAst,
+		Having:     havingAst,
 		OrderBy:    orderByExpr,
 		OrderOpt:   orderByOpt,
 		Limit:      -1, // 未确定好的生成策略

@@ -113,7 +113,7 @@ func GenerateUpdateStmt(tables []*common.Table, partitions []string) *statement.
 		Partitions: parList,
 		UpdateCol:  updColumns,
 		UpdateExpr: updExprList,
-		Where:      GenerateExpr(neededColumns, 5),
+		Where:      GenerateExpr(neededColumns, 3),
 		OrderBy:    orderByColumns,
 		OrderOpt:   orderByOpt,
 		Limit:      -1,
