@@ -108,22 +108,6 @@ func PQSWithCtx(ctx common.OracleRuntime, table *common.Table, predicate string,
 }
 
 func IsPivotRowExist(table *common.Table, pivotrow map[string]interface{}, columnstructs []map[string]interface{}) bool {
-	//columns := table.ColumnNames
-	//for k := 0; k < len(columnstructs); k++ {
-	//	j := 0
-	//	for i := 0; i < len(pivotrow); i++ {
-	//		if pivotrow[columns[i]] == columnstructs[k][columns[i]] {
-	//			j++
-	//		}
-	//		if pivotrow[columns[i]] != columnstructs[k][columns[i]] {
-	//			break
-	//		}
-	//	}
-	//	if j == len(pivotrow) {
-	//		return true
-	//	}
-	//}
-	//return false
 	for i := 0; i < len(columnstructs); i++ {
 		if !mapEqual2(pivotrow, columnstructs[i]) {
 			continue
