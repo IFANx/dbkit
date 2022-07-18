@@ -50,17 +50,27 @@ func (tester *MySQLPQSTester) RunTask(ctx common.OracleRuntime) {
 			}
 			columnStructs = append(columnStructs, columnStruct)
 		}
-		//随机选择一行数据作为pivotrow
+		//随机选择一行数据作为pivotRow
 		pivotRow := columnStructs[randomly.RandIntGap(0, n)]
 		log.Infof("the chosen pivotrow is：%s", pivotRow)
 
-		//为pivotrow构造20条谓词逻辑为true的where子句
+		//为pivotRow构造20条谓词逻辑为true的where子句
 		for run := 0; run < 20; run++ {
 			ctx.IncrTestRunCount(1)
 			time.Sleep(time.Second * 5)
-			predicate := gen.GenPQS(table, pivotRow)
+			RectifiedPredicate, predicate := gen.GenPQS(table, pivotRow)
+			//新建用于查询的语句，其值根据传入的predicate的改变
+			//计算生成的predicate语句的取值
+			expectedValue := getExpectedValue(predicate)
+			if expectedValue == nil {
+				RectifiedPredicate = "(" + RectifiedPredicate + ") IS NULL"
+			}
+			if expectedValue == false {
+				RectifiedPredicate = "NOT (" + RectifiedPredicate + ")"
+			}
+			log.Infof("生成新的谓词：%s", RectifiedPredicate)
 			log.Infof("生成新的谓词：%s", predicate)
-			PQSWithCtx(ctx, table, predicate, pivotRow)
+			PQSWithCtx(ctx, table, RectifiedPredicate, pivotRow)
 			if ctx.IsAborted() {
 				break
 			}
@@ -71,7 +81,22 @@ func (tester *MySQLPQSTester) RunTask(ctx common.OracleRuntime) {
 	}
 }
 
-func PQSWithCtx(ctx common.OracleRuntime, table *common.Table, predicate string, pivotrow map[string]interface{}) {
+func getExpectedValue(predicate string) interface{} {
+	expected := []string{"True", "False", "Null"}
+	res := randomly.RandPickOneStr(expected)
+	switch res {
+	case "True":
+		return true
+	case "False":
+		return false
+	case "Null":
+		return nil
+	default:
+		return false
+	}
+}
+
+func PQSWithCtx(ctx common.OracleRuntime, table *common.Table, predicate string, pivotRow map[string]interface{}) {
 	pqs := stmt.SelectStmt{
 		TableName: table.Name,
 		Targets:   []string{"*"},
@@ -85,7 +110,7 @@ func PQSWithCtx(ctx common.OracleRuntime, table *common.Table, predicate string,
 	if err != nil {
 		return
 	}
-	//如果当前查询到的结果集长度小于1，说明pivotrow未查询出来，若在构造谓词逻辑正确的情况下，则一定有错误发生
+	//如果当前查询到的结果集长度小于1，说明pivotRow未查询出来，若在构造谓词逻辑正确的情况下，则一定有错误发生
 	if len(rows) < 1 {
 		log.Infof("Potenial bugs found by " + predicate)
 	}
@@ -101,15 +126,15 @@ func PQSWithCtx(ctx common.OracleRuntime, table *common.Table, predicate string,
 		}
 		columnStructs = append(columnStructs, columnStruct)
 	}
-	if !IsPivotRowExist(table, pivotrow, columnStructs) {
+	if !IsPivotRowExist(table, pivotRow, columnStructs) {
 		log.Infof("Potenial bugs found by " + predicate)
 	}
 	log.Infof("Next process")
 }
 
-func IsPivotRowExist(table *common.Table, pivotrow map[string]interface{}, columnstructs []map[string]interface{}) bool {
-	for i := 0; i < len(columnstructs); i++ {
-		if !mapEqual2(pivotrow, columnstructs[i]) {
+func IsPivotRowExist(table *common.Table, pivotRow map[string]interface{}, columnStructs []map[string]interface{}) bool {
+	for i := 0; i < len(columnStructs); i++ {
+		if !mapEqual2(pivotRow, columnStructs[i]) {
 			continue
 		}
 		return true

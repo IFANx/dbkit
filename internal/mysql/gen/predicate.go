@@ -27,19 +27,19 @@ func GenPredicate(table *common.Table) string {
 		return expr
 	}
 }
-func GenPQS(table *common.Table, pivotrow map[string]interface{}) string {
+func GenPQS(table *common.Table, pivotRow map[string]interface{}) (string, string) {
 	exprGen := NewExprGen(table, 3)
-	expr := exprGen.GenPQSExpr(pivotrow, 0, "")
-	if expr == "" {
-		return "True"
+	exprWithName, exprWithValue := exprGen.GenPQSExpr(pivotRow, 0, "")
+	if exprWithName == "" || exprWithValue == "" {
+		return "True", "True"
 	} else {
-		return expr
+		return exprWithName, exprWithValue
 	}
 }
 
-func (exprGen *ExprGen) GenPQSExpr(pivotrow map[string]interface{}, depth int, str string) string {
+func (exprGen *ExprGen) GenPQSExpr(pivotRow map[string]interface{}, depth int, str string) (string, string) {
 	if randomly.ProbFiveOne() || depth > exprGen.depthLimit {
-		return exprGen.GenPQSLeaf(pivotrow)
+		return exprGen.GenPQSLeaf(pivotRow)
 	}
 	opNames := []string{"GenPQSColumn", "GenPQSConstant",
 		"GenPQSUaryPrefixOp", "GenPQSUaryPostfixOp",
@@ -49,41 +49,41 @@ func (exprGen *ExprGen) GenPQSExpr(pivotrow map[string]interface{}, depth int, s
 	opName := randomly.RandPickOneStr(opNames)
 	switch opName {
 	case "GenPQSColumn":
-		return exprGen.GenPQSColumn(pivotrow, depth+1, str)
+		return exprGen.GenPQSColumn(pivotRow, depth+1, str)
 	case "GenPQSConstant":
-		return exprGen.GenPQSConstant(pivotrow, depth+1, str)
+		return exprGen.GenPQSConstant(pivotRow, depth+1, str)
 	case "GenPQSUaryPrefixOp":
-		return exprGen.GenPQSUaryPrefixOp(pivotrow, depth+1, str)
+		return exprGen.GenPQSUaryPrefixOp(pivotRow, depth+1, str)
 	case "GenPQSUaryPostfixOp":
-		return exprGen.GenPQSUaryPostfixOp(pivotrow, depth+1, str)
+		return exprGen.GenPQSUaryPostfixOp(pivotRow, depth+1, str)
 	case "GenPQSBinaryLogicalOp":
-		return exprGen.GenPQSBinaryLogicalOp(pivotrow, depth+1, str)
+		return exprGen.GenPQSBinaryLogicalOp(pivotRow, depth+1, str)
 	case "GenPQSBinaryBitOp":
-		return exprGen.GenPQSBinaryBitOp(pivotrow, depth+1, str)
+		return exprGen.GenPQSBinaryBitOp(pivotRow, depth+1, str)
 	case "GenPQSBinaryMathOp":
-		return exprGen.GenPQSBinaryMathOp(pivotrow, depth+1, str)
+		return exprGen.GenPQSBinaryMathOp(pivotRow, depth+1, str)
 	case "GenPQSBinaryCompOp":
-		return exprGen.GenPQSBinaryCompOp(pivotrow, depth+1, str)
+		return exprGen.GenPQSBinaryCompOp(pivotRow, depth+1, str)
 	case "GenPQSInOp":
-		return exprGen.GenPQSInOp(pivotrow, depth+1, str)
+		return exprGen.GenPQSInOp(pivotRow, depth+1, str)
 	case "GenPQSBetweenOp":
-		return exprGen.GenPQSBetweenOp(pivotrow, depth+1, str)
+		return exprGen.GenPQSBetweenOp(pivotRow, depth+1, str)
 	case "GenPQSCastOp":
-		return exprGen.GenPQSCastOp(pivotrow, depth+1, str)
+		return exprGen.GenPQSCastOp(pivotRow, depth+1, str)
 	case "GenPQSFunction":
-		return exprGen.GenPQSFunction(pivotrow, depth+1, str)
+		return exprGen.GenPQSFunction(pivotRow, depth+1, str)
 	default:
-		return ""
+		return "", ""
 
 	}
 	//return reflect.ValueOf(exprGen).MethodByName(opName).Call(paramList)[0].String()
 
 }
-func (exprGen *ExprGen) GenPQSLeaf(pivotrow map[string]interface{}) string {
+func (exprGen *ExprGen) GenPQSLeaf(pivotRow map[string]interface{}) (string, string) {
 	if randomly.RandBool() {
-		return exprGen.GenPQSColumn(pivotrow, 0, "")
+		return exprGen.GenPQSColumn(pivotRow, 0, "")
 	} else {
-		return exprGen.GenConstant(0)
+		return exprGen.GenPQSConstant(pivotRow, 0, "")
 	}
 }
 
@@ -111,14 +111,13 @@ func (exprGen *ExprGen) GenLeaf() string {
 	}
 }
 
-func (exprGen *ExprGen) GenPQSColumn(pivotrow map[string]interface{}, depth int, str string) string {
+func (exprGen *ExprGen) GenPQSColumn(pivotRow map[string]interface{}, depth int, str string) (string, string) {
 	colName := randomly.RandPickOneStr(exprGen.table.ColumnNames)
-	colValue, ok := pivotrow[colName].([]byte)
-	//log.Infof("colvalue:%s", colValue)
+	colValue, ok := pivotRow[colName].([]byte)
 	if ok {
-		return string(colValue)
+		return colName, string(colValue)
 	}
-	return exprGen.GenConstant(0)
+	return exprGen.GenPQSConstant(pivotRow, 0, "")
 }
 
 func (exprGen *ExprGen) GenColumn(depth int) string {
@@ -152,28 +151,33 @@ func (exprGen *ExprGen) GenConstant(depth int) (res string) {
 	// log.Infof("Generate %s constant：%s", constType, res)
 	return
 }
-
-func (exprGen *ExprGen) GenPQSConstant(pivotrow map[string]interface{}, depth int, str string) (res string) {
+func (exprGen *ExprGen) GenPQSConstant(pivotRow map[string]interface{}, depth int, str string) (res1, res string) {
 	if randomly.ProbTwentyOne() {
 		res = "NULL"
+		res1 = "NULL"
 		return
 	}
 	constType := randomly.RandPickOneStr([]string{"INT", "STRING", "DOUBLE"})
 	switch constType {
 	case "INT":
 		res = fmt.Sprintf("%d", randomly.RandInt32())
+		res1 = res
 	case "STRING":
 		res = "'" + randomly.RandNormStrLen(randomly.RandIntGap(5, 10)) + "'"
+		res1 = res
 	case "DOUBLE":
 		if randomly.RandBool() {
 			res = strconv.FormatFloat(float64(randomly.RandFloat()), 'f',
 				randomly.RandIntGap(0, 5), 32)
+			res1 = res
 		} else {
 			res = strconv.FormatFloat(randomly.RandDouble(), 'f',
 				randomly.RandIntGap(0, 10), 64)
+			res1 = res
 		}
 	default:
 		res = "0"
+		res1 = res
 	}
 	// log.Infof("Generate %s constant：%s", constType, res)
 	return
@@ -183,18 +187,20 @@ func (exprGen *ExprGen) GenUaryPrefixOp(depth int) string {
 	op := randomly.RandPickOneStr([]string{"NOT", "!", "+", "-"})
 	return op + "(" + exprGen.GenExpr(depth+1) + ")"
 }
-func (exprGen *ExprGen) GenPQSUaryPrefixOp(pivotrow map[string]interface{}, depth int, str string) string {
+func (exprGen *ExprGen) GenPQSUaryPrefixOp(pivotRow map[string]interface{}, depth int, str string) (string, string) {
 	op := randomly.RandPickOneStr([]string{"NOT", "!", "+", "-"})
-	return op + "(" + exprGen.GenPQSExpr(pivotrow, depth+1, str) + ")"
+	str1, str2 := exprGen.GenPQSExpr(pivotRow, depth+1, str)
+	return op + "(" + str1 + ")", op + "(" + str2 + ")"
 }
 
 func (exprGen *ExprGen) GenUaryPostfixOp(depth int) string {
 	op := randomly.RandPickOneStr([]string{"IS NULL", "IS FALSE", "IS TRUE"})
 	return "(" + exprGen.GenExpr(depth+1) + ")" + op
 }
-func (exprGen *ExprGen) GenPQSUaryPostfixOp(pivotrow map[string]interface{}, depth int, str string) string {
+func (exprGen *ExprGen) GenPQSUaryPostfixOp(pivotRow map[string]interface{}, depth int, str string) (string, string) {
 	op := randomly.RandPickOneStr([]string{"IS NULL", "IS FALSE", "IS TRUE"})
-	return "(" + exprGen.GenPQSExpr(pivotrow, depth+1, str) + ")" + op
+	str1, str2 := exprGen.GenPQSExpr(pivotRow, depth+1, str)
+	return "(" + str1 + ")" + op, "(" + str2 + ")" + op
 }
 
 func (exprGen *ExprGen) GenBinaryLogicalOp(depth int) string {
@@ -202,10 +208,11 @@ func (exprGen *ExprGen) GenBinaryLogicalOp(depth int) string {
 	return "(" + exprGen.GenExpr(depth+1) + ")" + op +
 		"(" + exprGen.GenExpr(depth+1) + ")"
 }
-func (exprGen *ExprGen) GenPQSBinaryLogicalOp(pivotrow map[string]interface{}, depth int, str string) string {
+func (exprGen *ExprGen) GenPQSBinaryLogicalOp(pivotRow map[string]interface{}, depth int, str string) (string, string) {
 	op := randomly.RandPickOneStr([]string{"AND", "&&", "OR", "||", "XOR"})
-	return "(" + exprGen.GenPQSExpr(pivotrow, depth+1, str) + ")" + op +
-		"(" + exprGen.GenPQSExpr(pivotrow, depth+1, str) + ")"
+	str1, str2 := exprGen.GenPQSExpr(pivotRow, depth+1, str)
+	str3, str4 := exprGen.GenPQSExpr(pivotRow, depth+1, str)
+	return "(" + str1 + ")" + op + "(" + str3 + ")", "(" + str2 + ")" + op + "(" + str4 + ")"
 }
 
 func (exprGen *ExprGen) GenBinaryBitOp(depth int) string {
@@ -213,10 +220,11 @@ func (exprGen *ExprGen) GenBinaryBitOp(depth int) string {
 	return "(" + exprGen.GenExpr(depth+1) + ")" + op +
 		"(" + exprGen.GenExpr(depth+1) + ")"
 }
-func (exprGen *ExprGen) GenPQSBinaryBitOp(pivotrow map[string]interface{}, depth int, str string) string {
+func (exprGen *ExprGen) GenPQSBinaryBitOp(pivotRow map[string]interface{}, depth int, str string) (string, string) {
 	op := randomly.RandPickOneStr([]string{"&", "|", "^", ">>", "<<"})
-	return "(" + exprGen.GenPQSExpr(pivotrow, depth+1, str) + ")" + op +
-		"(" + exprGen.GenPQSExpr(pivotrow, depth+1, str) + ")"
+	str1, str2 := exprGen.GenPQSExpr(pivotRow, depth+1, str)
+	str3, str4 := exprGen.GenPQSExpr(pivotRow, depth+1, str)
+	return "(" + str1 + ")" + op + "(" + str3 + ")", "(" + str2 + ")" + op + "(" + str4 + ")"
 }
 
 func (exprGen *ExprGen) GenBinaryMathOp(depth int) string {
@@ -224,10 +232,11 @@ func (exprGen *ExprGen) GenBinaryMathOp(depth int) string {
 	return "(" + exprGen.GenExpr(depth+1) + ")" + op +
 		"(" + exprGen.GenExpr(depth+1) + ")"
 }
-func (exprGen *ExprGen) GenPQSBinaryMathOp(pivotrow map[string]interface{}, depth int, str string) string {
+func (exprGen *ExprGen) GenPQSBinaryMathOp(pivotRow map[string]interface{}, depth int, str string) (string, string) {
 	op := randomly.RandPickOneStr([]string{"+", "-", "*", "/", "%"})
-	return "(" + exprGen.GenPQSExpr(pivotrow, depth+1, str) + ")" + op +
-		"(" + exprGen.GenPQSExpr(pivotrow, depth+1, str) + ")"
+	str1, str2 := exprGen.GenPQSExpr(pivotRow, depth+1, str)
+	str3, str4 := exprGen.GenPQSExpr(pivotRow, depth+1, str)
+	return "(" + str1 + ")" + op + "(" + str3 + ")", "(" + str2 + ")" + op + "(" + str4 + ")"
 }
 
 func (exprGen *ExprGen) GenBinaryCompOp(depth int) string {
@@ -235,10 +244,11 @@ func (exprGen *ExprGen) GenBinaryCompOp(depth int) string {
 	return "(" + exprGen.GenExpr(depth+1) + ")" + op +
 		"(" + exprGen.GenExpr(depth+1) + ")"
 }
-func (exprGen *ExprGen) GenPQSBinaryCompOp(pivotrow map[string]interface{}, depth int, str string) string {
+func (exprGen *ExprGen) GenPQSBinaryCompOp(pivotRow map[string]interface{}, depth int, str string) (string, string) {
 	op := randomly.RandPickOneStr([]string{"=", "!=", "<", "<=", ">", ">=", "LIKE"})
-	return "(" + exprGen.GenPQSExpr(pivotrow, depth+1, str) + ")" + op +
-		"(" + exprGen.GenPQSExpr(pivotrow, depth+1, str) + ")"
+	str1, str2 := exprGen.GenPQSExpr(pivotRow, depth+1, str)
+	str3, str4 := exprGen.GenPQSExpr(pivotRow, depth+1, str)
+	return "(" + str1 + ")" + op + "(" + str3 + ")", "(" + str2 + ")" + op + "(" + str4 + ")"
 }
 
 func (exprGen *ExprGen) GenInOp(depth int) string {
@@ -249,13 +259,16 @@ func (exprGen *ExprGen) GenInOp(depth int) string {
 	return "(" + exprGen.GenExpr(depth+1) + ") IN ((" +
 		strings.Join(exprList, "), (") + "))"
 }
-func (exprGen *ExprGen) GenPQSInOp(pivotrow map[string]interface{}, depth int, str string) string {
-	exprList := []string{"0"}
+func (exprGen *ExprGen) GenPQSInOp(pivotRow map[string]interface{}, depth int, str string) (string, string) {
+	exprList1 := []string{"0"}
+	exprList2 := []string{"0"}
 	for i := 0; i < randomly.RandIntGap(1, 3); i++ {
-		exprList = append(exprList, exprGen.GenPQSExpr(pivotrow, depth+1, str))
+		str1, str2 := exprGen.GenPQSExpr(pivotRow, depth+1, str)
+		exprList1 = append(exprList1, str1)
+		exprList2 = append(exprList2, str2)
 	}
-	return "(" + exprGen.GenPQSExpr(pivotrow, depth+1, str) + ") IN ((" +
-		strings.Join(exprList, "), (") + "))"
+	str3, str4 := exprGen.GenPQSExpr(pivotRow, depth+1, str)
+	return "(" + str3 + ") IN ((" + strings.Join(exprList1, "), (") + "))", "(" + str4 + ") IN ((" + strings.Join(exprList2, "), (") + "))"
 }
 
 func (exprGen *ExprGen) GenBetweenOp(depth int) string {
@@ -264,11 +277,13 @@ func (exprGen *ExprGen) GenBetweenOp(depth int) string {
 	return "(" + exprGen.GenExpr(depth+1) + ") BETWEEN (" +
 		fromExpr + ") AND (" + toExpr + ")"
 }
-func (exprGen *ExprGen) GenPQSBetweenOp(pivotrow map[string]interface{}, depth int, str string) string {
-	fromExpr := exprGen.GenPQSExpr(pivotrow, depth+1, str)
-	toExpr := exprGen.GenPQSExpr(pivotrow, depth+1, str)
-	return "(" + exprGen.GenPQSExpr(pivotrow, depth+1, str) + ") BETWEEN (" +
-		fromExpr + ") AND (" + toExpr + ")"
+func (exprGen *ExprGen) GenPQSBetweenOp(pivotRow map[string]interface{}, depth int, str string) (string, string) {
+	str1, str2 := exprGen.GenPQSExpr(pivotRow, depth+1, str)
+	str3, str4 := exprGen.GenPQSExpr(pivotRow, depth+1, str)
+	str5, str6 := exprGen.GenPQSExpr(pivotRow, depth+1, str)
+	//fromExpr := exprGen.GenPQSExpr(pivotRow, depth+1, str)
+	//toExpr := exprGen.GenPQSExpr(pivotRow, depth+1, str)
+	return "(" + str5 + ") BETWEEN (" + str1 + ") AND (" + str3 + ")", "(" + str6 + ") BETWEEN (" + str2 + ") AND (" + str4 + ")"
 }
 
 func (exprGen *ExprGen) GenCastOp(depth int) string {
@@ -276,10 +291,11 @@ func (exprGen *ExprGen) GenCastOp(depth int) string {
 	castType := randomly.RandPickOneStr([]string{"DATE", "DECIMAL", "SIGNED", "UNSIGNED", "CHAR", "BINARY"})
 	return "CAST((" + castedExpr + ") AS " + castType + ")"
 }
-func (exprGen *ExprGen) GenPQSCastOp(pivotrow map[string]interface{}, depth int, str string) string {
-	castedExpr := exprGen.GenPQSExpr(pivotrow, depth+1, str)
+func (exprGen *ExprGen) GenPQSCastOp(pivotRow map[string]interface{}, depth int, str string) (string, string) {
+	str1, str2 := exprGen.GenPQSExpr(pivotRow, depth+1, str)
+	//castedExpr := exprGen.GenPQSExpr(pivotRow, depth+1, str)
 	castType := randomly.RandPickOneStr([]string{"DATE", "DECIMAL", "SIGNED", "UNSIGNED", "CHAR", "BINARY"})
-	return "CAST((" + castedExpr + ") AS " + castType + ")"
+	return "CAST((" + str1 + ") AS " + castType + ")", "CAST((" + str2 + ") AS " + castType + ")"
 }
 
 func (exprGen *ExprGen) GenFunction(depth int) string {
@@ -290,11 +306,14 @@ func (exprGen *ExprGen) GenFunction(depth int) string {
 	}
 	return function.name + "((" + strings.Join(argList, "), (") + "))"
 }
-func (exprGen *ExprGen) GenPQSFunction(pivotrow map[string]interface{}, depth int, str string) string {
+func (exprGen *ExprGen) GenPQSFunction(pivotRow map[string]interface{}, depth int, str string) (string, string) {
 	function := RandMySQLFunc()
-	var argList []string
+	var argList1 []string
+	var argList2 []string
 	for i := 0; i < function.argCnt; i++ {
-		argList = append(argList, exprGen.GenPQSExpr(pivotrow, depth+1, str))
+		str1, str2 := exprGen.GenPQSExpr(pivotRow, depth+1, str)
+		argList1 = append(argList1, str1)
+		argList2 = append(argList2, str2)
 	}
-	return function.name + "((" + strings.Join(argList, "), (") + "))"
+	return function.name + "((" + strings.Join(argList1, "), (") + "))", function.name + "((" + strings.Join(argList2, "), (") + "))"
 }
