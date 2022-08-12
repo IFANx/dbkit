@@ -151,6 +151,7 @@ func CheckTargetDSN(ctx *gin.Context) {
 	}
 	version, err := model.GetTargetDSNVersion(dsn.DBType, dsn.DBHost, dsn.DBUser,
 		dsn.DBPwd, dsn.DBName, dsn.Params, dsn.DBPort)
+	//version = "8.0.1"
 	if err != nil {
 		_ = model.UpdateStateAndVersionByTid(tid, -1, "-")
 		ctx.JSON(http.StatusOK, gin.H{

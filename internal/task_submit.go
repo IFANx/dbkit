@@ -4,6 +4,8 @@ import (
 	"dbkit/internal/common"
 	"dbkit/internal/common/dbms"
 	"dbkit/internal/common/oracle"
+	_ "dbkit/internal/dameng"
+	mysql2 "dbkit/internal/dameng"
 	"dbkit/internal/model"
 	"dbkit/internal/mysql"
 	"errors"
@@ -96,6 +98,9 @@ func getTaskRunnerFromSubmit(submit *TaskSubmit) (TaskRunner, error) {
 	if submit.Oracle == oracle.TLP {
 		if submit.TargetTypes[0] == dbms.MYSQL {
 			return &mysql.MySQLTLPTester{}, nil
+		}
+		if submit.TargetTypes[0] == dbms.DAMENG {
+			return &mysql2.DAMENGTLPTester{}, nil
 		}
 	}
 	if submit.Oracle == oracle.NoREC {

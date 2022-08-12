@@ -7,6 +7,7 @@ const (
 	CockroachName = "CockroachDB"
 	ZNBaseName    = "ZNBase"
 	SQLiteName    = "SQLite"
+	DAMENGName    = "DAMENG"
 
 	MySQLAlias         = "mysql"
 	DBMARIADBAlias     = "mariadb"
@@ -14,4 +15,5 @@ const (
 	DBCockroachDBAlias = "cockroachdb"
 	DBZNBaseAlias      = "znbase"
 	DBSQLiteAlias      = "sqlite"
+	DBDAMENGAlias      = "dameng"
 )

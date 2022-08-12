@@ -22,6 +22,7 @@ var (
 	COCKROACHDB = DBMS{CockroachName, DBCockroachDBAlias}
 	ZNBASE      = DBMS{ZNBaseName, DBZNBaseAlias}
 	SQLITE      = DBMS{SQLiteName, DBSQLiteAlias}
+	DAMENG      = DBMS{DAMENGName, DBDAMENGAlias}
 )
 
 var DBMSMap = map[string]DBMS{

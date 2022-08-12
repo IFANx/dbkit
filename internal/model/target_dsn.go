@@ -3,26 +3,43 @@ package model
 import (
 	"errors"
 	"fmt"
+	_ "gitee.com/chunanyong/dm"
 	"github.com/jmoiron/sqlx"
 	log "github.com/sirupsen/logrus"
 )
 
 type TargetDSN struct {
-	Tid     int    `json:"Tid" db:"tid"`
-	DBType  string `json:"DBType" db:"db_type"`
-	DBHost  string `json:"DBHost" db:"db_host"`
-	DBPort  int    `json:"DBPort" db:"db_port"`
-	DBUser  string `json:"DBUser" db:"db_user"`
-	DBPwd   string `json:"DBPwd" db:"db_pwd"`
-	DBName  string `json:"DBName" db:"db_name"`
-	Params  string `json:"Params" db:"params"`
-	State   int    `json:"State" db:"state"`
-	Version string `json:"Version" db:"version"`
-	Deleted string `json:"Deleted" db:"deleted"`
+	//MySQL数据类型大小写不影响结构体赋值
+	//Tid     int    `json:"Tid" db:"tid"`
+	//DBType  string `json:"DBType" db:"db_type"`
+	//DBHost  string `json:"DBHost" db:"db_host"`
+	//DBPort  int    `json:"DBPort" db:"db_port"`
+	//DBUser  string `json:"DBUser" db:"db_user"`
+	//DBPwd   string `json:"DBPwd" db:"db_pwd"`
+	//DBName  string `json:"DBName" db:"db_name"`
+	//Params  string `json:"Params" db:"params"`
+	//State   int    `json:"State" db:"state"`
+	//Version string `json:"Version" db:"version"`
+	//Deleted string `json:"Deleted" db:"deleted"`
+
+	//DM8对结构体赋值必须保证对应的大小写一致，这里db如果是小写就会出错
+	Tid     int    `json:"Tid" db:"TID"`
+	DBType  string `json:"DBType" db:"DB_TYPE"`
+	DBHost  string `json:"DBHost" db:"DB_HOST"`
+	DBPort  int    `json:"DBPort" db:"DB_PORT"`
+	DBUser  string `json:"DBUser" db:"DB_USER"`
+	DBPwd   string `json:"DBPwd" db:"DB_PWD"`
+	DBName  string `json:"DBName" db:"DB_NAME"`
+	Params  string `json:"Params" db:"PARAMS"`
+	State   int    `json:"State" db:"STATE"`
+	Version string `json:"Version" db:"VERSION"`
+	Deleted string `json:"Deleted" db:"DELETED"`
 }
 
 func (targetDSN *TargetDSN) GetDSN() string {
-	return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?%s", targetDSN.DBUser, targetDSN.DBPwd,
+	//return fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?%s", targetDSN.DBUser, targetDSN.DBPwd,
+	//	targetDSN.DBHost, targetDSN.DBPort, targetDSN.DBName, targetDSN.Params)
+	return fmt.Sprintf("dm://%s:%s@%s:%d/%s?%s", targetDSN.DBUser, targetDSN.DBPwd,
 		targetDSN.DBHost, targetDSN.DBPort, targetDSN.DBName, targetDSN.Params)
 }
 
@@ -30,6 +47,9 @@ func (targetDSN *TargetDSN) GetConn() (*sqlx.DB, error) {
 	dbType := targetDSN.DBType
 	if dbType == "tidb" || dbType == "mariadb" {
 		dbType = "mysql"
+	}
+	if dbType == "dameng" {
+		dbType = "dm"
 	}
 	conn, err := sqlx.Open(dbType, targetDSN.GetDSN())
 	if err != nil {
@@ -53,6 +73,44 @@ func GetAllTargetDSN() ([]TargetDSN, error) {
 func GetTargetDSNByType(tp string) ([]TargetDSN, error) {
 	var dsnList []TargetDSN
 	sql := fmt.Sprintf("SELECT * FROM %s WHERE db_type = '%s' AND deleted = 0", tableNameTargetDSN, tp)
+	//sql := fmt.Sprintf("SELECT * FROM \"dbkit\".\"%s\" WHERE db_type = '%s' AND deleted = 0", "TARGET_DSN", tp)
+	//debug显示实际上这里是将数据成功查询出来了的
+	//rows, err1 := db.Query(sql)
+	//var tid int
+	//var db_type string
+	//var db_host string
+	//var db_port int
+	//var db_user string
+	//var db_pwd string
+	//var db_name string
+	//var params string
+	//var state int
+	//var version string
+	//var deleted string
+	////defer rows.Close()
+	//dsn := TargetDSN{}
+	//if err1 == nil {
+	//	for rows.Next() {
+	//		if err1 = rows.Scan(&tid, &db_type, &db_host, &db_port, &db_user, &db_pwd, &db_name, &params, &state, &version, &deleted); err1 != nil {
+	//			return nil, err1
+	//		}
+	//		fmt.Println(tid, db_type, db_host, db_port, db_user, db_pwd, db_name, params, state, version, deleted)
+	//		dsn.Tid = tid
+	//		dsn.DBType = db_type
+	//		dsn.DBHost = db_host
+	//		dsn.DBPort = db_port
+	//		dsn.DBUser = db_user
+	//		dsn.DBPwd = db_pwd
+	//		dsn.DBName = db_name
+	//		dsn.Params = params
+	//		dsn.State = state
+	//		dsn.Version = version
+	//		dsn.Deleted = deleted
+	//		dsnList = append(dsnList, dsn)
+	//	}
+	//
+	//}
+
 	err := db.Select(&dsnList, sql)
 	if err != nil {
 		errMsg := fmt.Sprintf("查询连接参数出错: %s\n", err)
@@ -157,16 +215,25 @@ func DeleteTargetDSN(tid int) error {
 }
 
 func GetTargetDSNVersion(tp, host, user, pwd, dbName, params string, port int) (string, error) {
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?%s", user, pwd, host, port, dbName, params)
+	//mysql-dsn连接格式
+	//dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?%s", user, pwd, host, port, dbName, params)
+	//dameng-dsn连接格式
+	dsn := fmt.Sprintf("dm://%s:%s@%s:%d/%s?%s", user, pwd, host, port, dbName, params)
 	if tp == "tidb" || tp == "mariadb" {
 		tp = "mysql"
+	}
+	if tp == "dameng" {
+		tp = "dm"
 	}
 	tmpDB, err := sqlx.Open(tp, dsn)
 	if err != nil {
 		return "", err
 	}
 	var version string
-	err = tmpDB.Get(&version, "SELECT VERSION()")
+	//MySQL使用以下语句查询版本
+	//err = tmpDB.Get(&version, "SELECT VERSION()")
+	//DM8使用以下语句查询版本
+	err = tmpDB.Get(&version, "select substr(banner ,13,7) from v$version where rowid=2;")
 	if err != nil {
 		return "", err
 	}
@@ -177,6 +244,7 @@ func GetTargetDSNByTid(tid int) (*TargetDSN, error) {
 	var dsn = TargetDSN{}
 	sql := fmt.Sprintf("SELECT * FROM %s WHERE tid = %d", tableNameTargetDSN, tid)
 	err := db.Get(&dsn, sql)
+
 	if err != nil {
 		return nil, err
 	}

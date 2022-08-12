@@ -5,11 +5,11 @@ import (
 	"dbkit/internal/model"
 	"errors"
 	"fmt"
-	"sync"
-
+	_ "gitee.com/chunanyong/dm"
 	"github.com/jmoiron/sqlx"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"sync"
 )
 
 type GlobalState struct {
@@ -52,9 +52,12 @@ func makeGlobalState() *GlobalState {
 
 	// 根据配置文件建立连接
 	dataSource := state.Config.DataSource
-	connStr := fmt.Sprintf("%s:%s@tcp(%s:%d)/dbkit?parseTime=true",
+	fmt.Println(dataSource.Username, dataSource.Password, dataSource.Host, dataSource.Port)
+	//connStr := fmt.Sprintf("%s:%s@tcp(%s:%d)/dbkit?parseTime=true",
+	//	dataSource.Username, dataSource.Password, dataSource.Host, dataSource.Port)
+	connStr := fmt.Sprintf("dm://%s:%s@%s:%d/dbkit?parseTime=true",
 		dataSource.Username, dataSource.Password, dataSource.Host, dataSource.Port)
-	state.DataSource, err = sqlx.Open("mysql", connStr)
+	state.DataSource, err = sqlx.Open("dm", connStr)
 	if err != nil {
 		log.Fatalf("Fail to connect database")
 	} else {
