@@ -9,16 +9,29 @@ import (
 )
 
 type TestJob struct {
-	Jid       int       `json:"Jid" db:"jid"`
-	DSN       string    `json:"DSN" db:"dsn"`
-	DBName    string    `json:"DBName" db:"db_name"`
-	Target    string    `json:"Target" db:"target"`
-	Oracle    string    `json:"Oracle" db:"oracle"`
-	State     int       `json:"State" db:"state"`
-	TimeLimit float32   `json:"TimeLimit" db:"time_limit"`
-	Comments  string    `json:"Comments" db:"comments"`
-	CreatedAt time.Time `json:"CreatedAt" db:"created_at"`
-	Deleted   int       `json:"Deleted" db:"deleted"`
+	//对于MySQL来说，列名大小写均可以
+	//Jid       int       `json:"Jid" db:"jid"`
+	//DSN       string    `json:"DSN" db:"dsn"`
+	//DBName    string    `json:"DBName" db:"db_name"`
+	//Target    string    `json:"Target" db:"target"`
+	//Oracle    string    `json:"Oracle" db:"oracle"`
+	//State     int       `json:"State" db:"state"`
+	//TimeLimit float32   `json:"TimeLimit" db:"time_limit"`
+	//Comments  string    `json:"Comments" db:"comments"`
+	//CreatedAt time.Time `json:"CreatedAt" db:"created_at"`
+	//Deleted   int       `json:"Deleted" db:"deleted"`
+
+	//对于DM8来说，列名大小写需一致
+	Jid       int       `json:"Jid" db:"JID"`
+	DSN       string    `json:"DSN" db:"DSN"`
+	DBName    string    `json:"DBName" db:"DB_NAME"`
+	Target    string    `json:"Target" db:"TARGET"`
+	Oracle    string    `json:"Oracle" db:"ORACLE"`
+	State     int       `json:"State" db:"STATE"`
+	TimeLimit float32   `json:"TimeLimit" db:"TIME_LIMIT"`
+	Comments  string    `json:"Comments" db:"COMMENTS"`
+	CreatedAt time.Time `json:"CreatedAt" db:"CREATED_AT"`
+	Deleted   int       `json:"Deleted" db:"DELETED"`
 }
 
 func GetTestJobCount() (int, error) {

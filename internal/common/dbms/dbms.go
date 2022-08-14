@@ -32,6 +32,7 @@ var DBMSMap = map[string]DBMS{
 	DBCockroachDBAlias: COCKROACHDB,
 	DBZNBaseAlias:      ZNBASE,
 	DBSQLiteAlias:      SQLITE,
+	DBDAMENGAlias:      DAMENG,
 }
 
 func GetDBMSFromStr(dbms string) DBMS {
