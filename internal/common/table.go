@@ -4,6 +4,7 @@ import (
 	"dbkit/internal/common/dbms"
 	"dbkit/internal/randomly"
 	"fmt"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -29,18 +30,18 @@ func (table *Table) Build() {
 		log.Infof("Fail to create table: %s", err)
 	}
 	table.UpdateSchema()
-	for i := 0; i < randomly.RandIntGap(1, 3); i++ {
-		stmt := table.DB.DBProvider.GenCreateIndexStmt(table)
-		if stmt.IndexName != "" {
-			log.Infof("Create index statement: %s", stmt.String())
-			err := table.DB.ExecSQL(stmt.String())
-			if err != nil {
-				log.Infof("Fail to create index: %s", err)
-			} else {
-				table.IndexCount++
-			}
-		}
-	}
+	//for i := 0; i < randomly.RandIntGap(1, 3); i++ {
+	//	stmt := table.DB.DBProvider.GenCreateIndexStmt(table)
+	//	if stmt.IndexName != "" {
+	//		log.Infof("Create index statement: %s", stmt.String())
+	//		err := table.DB.ExecSQL(stmt.String())
+	//		if err != nil {
+	//			log.Infof("Fail to create index: %s", err)
+	//		} else {
+	//			table.IndexCount++
+	//		}
+	//	}
+	//}
 	for i := 0; i < randomly.RandIntGap(5, 10); i++ {
 		stmt := table.DB.DBProvider.GenInsertStmt(table)
 		log.Infof("Insert statement: %s", stmt.String())
@@ -58,22 +59,45 @@ func (table *Table) DropTable() {
 
 func (table *Table) UpdateSchema() {
 	switch table.DB.DBMS {
-	case dbms.MYSQL, dbms.MARIADB, dbms.TIDB:
-		rows, err := table.DB.Queryx("desc " + table.Name)
+	case dbms.MYSQL, dbms.MARIADB, dbms.TIDB, dbms.DAMENG:
+		//mysql与dm8的查询数据表列信息的语句不同
+		//rows, err := table.DB.Queryx("desc " + table.Name)
+		sql := fmt.Sprintf("select * from DBA_TAB_COLUMNS where OWNER='%s' AND TABLE_NAME='%s'", strings.ToUpper(table.DB.DBName), strings.ToUpper(table.Name))
+		rows, err := table.DB.Queryx(sql)
 		if err != nil {
 			log.Warnf("Fail to get table structure: %s", err)
 		}
+		//DM8查询列的constraint信息
+		//sql1 := fmt.Sprintf("SELECT * from DBA_CONSTRAINTS a, ALL_CONS_COLUMNS b where a.CONSTRAINT_NAME=b.CONSTRAINT_NAME and CONSTRAINT_TYPE in ('R','P','U') and a.OWNER='%s' and a.TABLE_NAME='%s'", table.DB.DBName, table.Name)
+		//rows1, err := table.DB.Queryx(sql1)
+		//if err != nil {
+		//	log.Warnf("Fail to get table structure: %s", err)
+		//}
 		defer rows.Close()
+		//defer rows1.Close()
 		res := make(map[string]interface{})
 		colNames := make([]string, 0)
 		columns := make(map[string]*Column)
 		for rows.Next() {
 			_ = rows.MapScan(res)
-			colName := string(res["Field"].([]byte))
-			colType := string(res["Type"].([]byte))
-			notNull := string(res["Null"].([]byte)) == "NO"
-			primary := string(res["Key"].([]byte)) == "PRI"
-			unique := string(res["Key"].([]byte)) == "UNI"
+			//mysql的列信息
+			//colName := string(res["Field"].([]byte))
+			//colType := string(res["Type"].([]byte))
+			//notNull := string(res["Null"].([]byte)) == "NO"
+			//primary := string(res["Key"].([]byte)) == "PRI"
+			//unique := string(res["Key"].([]byte)) == "UNI"
+
+			//DM8的列信息
+			colName := fmt.Sprintf("%s", res["COLUMN_NAME"])
+			colType := strings.ToLower(fmt.Sprintf("%s", res["DATA_TYPE"]))
+			notNullval := fmt.Sprintf("%s", res["NULLABLE"])
+			notNull := notNullval == "N"
+			//colName := string(res["COLUMN_NAME"].([]byte))
+			//colType := string(res["DATA_TYPE"].([]byte))
+			//notNull := string(res["NULLABLE"].([]byte)) == "N"
+			primary := false
+			unique := false
+
 			columns[colName] = &Column{
 				Table:      table,
 				Name:       colName,
@@ -89,37 +113,37 @@ func (table *Table) UpdateSchema() {
 		table.Columns = columns
 		table.ColumnNames = colNames
 		table.showSchema()
-		sql := fmt.Sprintf("select * from information_schema.statistics "+
-			"where table_schema = '%s' and table_name = '%s'", table.DB.DBName, table.Name)
-		rows, err = table.DB.Queryx(sql)
-		if err != nil {
-			log.Warnf("Fail to get index: %s", err)
-		}
-		indexNames := make([]string, 0)
-		indexes := make(map[string]*Index)
-		for rows.Next() {
-			_ = rows.MapScan(res)
-			indexName := string(res["INDEX_NAME"].([]byte))
-			indexCol := string(res["COLUMN_NAME"].([]byte))
-			isPrimary := indexName == "PRIMARY"
-			isUnique := string(res["NON_UNIQUE"].([]byte)) == "0"
-			if indexes[indexName] == nil {
-				indexNames = append(indexNames, indexName)
-				indexCols := make([]string, 0)
-				indexCols = append(indexCols, indexCol)
-				indexes[indexName] = &Index{
-					Name:        indexName,
-					IndexedCols: indexCols,
-					IsPrimary:   isPrimary,
-					IsUnique:    isUnique,
-				}
-			} else {
-				indexes[indexName].IndexedCols = append(indexes[indexName].IndexedCols, indexCol)
-			}
-		}
-		table.IndexNames = indexNames
-		table.Indexes = indexes
-		table.showSchema()
+		//sql = fmt.Sprintf("select * from information_schema.statistics "+
+		//	"where table_schema = '%s' and table_name = '%s'", strings.ToUpper(table.DB.DBName), strings.ToUpper(table.Name))
+		//rows, err = table.DB.Queryx(sql)
+		//if err != nil {
+		//	log.Warnf("Fail to get index: %s", err)
+		//}
+		//indexNames := make([]string, 0)
+		//indexes := make(map[string]*Index)
+		//for rows.Next() {
+		//	_ = rows.MapScan(res)
+		//	indexName := string(res["INDEX_NAME"].([]byte))
+		//	indexCol := string(res["COLUMN_NAME"].([]byte))
+		//	isPrimary := indexName == "PRIMARY"
+		//	isUnique := string(res["NON_UNIQUE"].([]byte)) == "0"
+		//	if indexes[indexName] == nil {
+		//		indexNames = append(indexNames, indexName)
+		//		indexCols := make([]string, 0)
+		//		indexCols = append(indexCols, indexCol)
+		//		indexes[indexName] = &Index{
+		//			Name:        indexName,
+		//			IndexedCols: indexCols,
+		//			IsPrimary:   isPrimary,
+		//			IsUnique:    isUnique,
+		//		}
+		//	} else {
+		//		indexes[indexName].IndexedCols = append(indexes[indexName].IndexedCols, indexCol)
+		//	}
+		//}
+		//table.IndexNames = indexNames
+		//table.Indexes = indexes
+		//table.showSchema()
 	}
 }
 

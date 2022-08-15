@@ -1,4 +1,4 @@
-package mysql
+package dameng
 
 import (
 	"dbkit/internal/common"

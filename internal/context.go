@@ -4,6 +4,7 @@ import (
 	"dbkit/internal/common"
 	"dbkit/internal/common/dbms"
 	"dbkit/internal/common/oracle"
+	"dbkit/internal/dameng"
 	"dbkit/internal/model"
 	"dbkit/internal/mysql"
 	"fmt"
@@ -94,6 +95,8 @@ func (ctx *TaskContext) initDBList() {
 		var provider common.Provider
 		if ctx.Submit.TargetTypes[i] == dbms.MYSQL {
 			provider = &mysql.MySQLProvider{}
+		} else if ctx.Submit.TargetTypes[i] == dbms.DAMENG {
+			provider = &dameng.DAMENGProvider{}
 		} else {
 			panic("未找到对应的Provider：" + ctx.Submit.TargetTypes[i].Name)
 		}

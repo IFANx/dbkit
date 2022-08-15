@@ -17,15 +17,18 @@ type Database struct {
 
 func (db *Database) Refresh() error {
 	var err error
-	err = db.ExecSQL("DROP DATABASE IF EXISTS " + db.DBName)
+	//达梦数据库drop database无法使用，使用drop schema删除模式
+	err = db.ExecSQL("DROP SCHEMA IF EXISTS " + db.DBName)
+	//err = db.ExecSQL("DROP DATABASE IF EXISTS " + db.DBName)
 	if err != nil {
 		return err
 	}
-	err = db.ExecSQL("CREATE DATABASE " + db.DBName)
+	//err = db.ExecSQL("CREATE DATABASE " + db.DBName)
+	err = db.ExecSQL("CREATE SCHEMA " + db.DBName)
 	if err != nil {
 		return err
 	}
-	err = db.ExecSQL("USE " + db.DBName)
+	err = db.ExecSQL("SET SCHEMA " + db.DBName)
 	if err != nil {
 		return err
 	}

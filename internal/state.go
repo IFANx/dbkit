@@ -55,7 +55,7 @@ func makeGlobalState() *GlobalState {
 	fmt.Println(dataSource.Username, dataSource.Password, dataSource.Host, dataSource.Port)
 	//connStr := fmt.Sprintf("%s:%s@tcp(%s:%d)/dbkit?parseTime=true",
 	//	dataSource.Username, dataSource.Password, dataSource.Host, dataSource.Port)
-	connStr := fmt.Sprintf("dm://%s:%s@%s:%d/dbkit?parseTime=true",
+	connStr := fmt.Sprintf("dm://%s:%s@%s:%d/dbkit?parseTime=true&compatibleMode=mysql",
 		dataSource.Username, dataSource.Password, dataSource.Host, dataSource.Port)
 	state.DataSource, err = sqlx.Open("dm", connStr)
 	if err != nil {

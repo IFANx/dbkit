@@ -47,13 +47,14 @@ func getTypeString(dataType MySQLDataType) string {
 			res += getPrecisionAndScale()
 		}
 	case TypeInt:
-		res = randomly.RandPickOneStr([]string{"TINYINT", "SMALLINT", "MEDIUMINT", "INT", "BIGINT"})
+		res = randomly.RandPickOneStr([]string{"TINYINT", "SMALLINT", "INT", "BIGINT"})
 	case TypeVarchar:
-		res = randomly.RandPickOneStr([]string{"VARCHAR(50)", "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT"})
+		res = randomly.RandPickOneStr([]string{"VARCHAR(50)", "TEXT"})
 	case TypeFloat:
 		res = randomly.RandPickOneStr([]string{"DOUBLE", "FLOAT"})
 		if randomly.RandBool() {
-			res += getPrecisionAndScale()
+			//dm8设置精度与mysql不同，暂时注释
+			//res += getPrecisionAndScale()
 		}
 	default:
 		panic("Unreachable")

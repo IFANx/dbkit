@@ -15,7 +15,7 @@ type SelectStmt struct {
 
 func (stmt *SelectStmt) String() string {
 	sql := fmt.Sprintf("SELECT %s FROM %s WHERE %s",
-		strings.Join(stmt.Targets, ","), stmt.TableName, stmt.Predicate)
+		strings.Join(stmt.Targets, ","), strings.ToUpper(stmt.TableName), stmt.Predicate)
 	if stmt.ForShare {
 		sql += " FOR SHARE"
 	}
